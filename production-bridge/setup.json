@@ -1,0 +1,23 @@
+{
+  "profile": "LAB_CURRENT",
+  "sources": {
+    "1": "CAM_1",
+    "2": "CAM_2",
+    "3": "CAM_3",
+    "4": "COMPUTER",
+    "5": "CAM_MAIN",
+    "6": "RESOLUME",
+    "7": "OBS",
+    "8": "TRUCK_PGM"
+  },
+  "decklinkMapping": {
+    "input-1": null,
+    "input-2": "COMPUTER",
+    "input-3": null,
+    "input-4": null,
+    "input-5": "CAM_MAIN",
+    "input-6": null,
+    "input-7": null,
+    "input-8": null
+  }
+}

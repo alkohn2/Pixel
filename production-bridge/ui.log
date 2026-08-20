@@ -1,0 +1,2 @@
+::ffff:127.0.0.1 - - [20/Aug/2026 13:12:18] "GET /pixel.html HTTP/1.1" 200 -
+::ffff:127.0.0.1 - - [20/Aug/2026 13:15:46] "GET /pixel.html HTTP/1.1" 200 -

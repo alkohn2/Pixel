@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PIXEL Live</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #111;
+      color: white;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #aaa;
+      margin-bottom: 30px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .status-item {
+      background: #1c1c1c;
+      padding: 14px 18px;
+      border-radius: 10px;
+      min-width: 140px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .live-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 35px;
+    }
+
+    .panel {
+      padding: 30px;
+      border-radius: 14px;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .program {
+      background: #5d1111;
+      border: 2px solid #ff3b3b;
+    }
+
+    .preview {
+      background: #0f4d1e;
+      border: 2px solid #3fd35b;
+    }
+
+    .panel .title {
+      font-size: 18px;
+      color: #ddd;
+      margin-bottom: 20px;
+    }
+
+    .panel .source {
+      font-size: 42px;
+      font-weight: bold;
+    }
+
+    .section-title {
+      font-size: 18px;
+      margin-bottom: 14px;
+      color: #ccc;
+    }
+
+    .sources-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 35px;
+    }
+
+    .source-card {
+      background: #1c1c1c;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 16px;
+      min-height: 110px;
+      transition: all 0.2s ease;
+    }
+
+    .source-card.program-active {
+      background: #5d1111;
+      border-color: #ff3b3b;
+    }
+
+    .source-card.preview-active {
+      background: #0f4d1e;
+      border-color: #3fd35b;
+    }
+
+    .source-card.both-active {
+      background: #5b4300;
+      border-color: #ffd54a;
+    }
+
+    .source-name {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+
+    .source-meta {
+      font-size: 12px;
+      color: #aaa;
+      line-height: 1.6;
+    }
+
+    .status-assigned {
+      color: #4ade80;
+    }
+
+    .status-signal-locked {
+      color: #4ade80;
+      font-weight: bold;
+    }
+
+    .status-signal-playback {
+      color: #38bdf8;
+      font-weight: bold;
+    }
+
+    .status-signal-none {
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    .status-signal-unmonitored {
+      color: #94a3b8;
+      font-weight: normal;
+    }
+
+    /* OBS SECTION */
+    .obs-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 35px;
+    }
+
+    .obs-card {
+      background: #181c24;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .obs-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .obs-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #e2e8f0;
+      word-break: break-word;
+    }
+
+    .status-active-red {
+      color: #ef4444;
+    }
+
+    .status-active-live {
+      color: #38bdf8;
+    }
+
+    /* RESOLUME SECTION */
+    .resolume-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .resolume-layers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 35px;
+    }
+
+    .res-layer-card {
+      background: #1e1b2e;
+      border: 1px solid #3b2d54;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .res-layer-title {
+      font-size: 12px;
+      color: #c084fc;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .res-clip-name {
+      font-size: 14px;
+      font-weight: bold;
+      color: #f3e8ff;
+      word-break: break-word;
+    }
+
+    /* DECKLINK SECTION */
+    .decklink-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 35px;
+    }
+
+    .decklink-card {
+      background: #241c14;
+      border: 1px solid #4a3424;
+      border-radius: 10px;
+      padding: 14px;
+    }
+
+    .dl-ch-title {
+      font-size: 12px;
+      color: #fb923c;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    .dl-ch-meta {
+      font-size: 12px;
+      color: #ddd;
+      line-height: 1.5;
+    }
+
+    /* HUDL TRUCK SECTION */
+    .truck-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 35px;
+    }
+
+    .truck-card {
+      background: #2a2012;
+      border: 1px solid #543b1e;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .truck-label {
+      font-size: 11px;
+      color: #fbbf24;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .truck-value {
+      font-size: 18px;
+      font-weight: bold;
+      color: #fef3c7;
+      word-break: break-word;
+    }
+
+    .confidence-tag {
+      font-size: 11px;
+      font-weight: normal;
+      color: #f59e0b;
+      margin-left: 4px;
+    }
+
+    .events-box {
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 110px 240px 1fr;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #2a2a2a;
+      align-items: center;
+    }
+
+    .event-row:last-child {
+      border-bottom: none;
+    }
+
+    .event-time {
+      color: #888;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .event-type {
+      font-size: 12px;
+      font-weight: bold;
+      color: #ccc;
+    }
+
+    .event-message {
+      font-size: 14px;
+      color: #eee;
+    }
+
+    .event-program .event-type {
+      color: #ff5c5c;
+    }
+
+    .event-preview .event-type {
+      color: #63e67b;
+    }
+
+    .event-obs .event-type {
+      color: #38bdf8;
+    }
+
+    .event-resolume .event-type {
+      color: #c084fc;
+    }
+
+    .event-decklink .event-type {
+      color: #fb923c;
+    }
+
+    .event-truck .event-type {
+      color: #f59e0b;
+    }
+
+    .event-connected .event-type {
+      color: #4ade80;
+    }
+
+    .event-disconnected .event-type {
+      color: #ff4d4d;
+    }
+
+    .events-empty {
+      padding: 20px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      color: #777;
+      font-size: 13px;
+    }
+
+    .online {
+      color: #4ade80;
+    }
+
+    .offline {
+      color: #ff4d4d;
+    }
+
+    @media (max-width: 800px) {
+      .live-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .sources-grid, .obs-grid, .resolume-summary-grid, .resolume-layers-grid, .decklink-grid, .truck-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .panel .source {
+        font-size: 32px;
+      }
+
+      .event-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>PIXEL — LIVE</h1>
+    <div class="subtitle">Sports Production Assistant</div>
+
+    <div class="status-bar">
+
+      <div class="status-item">
+        <div class="label">Profile</div>
+        <div class="value" id="profile">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">Bridge</div>
+        <div class="value" id="bridge">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">ATEM</div>
+        <div class="value" id="atem">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">OBS</div>
+        <div class="value" id="obs">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">Resolume</div>
+        <div class="value" id="resolume">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">DeckLink</div>
+        <div class="value" id="decklink">---</div>
+      </div>
+
+      <div class="status-item">
+        <div class="label">Truck</div>
+        <div class="value" id="truck">---</div>
+      </div>
+
+    </div>
+
+    <div class="live-grid">
+
+      <div class="panel preview">
+        <div class="title">PREVIEW</div>
+        <div class="source" id="preview">---</div>
+      </div>
+
+      <div class="panel program">
+        <div class="title">PROGRAM</div>
+        <div class="source" id="program">---</div>
+      </div>
+
+    </div>
+
+    <div class="section-title">OBS STUDIO (READ ONLY)</div>
+
+    <div class="obs-grid">
+      <div class="obs-card">
+        <div class="obs-label">PROGRAM SCENE</div>
+        <div class="obs-value" id="obsProgram">---</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">PREVIEW SCENE</div>
+        <div class="obs-value" id="obsPreview">---</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">RECORDING</div>
+        <div class="obs-value" id="obsRecording">OFF</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">STREAMING</div>
+        <div class="obs-value" id="obsStreaming">OFF</div>
+      </div>
+    </div>
+
+    <div class="section-title">RESOLUME ARENA (READ ONLY)</div>
+
+    <div class="resolume-summary-grid">
+      <div class="obs-card">
+        <div class="obs-label">COMPOSITION</div>
+        <div class="obs-value" id="resComp">---</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">ACTIVE COLUMN</div>
+        <div class="obs-value" id="resColumn">---</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">TEMPO</div>
+        <div class="obs-value" id="resBpm">---</div>
+      </div>
+      <div class="obs-card">
+        <div class="obs-label">VERSION</div>
+        <div class="obs-value" id="resVersion">---</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="font-size: 15px; color: #aaa; margin-top: 10px;">RESOLUME LAYERS</div>
+    <div class="resolume-layers-grid" id="resLayersGrid"></div>
+
+    <div class="section-title">DECKLINK QUAD 2 (READ ONLY)</div>
+    <div class="decklink-grid" id="decklinkGrid"></div>
+
+    <div class="section-title">HUDL PRODUCTION TRUCK (READ ONLY)</div>
+    <div class="truck-grid">
+      <div class="truck-card">
+        <div class="truck-label">PROCESS / VERSION</div>
+        <div class="truck-value" id="truckProcess">---</div>
+      </div>
+      <div class="truck-card">
+        <div class="truck-label">ACTIVE RENDER OUTPUT</div>
+        <div class="truck-value" id="truckOutput">---</div>
+      </div>
+      <div class="truck-card">
+        <div class="truck-label">REPLAY SYSTEM</div>
+        <div class="truck-value" id="truckReplay">---</div>
+      </div>
+      <div class="truck-card">
+        <div class="truck-label">REPLAY CAMERA</div>
+        <div class="truck-value" id="truckReplayCam">---</div>
+      </div>
+    </div>
+
+    <div class="section-title">SOURCES</div>
+
+    <div class="sources-grid" id="sourcesGrid"></div>
+
+    <div class="section-title">LIVE EVENTS</div>
+
+    <div class="events-box" id="eventsBox">
+      <div class="events-empty">Waiting for events...</div>
+    </div>
+
+    <div class="footer">
+      Last update: <span id="updated">---</span>
+    </div>
+
+  </div>
+
+<script>
+const SOURCES = [
+  { input: 1, name: 'CAM_1' },
+  { input: 2, name: 'CAM_2' },
+  { input: 3, name: 'CAM_3' },
+  { input: 4, name: 'COMPUTER' },
+  { input: 5, name: 'CAM_MAIN' },
+  { input: 6, name: 'RESOLUME' },
+  { input: 7, name: 'OBS' },
+  { input: 8, name: 'TRUCK_PGM' }
+]
+
+function createSourceCards() {
+  const grid = document.getElementById('sourcesGrid')
+  grid.innerHTML = ''
+
+  SOURCES.forEach(source => {
+    const card = document.createElement('div')
+    card.className = 'source-card'
+    card.id = `source-${source.name}`
+
+    card.innerHTML = `
+      <div class="source-name">${source.name}</div>
+      <div class="source-meta">
+        ATEM INPUT: ${source.input}<br>
+        STATUS: <span class="status-assigned">ASSIGNED</span><br>
+        SIGNAL: <span id="signal-${source.name}" class="status-signal-unmonitored">NOT MONITORED</span>
+      </div>
+    `
+
+    grid.appendChild(card)
+  })
+}
+
+function updateSourceStates(programName, previewName) {
+  SOURCES.forEach(source => {
+    const card = document.getElementById(`source-${source.name}`)
+    if (!card) return
+    card.className = 'source-card'
+
+    const isProgram = source.name === programName
+    const isPreview = source.name === previewName
+
+    if (isProgram && isPreview) {
+      card.classList.add('both-active')
+    } else if (isProgram) {
+      card.classList.add('program-active')
+    } else if (isPreview) {
+      card.classList.add('preview-active')
+    }
+  })
+}
+
+function updateDecklinkSignalStatus(dlData) {
+  const mapping = dlData?.mapping || {}
+  const channels = dlData?.channels || {}
+
+  SOURCES.forEach(source => {
+    const signalEl = document.getElementById(`signal-${source.name}`)
+    if (!signalEl) return
+
+    let mappedChannelKey = null
+    for (const [chKey, mappedSourceName] of Object.entries(mapping)) {
+      if (mappedSourceName === source.name) {
+        mappedChannelKey = chKey
+        break
+      }
+    }
+
+    if (!mappedChannelKey || !dlData?.connected) {
+      signalEl.textContent = 'NOT MONITORED'
+      signalEl.className = 'status-signal-unmonitored'
+    } else {
+      const ch = channels[mappedChannelKey]
+      if (!ch) {
+        signalEl.textContent = 'NO SIGNAL'
+        signalEl.className = 'status-signal-none'
+      } else if (ch.directionState === 'PLAYBACK') {
+        signalEl.textContent = `PLAYBACK (${ch.inputFormat || 'Active'})`
+        signalEl.className = 'status-signal-playback'
+      } else if (ch.signalLocked) {
+        signalEl.textContent = ch.inputFormat || 'LOCKED'
+        signalEl.className = 'status-signal-locked'
+      } else {
+        signalEl.textContent = 'NO SIGNAL'
+        signalEl.className = 'status-signal-none'
+      }
+    }
+  })
+}
+
+function renderDecklinkPanel(dlData) {
+  const grid = document.getElementById('decklinkGrid')
+  if (!grid) return
+
+  if (!dlData || !dlData.connected || !dlData.channels) {
+    grid.innerHTML = '<div style="color: #777; font-size: 14px; padding: 10px;">DeckLink hardware monitoring unavailable.</div>'
+    return
+  }
+
+  grid.innerHTML = ''
+  const channels = dlData.channels
+  const mapping = dlData.mapping || {}
+
+  for (let i = 1; i <= 8; i++) {
+    const chKey = `input-${i}`
+    const ch = channels[chKey] || {}
+    const mappedSource = mapping[chKey] || 'Unmapped'
+
+    const card = document.createElement('div')
+    card.className = 'decklink-card'
+
+    let statusHtml = '<span class="status-signal-none">NO SIGNAL</span>'
+    if (ch.directionState === 'PLAYBACK') {
+      statusHtml = `<span class="status-signal-playback">PLAYBACK (${ch.inputFormat || 'Active'})</span>`
+    } else if (ch.signalLocked) {
+      statusHtml = `<span class="status-signal-locked">${ch.inputFormat || 'LOCKED'}</span>`
+    }
+
+    card.innerHTML = `
+      <div class="dl-ch-title">SDI CH ${i} (${chKey})</div>
+      <div class="dl-ch-meta">
+        MAPPED TO: <strong>${mappedSource}</strong><br>
+        SIGNAL: ${statusHtml}<br>
+        PIXEL FMT: ${ch.pixelFormat || 'N/A'}<br>
+        MODE: ${ch.directionState || 'IDLE'}
+      </div>
+    `
+    grid.appendChild(card)
+  }
+}
+
+function renderTruckPanel(truckData) {
+  const processEl = document.getElementById('truckProcess')
+  const outputEl = document.getElementById('truckOutput')
+  const replayEl = document.getElementById('truckReplay')
+  const replayCamEl = document.getElementById('truckReplayCam')
+
+  if (!truckData || !truckData.running) {
+    processEl.textContent = 'OFFLINE (DIRECT)'
+    outputEl.textContent = 'INACTIVE (UNKNOWN)'
+    replayEl.textContent = 'UNCONFIRMED (UNKNOWN)'
+    replayCamEl.textContent = 'NONE (UNKNOWN)'
+    return
+  }
+
+  processEl.innerHTML = `RUNNING v${truckData.version || '4.15'} <span class="confidence-tag">(DIRECT)</span>`
+
+  const outObj = truckData.outputPresent || {}
+  if (outObj.value) {
+    outputEl.innerHTML = `ACTIVE <span class="confidence-tag">(${outObj.confidence})</span>`
+  } else {
+    outputEl.innerHTML = `INACTIVE <span class="confidence-tag">(${outObj.confidence || 'UNKNOWN'})</span>`
+  }
+
+  const repObj = truckData.replayReady || {}
+  if (repObj.value === true) {
+    replayEl.innerHTML = `READY <span class="confidence-tag">(${repObj.confidence})</span>`
+  } else {
+    replayEl.innerHTML = `UNCONFIRMED <span class="confidence-tag">(${repObj.confidence || 'UNKNOWN'})</span>`
+  }
+
+  const srcObj = truckData.replaySource || {}
+  if (srcObj.value) {
+    replayCamEl.innerHTML = `${srcObj.value} <span class="confidence-tag">(${srcObj.confidence})</span>`
+  } else {
+    replayCamEl.innerHTML = `NONE <span class="confidence-tag">(${srcObj.confidence || 'UNKNOWN'})</span>`
+  }
+}
+
+function formatTime(isoTime) {
+  try {
+    return new Date(isoTime).toLocaleTimeString()
+  } catch {
+    return '---'
+  }
+}
+
+function eventClass(type) {
+  if (type === 'PROGRAM_CHANGED') return 'event-program'
+  if (type === 'PREVIEW_CHANGED') return 'event-preview'
+  if (type && type.startsWith('OBS_')) return 'event-obs'
+  if (type && type.startsWith('RESOLUME_')) return 'event-resolume'
+  if (type && type.startsWith('DECKLINK_')) return 'event-decklink'
+  if (type && type.startsWith('TRUCK_')) return 'event-truck'
+  if (type === 'ATEM_CONNECTED' || type === 'OBS_CONNECTED' || type === 'RESOLUME_CONNECTED' || type === 'DECKLINK_CONNECTED' || type === 'TRUCK_CONNECTED') return 'event-connected'
+  if (type === 'ATEM_DISCONNECTED' || type === 'OBS_DISCONNECTED' || type === 'RESOLUME_DISCONNECTED' || type === 'DECKLINK_DISCONNECTED' || type === 'TRUCK_DISCONNECTED') return 'event-disconnected'
+  return ''
+}
+
+function renderEvents(events) {
+  const box = document.getElementById('eventsBox')
+
+  if (!events || events.length === 0) {
+    box.innerHTML = `
+      <div class="events-empty">
+        No events recorded yet.
+      </div>
+    `
+    return
+  }
+
+  box.innerHTML = ''
+
+  events.slice(0, 15).forEach(event => {
+    const row = document.createElement('div')
+    row.className = `event-row ${eventClass(event.type)}`
+
+    row.innerHTML = `
+      <div class="event-time">${formatTime(event.time)}</div>
+      <div class="event-type">${event.type}</div>
+      <div class="event-message">${event.message}</div>
+    `
+
+    box.appendChild(row)
+  })
+}
+
+async function updatePixel() {
+  try {
+    const response = await fetch('http://localhost:3000/status')
+    const data = await response.json()
+
+    document.getElementById('profile').textContent =
+      data.profile || 'UNKNOWN'
+
+    document.getElementById('bridge').textContent =
+      data.bridge || 'OFFLINE'
+
+    document.getElementById('program').textContent =
+      data.program?.name || '---'
+
+    document.getElementById('preview').textContent =
+      data.preview?.name || '---'
+
+    // ATEM Status
+    const atem = document.getElementById('atem')
+    if (data.atemConnected) {
+      atem.textContent = 'CONNECTED'
+      atem.className = 'value online'
+    } else {
+      atem.textContent = 'DISCONNECTED'
+      atem.className = 'value offline'
+    }
+
+    // OBS Status
+    const obs = document.getElementById('obs')
+    if (data.obsConnected) {
+      obs.textContent = 'CONNECTED'
+      obs.className = 'value online'
+    } else {
+      obs.textContent = 'DISCONNECTED'
+      obs.className = 'value offline'
+    }
+
+    // OBS Details
+    const obsState = data.obs || {}
+    document.getElementById('obsProgram').textContent = obsState.programScene || '---'
+
+    if (obsState.studioMode) {
+      document.getElementById('obsPreview').textContent = obsState.previewScene || '---'
+    } else {
+      document.getElementById('obsPreview').textContent = 'DISABLED (Studio Mode Off)'
+    }
+
+    const recEl = document.getElementById('obsRecording')
+    if (obsState.recording) {
+      recEl.textContent = 'RECORDING 🔴'
+      recEl.className = 'obs-value status-active-red'
+    } else {
+      recEl.textContent = 'OFF'
+      recEl.className = 'obs-value'
+    }
+
+    const strmEl = document.getElementById('obsStreaming')
+    if (obsState.streaming) {
+      strmEl.textContent = 'LIVE STREAM 📡'
+      strmEl.className = 'obs-value status-active-live'
+    } else {
+      strmEl.textContent = 'OFFLINE'
+      strmEl.className = 'obs-value'
+    }
+
+    // Resolume Status
+    const resVal = document.getElementById('resolume')
+    if (data.resolumeConnected) {
+      resVal.textContent = 'CONNECTED'
+      resVal.className = 'value online'
+    } else {
+      resVal.textContent = 'DISCONNECTED'
+      resVal.className = 'value offline'
+    }
+
+    // Resolume Details
+    const resState = data.resolume || {}
+    document.getElementById('resComp').textContent = resState.compositionName || '---'
+    document.getElementById('resColumn').textContent = resState.activeColumn || 'None'
+    document.getElementById('resBpm').textContent = resState.bpm ? `${resState.bpm} BPM` : '---'
+    document.getElementById('resVersion').textContent = resState.version || '---'
+
+    const layersGrid = document.getElementById('resLayersGrid')
+    if (resState.layers && resState.layers.length > 0) {
+      layersGrid.innerHTML = ''
+      resState.layers.forEach(layer => {
+        const card = document.createElement('div')
+        card.className = 'res-layer-card'
+        card.innerHTML = `
+          <div class="res-layer-title">${layer.name}</div>
+          <div class="res-clip-name">${layer.activeClip || 'No Active Clip'}</div>
+        `
+        layersGrid.appendChild(card)
+      })
+    } else {
+      layersGrid.innerHTML = '<div style="color: #777; font-size: 14px; padding: 10px;">No Resolume layers active.</div>'
+    }
+
+    // DeckLink Status & Panel
+    const dlVal = document.getElementById('decklink')
+    if (data.decklinkConnected) {
+      dlVal.textContent = 'CONNECTED'
+      dlVal.className = 'value online'
+    } else {
+      dlVal.textContent = 'DISCONNECTED'
+      dlVal.className = 'value offline'
+    }
+
+    updateDecklinkSignalStatus(data.decklink)
+    renderDecklinkPanel(data.decklink)
+
+    // Truck Status & Panel
+    const truckVal = document.getElementById('truck')
+    if (data.truckConnected) {
+      truckVal.textContent = 'CONNECTED'
+      truckVal.className = 'value online'
+    } else {
+      truckVal.textContent = 'DISCONNECTED'
+      truckVal.className = 'value offline'
+    }
+
+    renderTruckPanel(data.truck)
+
+    document.getElementById('updated').textContent =
+      data.updatedAt || '---'
+
+    updateSourceStates(
+      data.program?.name,
+      data.preview?.name
+    )
+
+    renderEvents(data.events)
+
+  } catch (error) {
+    document.getElementById('bridge').textContent = 'OFFLINE'
+    document.getElementById('atem').textContent = 'DISCONNECTED'
+    document.getElementById('obs').textContent = 'DISCONNECTED'
+    document.getElementById('resolume').textContent = 'DISCONNECTED'
+    document.getElementById('decklink').textContent = 'DISCONNECTED'
+    document.getElementById('truck').textContent = 'DISCONNECTED'
+    document.getElementById('program').textContent = '---'
+    document.getElementById('preview').textContent = '---'
+
+    renderEvents([])
+  }
+}
+
+createSourceCards()
+updatePixel()
+setInterval(updatePixel, 500)
+</script>
+
+</body>
+</html>

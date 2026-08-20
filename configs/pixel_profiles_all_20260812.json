@@ -1,0 +1,518 @@
+{
+  "version": "1.0",
+  "system": "PIXEL_OPERATIONAL_PROFILES",
+  "exportedAt": "2026-08-12T14:12:19.997Z",
+  "activeProfileId": "LAB_CURRENT",
+  "profiles": [
+    {
+      "id": "LAB_CURRENT",
+      "name": "LAB_CURRENT",
+      "description": "Perfil actual de laboratorio con las fuentes verificadas (Perfil Activo inicial)",
+      "isBuiltin": true,
+      "updatedAt": "2026-08-11T18:32:13.507Z",
+      "sources": [
+        {
+          "id": "pos-1",
+          "positionIndex": 1,
+          "name": "CAM_1",
+          "shortLabel": "CAM_1",
+          "physicalInputId": "unassigned",
+          "color": "#3B82F6",
+          "iconName": "Camera",
+          "status": "unassigned",
+          "description": "Posición 1: Sin asignar hasta confirmación"
+        },
+        {
+          "id": "pos-2",
+          "positionIndex": 2,
+          "name": "CAM_2",
+          "shortLabel": "CAM_2",
+          "physicalInputId": "input-5",
+          "color": "#10B981",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Posición 2: CAM_2 (Input 5 / BNC 1)"
+        },
+        {
+          "id": "pos-3",
+          "positionIndex": 3,
+          "name": "CAM_3",
+          "shortLabel": "CAM_3",
+          "physicalInputId": "unassigned",
+          "color": "#8B5CF6",
+          "iconName": "Video",
+          "status": "unassigned",
+          "description": "Posición 3: Sin asignar hasta confirmación"
+        },
+        {
+          "id": "pos-4",
+          "positionIndex": 4,
+          "name": "COMPUTER",
+          "shortLabel": "COMPUTER",
+          "physicalInputId": "input-2",
+          "color": "#06B6D4",
+          "iconName": "Monitor",
+          "status": "assigned",
+          "description": "Posición 4: COMPUTER (Input 2)"
+        },
+        {
+          "id": "pos-5",
+          "positionIndex": 5,
+          "name": "OBS",
+          "shortLabel": "OBS",
+          "physicalInputId": "input-6",
+          "color": "#F59E0B",
+          "iconName": "Radio",
+          "status": "assigned",
+          "description": "Posición 5: OBS (Input 6 / BNC 2)"
+        },
+        {
+          "id": "pos-6",
+          "positionIndex": 6,
+          "name": "TRUCK",
+          "shortLabel": "TRUCK",
+          "physicalInputId": "input-7",
+          "color": "#EF4444",
+          "iconName": "Truck",
+          "status": "assigned",
+          "description": "Posición 6: TRUCK (Input 7 / BNC 3)"
+        },
+        {
+          "id": "pos-7",
+          "positionIndex": 7,
+          "name": "RESOLUME",
+          "shortLabel": "RESOLUME",
+          "physicalInputId": "input-8",
+          "color": "#6366F1",
+          "iconName": "Sliders",
+          "status": "assigned",
+          "description": "Posición 7: RESOLUME (Input 8 / BNC 4)"
+        },
+        {
+          "id": "pos-8",
+          "positionIndex": 8,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Posición 8: Sin asignar"
+        }
+      ],
+      "volleyballModule": {
+        "name": "Volleyball Control2",
+        "controlUrl": "http://127.0.0.1:8080/control.html",
+        "overlayUrl": "http://127.0.0.1:8080/overlay.html"
+      }
+    },
+    {
+      "id": "SPORTS_3CAM",
+      "name": "SPORTS_3CAM",
+      "description": "Plantilla para producción deportiva de 3 cámaras en directo",
+      "isBuiltin": true,
+      "updatedAt": "2026-08-11T18:32:13.507Z",
+      "sources": [
+        {
+          "id": "p3c-1",
+          "positionIndex": 1,
+          "name": "CAM_1",
+          "shortLabel": "CAM_1",
+          "physicalInputId": "input-1",
+          "color": "#3B82F6",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Cámara Máster Principal"
+        },
+        {
+          "id": "p3c-2",
+          "positionIndex": 2,
+          "name": "CAM_2",
+          "shortLabel": "CAM_2",
+          "physicalInputId": "input-5",
+          "color": "#10B981",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Cámara de Banda"
+        },
+        {
+          "id": "p3c-3",
+          "positionIndex": 3,
+          "name": "CAM_3",
+          "shortLabel": "CAM_3",
+          "physicalInputId": "input-3",
+          "color": "#8B5CF6",
+          "iconName": "Video",
+          "status": "assigned",
+          "description": "Cámara Táctica Elevada"
+        },
+        {
+          "id": "p3c-4",
+          "positionIndex": 4,
+          "name": "COMPUTER",
+          "shortLabel": "COMPUTER",
+          "physicalInputId": "input-2",
+          "color": "#06B6D4",
+          "iconName": "Monitor",
+          "status": "assigned",
+          "description": "VTR / Clips Estadísticas"
+        },
+        {
+          "id": "p3c-5",
+          "positionIndex": 5,
+          "name": "OBS",
+          "shortLabel": "OBS",
+          "physicalInputId": "input-6",
+          "color": "#F59E0B",
+          "iconName": "Radio",
+          "status": "assigned",
+          "description": "Salida Streaming"
+        },
+        {
+          "id": "p3c-6",
+          "positionIndex": 6,
+          "name": "TRUCK",
+          "shortLabel": "TRUCK",
+          "physicalInputId": "input-7",
+          "color": "#EF4444",
+          "iconName": "Truck",
+          "status": "assigned",
+          "description": "Unidad Móvil OB"
+        },
+        {
+          "id": "p3c-7",
+          "positionIndex": 7,
+          "name": "RESOLUME",
+          "shortLabel": "RESOLUME",
+          "physicalInputId": "input-8",
+          "color": "#6366F1",
+          "iconName": "Sliders",
+          "status": "assigned",
+          "description": "Servidor Grafismos LED"
+        },
+        {
+          "id": "p3c-8",
+          "positionIndex": 8,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Posición libre"
+        }
+      ],
+      "volleyballModule": {
+        "name": "Volleyball Control2",
+        "controlUrl": "http://127.0.0.1:8080/volleyball_control.html",
+        "overlayUrl": "http://127.0.0.1:8080/volleyball_overlay.html"
+      }
+    },
+    {
+      "id": "SPORTS_4CAM",
+      "name": "SPORTS_4CAM",
+      "description": "Plantilla completa para producción deportiva de 4 cámaras",
+      "isBuiltin": true,
+      "updatedAt": "2026-08-11T18:32:13.507Z",
+      "sources": [
+        {
+          "id": "p4c-1",
+          "positionIndex": 1,
+          "name": "CAM_1",
+          "shortLabel": "CAM_1",
+          "physicalInputId": "input-1",
+          "color": "#3B82F6",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Cámara 1 (Máster)"
+        },
+        {
+          "id": "p4c-2",
+          "positionIndex": 2,
+          "name": "CAM_2",
+          "shortLabel": "CAM_2",
+          "physicalInputId": "input-5",
+          "color": "#10B981",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Cámara 2 (Banda A)"
+        },
+        {
+          "id": "p4c-3",
+          "positionIndex": 3,
+          "name": "CAM_3",
+          "shortLabel": "CAM_3",
+          "physicalInputId": "input-3",
+          "color": "#8B5CF6",
+          "iconName": "Video",
+          "status": "assigned",
+          "description": "Cámara 3 (Banda B)"
+        },
+        {
+          "id": "p4c-4",
+          "positionIndex": 4,
+          "name": "CAM_4",
+          "shortLabel": "CAM_4",
+          "physicalInputId": "input-4",
+          "color": "#EC4899",
+          "iconName": "RotateCcw",
+          "status": "assigned",
+          "description": "Cámara 4 (Corta Banquillos)"
+        },
+        {
+          "id": "p4c-5",
+          "positionIndex": 5,
+          "name": "COMPUTER",
+          "shortLabel": "COMPUTER",
+          "physicalInputId": "input-2",
+          "color": "#06B6D4",
+          "iconName": "Monitor",
+          "status": "assigned",
+          "description": "Presentación PC"
+        },
+        {
+          "id": "p4c-6",
+          "positionIndex": 6,
+          "name": "OBS",
+          "shortLabel": "OBS",
+          "physicalInputId": "input-6",
+          "color": "#F59E0B",
+          "iconName": "Radio",
+          "status": "assigned",
+          "description": "Stream Feed"
+        },
+        {
+          "id": "p4c-7",
+          "positionIndex": 7,
+          "name": "TRUCK",
+          "shortLabel": "TRUCK",
+          "physicalInputId": "input-7",
+          "color": "#EF4444",
+          "iconName": "Truck",
+          "status": "assigned",
+          "description": "OB Van Signal"
+        },
+        {
+          "id": "p4c-8",
+          "positionIndex": 8,
+          "name": "RESOLUME",
+          "shortLabel": "RESOLUME",
+          "physicalInputId": "input-8",
+          "color": "#6366F1",
+          "iconName": "Sliders",
+          "status": "assigned",
+          "description": "Visuales LED"
+        }
+      ],
+      "volleyballModule": {
+        "name": "Volleyball Control2",
+        "controlUrl": "",
+        "overlayUrl": ""
+      }
+    },
+    {
+      "id": "STUDIO",
+      "name": "STUDIO",
+      "description": "Plantilla para programas de estudio y plató de televisión",
+      "isBuiltin": true,
+      "updatedAt": "2026-08-11T18:32:13.507Z",
+      "sources": [
+        {
+          "id": "pstd-1",
+          "positionIndex": 1,
+          "name": "CAM_STUDIO_A",
+          "shortLabel": "CAM_A",
+          "physicalInputId": "input-1",
+          "color": "#3B82F6",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Plató Cámara A"
+        },
+        {
+          "id": "pstd-2",
+          "positionIndex": 2,
+          "name": "CAM_STUDIO_B",
+          "shortLabel": "CAM_B",
+          "physicalInputId": "input-5",
+          "color": "#10B981",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Plató Cámara B"
+        },
+        {
+          "id": "pstd-3",
+          "positionIndex": 3,
+          "name": "CAM_PRESENTER",
+          "shortLabel": "PRES",
+          "physicalInputId": "input-3",
+          "color": "#8B5CF6",
+          "iconName": "Video",
+          "status": "assigned",
+          "description": "Primer Plano Presentador"
+        },
+        {
+          "id": "pstd-4",
+          "positionIndex": 4,
+          "name": "COMPUTER_PROJ",
+          "shortLabel": "COMP",
+          "physicalInputId": "input-2",
+          "color": "#06B6D4",
+          "iconName": "Monitor",
+          "status": "assigned",
+          "description": "Proyección Vídeos"
+        },
+        {
+          "id": "pstd-5",
+          "positionIndex": 5,
+          "name": "MEDIA_PLAYER",
+          "shortLabel": "MEDIA",
+          "physicalInputId": "input-6",
+          "color": "#F59E0B",
+          "iconName": "Radio",
+          "status": "assigned",
+          "description": "Reproductor de Contenidos"
+        },
+        {
+          "id": "pstd-6",
+          "positionIndex": 6,
+          "name": "REMOTE_ZOOM",
+          "shortLabel": "ZOOM",
+          "physicalInputId": "input-7",
+          "color": "#EF4444",
+          "iconName": "Truck",
+          "status": "assigned",
+          "description": "Conexión Remota / Zoom"
+        },
+        {
+          "id": "pstd-7",
+          "positionIndex": 7,
+          "name": "GRAPHICS_CG",
+          "shortLabel": "CG",
+          "physicalInputId": "input-8",
+          "color": "#6366F1",
+          "iconName": "Sliders",
+          "status": "assigned",
+          "description": "Generador de Caracteres"
+        },
+        {
+          "id": "pstd-8",
+          "positionIndex": 8,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Entrada Libre"
+        }
+      ],
+      "volleyballModule": {
+        "name": "Volleyball Control2",
+        "controlUrl": "",
+        "overlayUrl": ""
+      }
+    },
+    {
+      "id": "SIMPLE",
+      "name": "SIMPLE",
+      "description": "Plantilla para operación reducida de 2 fuentes principales",
+      "isBuiltin": true,
+      "updatedAt": "2026-08-11T18:32:13.507Z",
+      "sources": [
+        {
+          "id": "psmp-1",
+          "positionIndex": 1,
+          "name": "CAM_MAIN",
+          "shortLabel": "CAM_1",
+          "physicalInputId": "input-5",
+          "color": "#10B981",
+          "iconName": "Camera",
+          "status": "assigned",
+          "description": "Cámara Principal"
+        },
+        {
+          "id": "psmp-2",
+          "positionIndex": 2,
+          "name": "PRESENTATION",
+          "shortLabel": "COMP",
+          "physicalInputId": "input-2",
+          "color": "#06B6D4",
+          "iconName": "Monitor",
+          "status": "assigned",
+          "description": "Presentación"
+        },
+        {
+          "id": "psmp-3",
+          "positionIndex": 3,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        },
+        {
+          "id": "psmp-4",
+          "positionIndex": 4,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        },
+        {
+          "id": "psmp-5",
+          "positionIndex": 5,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        },
+        {
+          "id": "psmp-6",
+          "positionIndex": 6,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        },
+        {
+          "id": "psmp-7",
+          "positionIndex": 7,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        },
+        {
+          "id": "psmp-8",
+          "positionIndex": 8,
+          "name": "Sin asignar",
+          "shortLabel": "Sin asignar",
+          "physicalInputId": "unassigned",
+          "color": "#64748B",
+          "iconName": "AlertCircle",
+          "status": "unassigned",
+          "description": "Sin asignar"
+        }
+      ],
+      "volleyballModule": {
+        "name": "Volleyball Control2",
+        "controlUrl": "",
+        "overlayUrl": ""
+      }
+    }
+  ]
+}
