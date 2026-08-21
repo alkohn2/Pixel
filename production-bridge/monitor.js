@@ -67,6 +67,14 @@ const bridgeState = {
     lastActivityAt: null,
     confidence: 'INFERRED'
   },
+  manualControl: {
+    enabled: Boolean(setup.manualControl?.enabled),
+    mode: 'MANUAL_CONTROL',
+    obsTransitionMacroIndex: setup.manualControl?.obsTransitionMacroIndex ?? 0,
+    transitionLocked: false,
+    lastTriggeredAt: null,
+    lastResult: null
+  },
   updatedAt: null,
   events: []
 }
@@ -197,6 +205,12 @@ async function connectOBS() {
 
   try {
     await obs.connect(OBS_WS_URL)
+    obsConnecting = false
+    bridgeState.obsConnected = true
+    bridgeState.obs.connected = true
+    addEvent('OBS_CONNECTED', 'OBS WebSocket connected')
+    console.log('OBS CONNECTED ✅')
+    await initOBSState()
   } catch (err) {
     obsConnecting = false
     bridgeState.obsConnected = false
@@ -204,12 +218,10 @@ async function connectOBS() {
   }
 }
 
-obs.on('ConnectionOpened', async () => {
+obs.on('Identified', async () => {
   obsConnecting = false
   bridgeState.obsConnected = true
   bridgeState.obs.connected = true
-  addEvent('OBS_CONNECTED', 'OBS WebSocket connected')
-  console.log('OBS CONNECTED ✅')
   await initOBSState()
 })
 
@@ -293,6 +305,77 @@ obs.on('StreamStateChanged', (data) => {
     addEvent('OBS_STREAMING_CHANGED', `OBS Streaming ${isStreaming ? 'LIVE 📡' : 'OFFLINE ⚪'}`)
   }
 })
+
+// Phase 8.1: OBS Transition Tracking & Lock State
+obs.on('SceneTransitionStarted', (data) => {
+  bridgeState.manualControl.transitionLocked = true
+  bridgeState.updatedAt = new Date().toISOString()
+})
+
+obs.on('SceneTransitionEnded', (data) => {
+  bridgeState.manualControl.transitionLocked = false
+  if (transitionLockTimeout) {
+    clearTimeout(transitionLockTimeout)
+    transitionLockTimeout = null
+  }
+  bridgeState.updatedAt = new Date().toISOString()
+})
+
+let transitionLockTimeout = null
+
+async function triggerObsStudioTransition(source = 'ATEM_MACRO') {
+  const mc = bridgeState.manualControl
+  if (!mc.enabled) {
+    addEvent('OBS_TRANSITION_BLOCKED', 'OBS Transition blocked: MANUAL_CONTROL is disabled', { reason: 'DISABLED' })
+    return { success: false, reason: 'DISABLED' }
+  }
+
+  if (!bridgeState.obsConnected) {
+    addEvent('OBS_TRANSITION_BLOCKED', 'OBS Transition blocked: OBS WebSocket is disconnected', { reason: 'OBS_DISCONNECTED' })
+    return { success: false, reason: 'OBS_DISCONNECTED' }
+  }
+
+  if (!bridgeState.obs.studioMode) {
+    addEvent('OBS_TRANSITION_BLOCKED', 'OBS Transition blocked: OBS Studio Mode is OFF', { reason: 'STUDIO_MODE_OFF' })
+    return { success: false, reason: 'STUDIO_MODE_OFF' }
+  }
+
+  if (mc.transitionLocked) {
+    addEvent('OBS_TRANSITION_BLOCKED', 'OBS Transition blocked: Transition is already running or locked (double-press protection)', { reason: 'ALREADY_LOCKED' })
+    return { success: false, reason: 'ALREADY_LOCKED' }
+  }
+
+  // Lock trigger immediately
+  mc.transitionLocked = true
+  mc.lastTriggeredAt = new Date().toISOString()
+  bridgeState.updatedAt = new Date().toISOString()
+
+  addEvent('OBS_TRANSITION_TRIGGER_REQUESTED', `OBS Transition requested via ${source}`)
+
+  // Fallback unlock timeout (safety)
+  const lockMs = setup.manualControl?.transitionLockMs || 2000
+  if (transitionLockTimeout) clearTimeout(transitionLockTimeout)
+  transitionLockTimeout = setTimeout(() => {
+    if (bridgeState.manualControl.transitionLocked) {
+      bridgeState.manualControl.transitionLocked = false
+      bridgeState.updatedAt = new Date().toISOString()
+    }
+  }, lockMs)
+
+  try {
+    await obs.call('TriggerStudioModeTransition')
+    mc.lastResult = 'SUCCESS'
+    bridgeState.updatedAt = new Date().toISOString()
+    addEvent('OBS_TRANSITION_TRIGGERED', 'OBS Studio Mode Transition executed successfully')
+    return { success: true }
+  } catch (err) {
+    mc.transitionLocked = false
+    mc.lastResult = `FAILED: ${err?.message || err}`
+    bridgeState.updatedAt = new Date().toISOString()
+    addEvent('OBS_TRANSITION_FAILED', `OBS Transition failed: ${err?.message || err}`, { error: err?.message })
+    return { success: false, reason: 'ERROR', error: err?.message }
+  }
+}
 
 setInterval(() => {
   if (!bridgeState.obsConnected && !obsConnecting) {
@@ -649,12 +732,58 @@ const server = http.createServer((request, response) => {
     return
   }
 
+  // Phase 8.1: Controlled Manual Trigger endpoint (for testing or UI manual triggers)
+  if (request.method === 'POST' && request.url === '/control/obs-transition') {
+    triggerObsStudioTransition('API_TRIGGER').then((res) => {
+      response.writeHead(res.success ? 200 : 400)
+      response.end(JSON.stringify({
+        ...res,
+        manualControl: bridgeState.manualControl
+      }, null, 2))
+    }).catch((err) => {
+      response.writeHead(500)
+      response.end(JSON.stringify({ error: err?.message }, null, 2))
+    })
+    return
+  }
+
   response.writeHead(404)
   response.end(JSON.stringify({
     error: 'Not found',
-    availableEndpoints: ['/status', '/health', '/events']
+    availableEndpoints: ['/status', '/health', '/events', '/control/obs-transition']
   }, null, 2))
 })
+
+// ============================================================================
+// ATEM MACRO EDGE DETECTION & HANDLERS (Phase 8.1)
+// ============================================================================
+let lastAtemMacroRunning = false
+let atemMacroStateInitialized = false
+
+function handleAtemMacroStateChange(macroPlayer) {
+  if (!macroPlayer) return
+
+  const isRunning = Boolean(macroPlayer.isRunning)
+  const macroIndex = Number(macroPlayer.macroIndex)
+  const targetIndex = Number(bridgeState.manualControl.obsTransitionMacroIndex)
+
+  // Initialization safeguard: capture initial state on sync without triggering
+  if (!atemMacroStateInitialized) {
+    lastAtemMacroRunning = isRunning
+    atemMacroStateInitialized = true
+    return
+  }
+
+  // Detect rising edge: false -> true
+  if (isRunning && !lastAtemMacroRunning) {
+    console.log(`ATEM Macro execution detected: Macro index ${macroIndex} (configured target: ${targetIndex})`)
+    if (macroIndex === targetIndex) {
+      triggerObsStudioTransition(`ATEM_MACRO_${macroIndex + 1}`)
+    }
+  }
+
+  lastAtemMacroRunning = isRunning
+}
 
 atem.on('error', (err) => {
   console.error('ATEM ERROR:', err)
@@ -662,6 +791,13 @@ atem.on('error', (err) => {
 
 atem.on('connected', () => {
   bridgeState.atemConnected = true
+
+  // Safeguard: Initialize macro edge detector on connection without firing
+  atemMacroStateInitialized = false
+  if (atem.state?.macro?.macroPlayer) {
+    lastAtemMacroRunning = Boolean(atem.state.macro.macroPlayer.isRunning)
+    atemMacroStateInitialized = true
+  }
 
   addEvent(
     'ATEM_CONNECTED',
@@ -674,6 +810,8 @@ atem.on('connected', () => {
 
 atem.on('disconnected', () => {
   bridgeState.atemConnected = false
+  atemMacroStateInitialized = false
+  lastAtemMacroRunning = false
   bridgeState.updatedAt = new Date().toISOString()
 
   addEvent(
@@ -684,8 +822,12 @@ atem.on('disconnected', () => {
   console.log('ATEM DISCONNECTED ❌')
 })
 
-atem.on('stateChanged', (state) => {
+atem.on('stateChanged', (state, pathToChange) => {
   updateAtemState(state)
+
+  if (pathToChange && pathToChange.some(p => p.startsWith('macro.macroPlayer') || p === 'macro.macroPlayer')) {
+    handleAtemMacroStateChange(state.macro?.macroPlayer)
+  }
 })
 
 server.listen(PORT, '127.0.0.1', () => {

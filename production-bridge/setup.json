@@ -19,5 +19,10 @@
     "input-6": null,
     "input-7": null,
     "input-8": null
+  },
+  "manualControl": {
+    "enabled": true,
+    "obsTransitionMacroIndex": 0,
+    "transitionLockMs": 2000
   }
 }
