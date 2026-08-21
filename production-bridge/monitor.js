@@ -151,7 +151,7 @@ let obsConnecting = false
 async function initOBSState() {
   try {
     const pScene = await obs.call('GetCurrentProgramScene')
-    bridgeState.obs.programScene = pScene.currentProgramSceneName || null
+    bridgeState.obs.programScene = pScene.currentProgramSceneName || pScene.sceneName || null
 
     try {
       const modeRes = await obs.call('GetStudioModeEnabled')
@@ -163,7 +163,7 @@ async function initOBSState() {
     if (bridgeState.obs.studioMode) {
       try {
         const prevRes = await obs.call('GetCurrentPreviewScene')
-        bridgeState.obs.previewScene = prevRes.currentPreviewSceneName || null
+        bridgeState.obs.previewScene = prevRes.currentPreviewSceneName || prevRes.sceneName || null
       } catch {
         bridgeState.obs.previewScene = null
       }
@@ -234,8 +234,8 @@ obs.on('ConnectionError', (err) => {
 })
 
 obs.on('CurrentProgramSceneChanged', (data) => {
-  const newScene = data.sceneName
-  if (bridgeState.obs.programScene !== newScene) {
+  const newScene = data.sceneName || data.currentProgramSceneName
+  if (newScene && bridgeState.obs.programScene !== newScene) {
     const oldScene = bridgeState.obs.programScene || 'NONE'
     bridgeState.obs.programScene = newScene
     bridgeState.updatedAt = new Date().toISOString()
@@ -247,8 +247,8 @@ obs.on('CurrentProgramSceneChanged', (data) => {
 })
 
 obs.on('CurrentPreviewSceneChanged', (data) => {
-  const newScene = data.sceneName
-  if (bridgeState.obs.previewScene !== newScene) {
+  const newScene = data.sceneName || data.currentPreviewSceneName
+  if (newScene && bridgeState.obs.previewScene !== newScene) {
     const oldScene = bridgeState.obs.previewScene || 'NONE'
     bridgeState.obs.previewScene = newScene
     bridgeState.updatedAt = new Date().toISOString()
@@ -259,13 +259,21 @@ obs.on('CurrentPreviewSceneChanged', (data) => {
   }
 })
 
-obs.on('StudioModeStateChanged', (data) => {
+obs.on('StudioModeStateChanged', async (data) => {
   const enabled = !!data.studioModeEnabled
   bridgeState.obs.studioMode = enabled
-  if (!enabled) {
+  if (enabled) {
+    try {
+      const prevRes = await obs.call('GetCurrentPreviewScene')
+      bridgeState.obs.previewScene = prevRes.currentPreviewSceneName || prevRes.sceneName || null
+    } catch {
+      bridgeState.obs.previewScene = null
+    }
+  } else {
     bridgeState.obs.previewScene = null
   }
   bridgeState.updatedAt = new Date().toISOString()
+  addEvent('OBS_STUDIO_MODE_CHANGED', `OBS Studio Mode: ${enabled ? 'ENABLED' : 'DISABLED'}`)
 })
 
 obs.on('RecordStateChanged', (data) => {
