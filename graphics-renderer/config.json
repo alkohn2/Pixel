@@ -1,0 +1,10 @@
+{
+  "sourceName": "PIXEL Graphics",
+  "host": "127.0.0.1",
+  "port": 8081,
+  "overlayPath": "/graphics/volleyball/volleyball-master-overlay.html",
+  "width": 1920,
+  "height": 1080,
+  "fps": 59.94,
+  "alpha": true
+}
