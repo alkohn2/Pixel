@@ -65,6 +65,7 @@
         self.config = @{
             @"transport": @"ndi",
             @"sourceName": @"PIXEL Graphics",
+            @"showRendererWindow": @NO,
             @"host": @"127.0.0.1",
             @"port": @8081,
             @"overlayPath": @"/graphics/volleyball/volleyball-master-overlay.html",
@@ -77,9 +78,12 @@
 }
 
 - (void)setupTransparentWebView {
+    BOOL showWindow = [self.config[@"showRendererWindow"] boolValue];
     CGFloat width = [self.config[@"width"] floatValue] ?: 1920.0;
     CGFloat height = [self.config[@"height"] floatValue] ?: 1080.0;
-    NSRect frame = NSMakeRect(0, 0, width, height);
+    
+    // Position offscreen when showRendererWindow is false to keep desktop clean
+    NSRect frame = showWindow ? NSMakeRect(0, 0, width, height) : NSMakeRect(-10000, -10000, width, height);
 
     self.window = [[NSWindow alloc] initWithContentRect:frame
                                               styleMask:NSWindowStyleMaskBorderless
@@ -88,18 +92,31 @@
     self.window.opaque = NO;
     self.window.hasShadow = NO;
     self.window.backgroundColor = [NSColor clearColor];
-    self.window.level = NSFloatingWindowLevel;
     self.window.ignoresMouseEvents = YES;
+    self.window.excludedFromWindowsMenu = YES;
+    self.window.hidesOnDeactivate = NO;
+    [self.window setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorStationary | NSWindowCollectionBehaviorIgnoresCycle];
+
+    if (showWindow) {
+        self.window.level = NSFloatingWindowLevel;
+    } else {
+        self.window.level = NSNormalWindowLevel - 1;
+    }
 
     WKWebViewConfiguration *webConfig = [[WKWebViewConfiguration alloc] init];
     [webConfig.preferences setValue:@YES forKey:@"allowFileAccessFromFileURLs"];
 
-    self.webView = [[WKWebView alloc] initWithFrame:frame configuration:webConfig];
+    self.webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, width, height) configuration:webConfig];
     [self.webView setValue:@NO forKey:@"drawsBackground"];
     self.webView.navigationDelegate = self;
 
     self.window.contentView = self.webView;
-    [self.window orderFrontRegardless];
+
+    if (showWindow) {
+        [self.window orderFrontRegardless];
+    } else {
+        [self.window orderWindow:NSWindowBelow relativeTo:0];
+    }
 
     self.pixelBuffer = [NSMutableData dataWithLength:(size_t)(width * height * 4)];
 }
