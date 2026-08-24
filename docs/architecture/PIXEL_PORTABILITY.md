@@ -4,23 +4,30 @@ This document specifies the software requirements, deployment instructions, and 
 
 ---
 
-## 1. System Requirements
+## 1. System Requirements & Architecture
 
-### System Software (To be installed on Host Mac):
-1. **Operating System**: macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia) on Apple Silicon (M1/M2/M3/M4) or Intel.
-2. **Node.js**: Version 20.x or 24.x LTS (with `npm`).
-3. **Resolume Arena 7**: Version 7.20.1+ with production composition (`Sports.avc` or standard broadcast template).
+### Hardware & Operating System:
+- **Architecture**: Apple Silicon (`arm64` — M1 / M2 / M3 / M4 / Pro / Max / Ultra).
+- **Operating System**: macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia).
+
+### System Software (Host Mac Requirements):
+1. **Node.js**: Version 20.x or 24.x LTS (with `npm`).
+2. **Resolume Arena 7**: Version 7.20.1+ with production composition (`Sports.avc` or standard broadcast template).
+3. **Swift Compiler / CLI**: Standard macOS Developer Command Line Tools (`/usr/bin/swift`, `/usr/bin/swiftc`).
 4. **Blackmagic Desktop Video Driver**: *(Optional)* Required only if physical DeckLink SDI hardware cards are attached to that machine.
 
 ---
 
-## 2. Bundled with PIXEL (Zero Extra Installs)
+## 2. Bundled with PIXEL (Zero Machine Path Assumptions)
 
-All the following components reside entirely inside the `PIXEL` directory and have **zero external drive path dependencies**:
+All the following components reside entirely inside the `PIXEL` directory and have **zero hardcoded external drive dependencies (`/Volumes/VGC-01/`)**:
 
-- **PIXEL Graphics Renderer** (`graphics-renderer/`): Standalone native macOS WebKit graphics runner.
-- **Production Bridge** (`production-bridge/`): ATEM OSC / Macro and hardware bridge API.
-- **Frontend & Overlays** (`frontend/dist/`): Complete React management UI, Master Overlay Canvas, Graphics Controller, Roster Editor, and Game Package Manager.
+- **PIXEL Native Graphics Renderer** (`graphics-renderer/`):
+  - Binary: `graphics-renderer/build/pixel-graphics-renderer` (`Mach-O 64-bit arm64`).
+  - Source: `graphics-renderer/src/main.swift` (Native Cocoa `NSWindow` + `WKWebView` with hardware-accelerated `drawsBackground = false` alpha compositing).
+  - Runtime Config: `graphics-renderer/config.json`.
+- **Production Bridge** (`production-bridge/`): ATEM OSC / Macro and hardware bridge API (Port 3000).
+- **Frontend & Overlays** (`frontend/dist/`): Complete React management UI, Master Overlay Canvas, Graphics Controller, Roster Editor, and Game Package Manager (Port 8081).
 - **Offline Motion Engine**: Anime.js v4.5.0 and Tabler Icons offline bundles.
 - **Branding & Assets**: Vector SVG logos and athlete portraits (`frontend/graphics/assets/`).
 
@@ -28,7 +35,7 @@ All the following components reside entirely inside the `PIXEL` directory and ha
 
 ## 3. Clean Machine Quickstart Sequence
 
-When copying the `PIXEL` folder to a new laptop:
+When copying the `PIXEL` directory to a new laptop:
 
 ```bash
 # 1. Navigate to frontend and build production distribution
@@ -40,17 +47,27 @@ npm run build
 cd ..
 ./start-pixel.command
 
-# 3. Start Graphics Renderer
+# 3. Start Native Graphics Renderer
 ./graphics-renderer/run-pixel-renderer.sh
 
 # 4. Open Resolume Arena
-# The "PIXEL Graphics" source will appear under Sources -> Syphon.
-# Drag to Layer 5 ("Overlays") Slot 5.
+# The "PIXEL Graphics" source will appear under Sources.
+# Bind to Layer 5 ("Overlays") Slot 5.
 ```
 
 ---
 
-## 4. Failure Recovery & Reconnect Matrix
+## 4. Lifecycle & Process Management
+
+| Action | Command | Mechanism |
+| :--- | :--- | :--- |
+| **Start Renderer** | `./graphics-renderer/run-pixel-renderer.sh` | Launches background daemon, writes PID to `.renderer.pid` |
+| **Stop Renderer** | `./graphics-renderer/stop-pixel-renderer.sh` | Sends `kill` specifically to recorded PID; zero collateral impact |
+| **Recompile Binary** | `swiftc -O src/main.swift -o build/pixel-graphics-renderer` | Compiles native 64-bit arm64 Mach-O executable |
+
+---
+
+## 5. Failure Recovery & Reconnect Matrix
 
 | Failure Event | System Behavior | Recovery Action |
 | :--- | :--- | :--- |
