@@ -699,11 +699,45 @@ setInterval(pollTruck, 3000)
 pollTruck()
 
 // ============================================================================
+// GRAPHICS CROSS-PROCESS STATE & SSE (Phase G6.3)
+// ============================================================================
+let sseClients = []
+bridgeState.graphicsState = {
+  match: null,
+  graphics: null,
+  roster: null,
+  activeGame: null,
+  timestamp: Date.now()
+}
+
+function broadcastGraphicsUpdate(sourceAction) {
+  const payload = JSON.stringify({
+    type: 'GRAPHICS_STATE_UPDATE',
+    action: sourceAction || 'STATE_SYNC',
+    state: bridgeState.graphicsState,
+    timestamp: Date.now()
+  })
+  sseClients.forEach(client => {
+    try {
+      client.write(`data: ${payload}\n\n`)
+    } catch (e) {}
+  })
+}
+
+// ============================================================================
 // HTTP SERVER & ATEM HANDLERS
 // ============================================================================
 const server = http.createServer((request, response) => {
   response.setHeader('Access-Control-Allow-Origin', '*')
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type')
   response.setHeader('Content-Type', 'application/json')
+
+  if (request.method === 'OPTIONS') {
+    response.writeHead(204)
+    response.end()
+    return
+  }
 
   if (request.method === 'GET' && request.url === '/status') {
     response.writeHead(200)
@@ -732,6 +766,59 @@ const server = http.createServer((request, response) => {
     return
   }
 
+  // Phase G6.3: Graphics State REST Endpoint
+  if (request.method === 'GET' && request.url === '/graphics/state') {
+    response.writeHead(200)
+    response.end(JSON.stringify(bridgeState.graphicsState, null, 2))
+    return
+  }
+
+  // Phase G6.3: Graphics State SSE Stream Endpoint
+  if (request.method === 'GET' && request.url === '/graphics/events') {
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    })
+    const initialPayload = JSON.stringify({
+      type: 'GRAPHICS_STATE_INITIAL',
+      state: bridgeState.graphicsState,
+      timestamp: Date.now()
+    })
+    response.write(`data: ${initialPayload}\n\n`)
+    sseClients.push(response)
+
+    request.on('close', () => {
+      sseClients = sseClients.filter(c => c !== response)
+    })
+    return
+  }
+
+  // Phase G6.3: Graphics State Mutation (Presentation & Match Safe Sync)
+  if (request.method === 'POST' && request.url === '/graphics/state') {
+    let body = ''
+    request.on('data', chunk => { body += chunk })
+    request.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}')
+        if (payload.graphics !== undefined) bridgeState.graphicsState.graphics = payload.graphics
+        if (payload.match !== undefined) bridgeState.graphicsState.match = payload.match
+        if (payload.roster !== undefined) bridgeState.graphicsState.roster = payload.roster
+        if (payload.activeGame !== undefined) bridgeState.graphicsState.activeGame = payload.activeGame
+        bridgeState.graphicsState.timestamp = Date.now()
+
+        broadcastGraphicsUpdate(payload.action || 'GRAPHICS_UPDATE')
+
+        response.writeHead(200)
+        response.end(JSON.stringify({ success: true, timestamp: bridgeState.graphicsState.timestamp }))
+      } catch (err) {
+        response.writeHead(400)
+        response.end(JSON.stringify({ error: err?.message }))
+      }
+    })
+    return
+  }
+
   // Phase 8.1: Controlled Manual Trigger endpoint (for testing or UI manual triggers)
   if (request.method === 'POST' && request.url === '/control/obs-transition') {
     triggerObsStudioTransition('API_TRIGGER').then((res) => {
@@ -750,7 +837,7 @@ const server = http.createServer((request, response) => {
   response.writeHead(404)
   response.end(JSON.stringify({
     error: 'Not found',
-    availableEndpoints: ['/status', '/health', '/events', '/control/obs-transition']
+    availableEndpoints: ['/status', '/health', '/events', '/graphics/state', '/graphics/events', '/control/obs-transition']
   }, null, 2))
 })
 

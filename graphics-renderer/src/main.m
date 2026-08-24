@@ -3,34 +3,54 @@
 #import <OpenGL/OpenGL.h>
 #import <OpenGL/gl.h>
 #import "PixelGraphics-Bridging-Header.h"
+#import "Processing.NDI.Lib.h"
 
 @interface PixelRendererApp : NSObject <NSApplicationDelegate, WKNavigationDelegate>
 @property (strong, nonatomic) NSWindow *window;
 @property (strong, nonatomic) WKWebView *webView;
+@property (strong, nonatomic) NSDictionary *config;
+@property (strong, nonatomic) NSTimer *renderTimer;
+@property (assign, nonatomic) BOOL isCapturing;
+
+// Transport Selection
+@property (strong, nonatomic) NSString *transportType; // "ndi" (default) or "syphon"
+
+// Syphon Transport
 @property (strong, nonatomic) SyphonServer *syphonServer;
 @property (assign, nonatomic) CGLContextObj glContext;
-@property (strong, nonatomic) NSTimer *renderTimer;
-@property (strong, nonatomic) NSDictionary *config;
 @property (assign, nonatomic) GLuint textureId;
-@property (assign, nonatomic) BOOL isCapturing;
+
+// NDI Transport
+@property (assign, nonatomic) NDIlib_send_instance_t ndiSender;
+@property (strong, nonatomic) NSMutableData *pixelBuffer;
 @end
 
 @implementation PixelRendererApp
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
     [self loadConfig];
-    [self setupOpenGLContext];
-    [self setupSyphonServer];
     [self setupTransparentWebView];
     [self loadOverlayURL];
+
+    self.transportType = [self.config[@"transport"] lowercaseString] ?: @"ndi";
+
+    if ([self.transportType isEqualToString:@"syphon"]) {
+        [self setupSyphon];
+    } else {
+        [self setupNDI];
+    }
+
     [self startRenderLoop];
 
-    NSLog(@"[PIXEL Syphon Renderer] Started successfully.");
-    NSLog(@"[PIXEL Syphon Renderer] Syphon Server: %@", self.syphonServer.name);
-    NSLog(@"[PIXEL Syphon Renderer] URL: http://%@:%@%@", 
-          self.config[@"host"], self.config[@"port"], self.config[@"overlayPath"]);
-    NSLog(@"[PIXEL Syphon Renderer] Output: %@x%@ @ %@fps (Alpha: YES)", 
+    NSLog(@"==================================================");
+    NSLog(@"[PIXEL Graphics Renderer] Online & Broadcasting");
+    NSLog(@"[PIXEL Graphics Renderer] Official Transport: %@", [self.transportType uppercaseString]);
+    NSLog(@"[PIXEL Graphics Renderer] Source Name: %@", self.config[@"sourceName"]);
+    NSLog(@"[PIXEL Graphics Renderer] Resolution: %@x%@ @ %@fps (Alpha: YES)",
           self.config[@"width"], self.config[@"height"], self.config[@"fps"]);
+    NSLog(@"[PIXEL Graphics Renderer] URL: http://%@:%@%@", 
+          self.config[@"host"], self.config[@"port"], self.config[@"overlayPath"]);
+    NSLog(@"==================================================");
 }
 
 - (void)loadConfig {
@@ -43,6 +63,7 @@
     }
     if (!self.config) {
         self.config = @{
+            @"transport": @"ndi",
             @"sourceName": @"PIXEL Graphics",
             @"host": @"127.0.0.1",
             @"port": @8081,
@@ -52,41 +73,6 @@
             @"fps": @59.94,
             @"alpha": @YES
         };
-    }
-}
-
-- (void)setupOpenGLContext {
-    CGLPixelFormatAttribute attribs[] = {
-        kCGLPFAAccelerated,
-        kCGLPFANoRecovery,
-        kCGLPFAColorSize, (CGLPixelFormatAttribute)32,
-        kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
-        (CGLPixelFormatAttribute)0
-    };
-    CGLPixelFormatObj pixFormat;
-    GLint numPixelFormats;
-    CGLChoosePixelFormat(attribs, &pixFormat, &numPixelFormats);
-    CGLContextObj ctx;
-    CGLCreateContext(pixFormat, NULL, &ctx);
-    CGLDestroyPixelFormat(pixFormat);
-    self.glContext = ctx;
-
-    CGLSetCurrentContext(self.glContext);
-    glGenTextures(1, &_textureId);
-    glBindTexture(GL_TEXTURE_2D, _textureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-}
-
-- (void)setupSyphonServer {
-    NSString *name = self.config[@"sourceName"] ?: @"PIXEL Graphics";
-    self.syphonServer = [[SyphonServer alloc] initWithName:name context:self.glContext options:nil];
-    if (self.syphonServer) {
-        NSLog(@"[PIXEL Syphon Renderer] Successfully registered Syphon Server '%@'", name);
-    } else {
-        NSLog(@"[PIXEL Syphon Renderer] ERROR: Failed to create Syphon Server!");
     }
 }
 
@@ -114,6 +100,8 @@
 
     self.window.contentView = self.webView;
     [self.window orderFrontRegardless];
+
+    self.pixelBuffer = [NSMutableData dataWithLength:(size_t)(width * height * 4)];
 }
 
 - (void)loadOverlayURL {
@@ -126,49 +114,145 @@
     [self.webView loadRequest:req];
 }
 
+// ── NDI SETUP ──
+- (void)setupNDI {
+    if (!NDIlib_initialize()) {
+        NSLog(@"[PIXEL Graphics Renderer] ERROR: NDIlib_initialize failed!");
+        return;
+    }
+
+    NSString *sourceName = self.config[@"sourceName"] ?: @"PIXEL Graphics";
+    NDIlib_send_create_t createSettings;
+    createSettings.p_ndi_name = [sourceName UTF8String];
+    createSettings.p_groups = NULL;
+    createSettings.clock_video = true;
+    createSettings.clock_audio = false;
+
+    self.ndiSender = NDIlib_send_create(&createSettings);
+    if (self.ndiSender) {
+        NSLog(@"[PIXEL Graphics Renderer] NDI Sender created successfully: '%@'", sourceName);
+    } else {
+        NSLog(@"[PIXEL Graphics Renderer] ERROR: Failed to create NDI sender!");
+    }
+}
+
+// ── SYPHON SETUP ──
+- (void)setupSyphon {
+    CGLPixelFormatAttribute attribs[] = {
+        kCGLPFAAccelerated,
+        kCGLPFANoRecovery,
+        kCGLPFAColorSize, (CGLPixelFormatAttribute)32,
+        kCGLPFAAlphaSize, (CGLPixelFormatAttribute)8,
+        (CGLPixelFormatAttribute)0
+    };
+    CGLPixelFormatObj pixFormat;
+    GLint numPixelFormats;
+    CGLChoosePixelFormat(attribs, &pixFormat, &numPixelFormats);
+    CGLContextObj ctx;
+    CGLCreateContext(pixFormat, NULL, &ctx);
+    CGLDestroyPixelFormat(pixFormat);
+    self.glContext = ctx;
+
+    CGLSetCurrentContext(self.glContext);
+    glGenTextures(1, &_textureId);
+    glBindTexture(GL_TEXTURE_2D, _textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    NSString *name = self.config[@"sourceName"] ?: @"PIXEL Graphics";
+    self.syphonServer = [[SyphonServer alloc] initWithName:name context:self.glContext options:nil];
+}
+
+// ── RENDER LOOP ──
 - (void)startRenderLoop {
     double fps = [self.config[@"fps"] doubleValue] ?: 59.94;
     NSTimeInterval interval = 1.0 / fps;
     
     self.renderTimer = [NSTimer scheduledTimerWithTimeInterval:interval
                                                        target:self
-                                                     selector:@selector(renderFrame)
+                                                     selector:@selector(captureAndPublishFrame)
                                                      userInfo:nil
                                                       repeats:YES];
     [[NSRunLoop currentRunLoop] addTimer:self.renderTimer forMode:NSEventTrackingRunLoopMode];
     [[NSRunLoop currentRunLoop] addTimer:self.renderTimer forMode:NSDefaultRunLoopMode];
 }
 
-- (void)renderFrame {
-    if (!self.syphonServer || self.isCapturing) return;
-    
-    // Only capture if clients are connected or periodically for thumbnail
+- (void)captureAndPublishFrame {
+    if (self.isCapturing) return;
+
     CGFloat width = [self.config[@"width"] floatValue] ?: 1920.0;
     CGFloat height = [self.config[@"height"] floatValue] ?: 1080.0;
-    
+
     self.isCapturing = YES;
     WKSnapshotConfiguration *snapConfig = [[WKSnapshotConfiguration alloc] init];
     snapConfig.rect = NSMakeRect(0, 0, width, height);
 
     [self.webView takeSnapshotWithConfiguration:snapConfig completionHandler:^(NSImage * _Nullable snapshotImage, NSError * _Nullable error) {
         if (snapshotImage && !error) {
-            [self publishImageToSyphon:snapshotImage width:width height:height];
+            if ([self.transportType isEqualToString:@"syphon"]) {
+                [self publishSyphonFrame:snapshotImage width:width height:height];
+            } else {
+                [self publishNDIFrame:snapshotImage width:width height:height];
+            }
         }
         self.isCapturing = NO;
     }];
 }
 
-- (void)publishImageToSyphon:(NSImage *)image width:(CGFloat)width height:(CGFloat)height {
+// ── NDI PUBLISH ──
+- (void)publishNDIFrame:(NSImage *)image width:(CGFloat)width height:(CGFloat)height {
+    if (!self.ndiSender) return;
+
     CGImageRef cgImage = [image CGImageForProposedRect:NULL context:NULL hints:nil];
     if (!cgImage) return;
 
     size_t w = CGImageGetWidth(cgImage);
     size_t h = CGImageGetHeight(cgImage);
-    
-    // Prepare straight RGBA pixel buffer
-    NSMutableData *pixelData = [NSMutableData dataWithLength:w * h * 4];
+
+    if (self.pixelBuffer.length != w * h * 4) {
+        self.pixelBuffer = [NSMutableData dataWithLength:w * h * 4];
+    }
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-    CGContextRef ctx = CGBitmapContextCreate(pixelData.mutableBytes,
+    CGContextRef ctx = CGBitmapContextCreate(self.pixelBuffer.mutableBytes,
+                                             w, h, 8, w * 4,
+                                             colorSpace,
+                                             kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextDrawImage(ctx, CGRectMake(0, 0, w, h), cgImage);
+    CGContextRelease(ctx);
+    CGColorSpaceRelease(colorSpace);
+
+    NDIlib_video_frame_v2_t videoFrame;
+    videoFrame.xres = (int)w;
+    videoFrame.yres = (int)h;
+    videoFrame.FourCC = NDIlib_FourCC_video_type_RGBA;
+    videoFrame.frame_rate_N = 60000;
+    videoFrame.frame_rate_D = 1001;
+    videoFrame.picture_aspect_ratio = 16.0f / 9.0f;
+    videoFrame.frame_format_type = NDIlib_frame_format_type_progressive;
+    videoFrame.timecode = 0;
+    videoFrame.p_data = (uint8_t *)self.pixelBuffer.bytes;
+    videoFrame.line_stride_in_bytes = (int)(w * 4);
+    videoFrame.p_metadata = NULL;
+    videoFrame.timestamp = 0;
+
+    NDIlib_send_send_video_async_v2(self.ndiSender, &videoFrame);
+}
+
+// ── SYPHON PUBLISH ──
+- (void)publishSyphonFrame:(NSImage *)image width:(CGFloat)width height:(CGFloat)height {
+    if (!self.syphonServer) return;
+
+    CGImageRef cgImage = [image CGImageForProposedRect:NULL context:NULL hints:nil];
+    if (!cgImage) return;
+
+    size_t w = CGImageGetWidth(cgImage);
+    size_t h = CGImageGetHeight(cgImage);
+
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
+    CGContextRef ctx = CGBitmapContextCreate(self.pixelBuffer.mutableBytes,
                                              w, h, 8, w * 4,
                                              colorSpace,
                                              kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
@@ -178,7 +262,7 @@
 
     CGLSetCurrentContext(self.glContext);
     glBindTexture(GL_TEXTURE_2D, self.textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)w, (GLsizei)h, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixelData.bytes);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)w, (GLsizei)h, 0, GL_RGBA, GL_UNSIGNED_BYTE, self.pixelBuffer.bytes);
 
     NSRect region = NSMakeRect(0, 0, w, h);
     NSSize size = NSMakeSize(w, h);
@@ -190,11 +274,17 @@
 }
 
 - (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
-    NSLog(@"[PIXEL Syphon Renderer] Web overlay loaded and ready.");
+    NSLog(@"[PIXEL Graphics Renderer] Web overlay loaded and running.");
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification {
-    [self.syphonServer stop];
+    if (self.ndiSender) {
+        NDIlib_send_destroy(self.ndiSender);
+        NDIlib_destroy();
+    }
+    if (self.syphonServer) {
+        [self.syphonServer stop];
+    }
     if (self.glContext) {
         CGLDestroyContext(self.glContext);
     }
