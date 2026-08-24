@@ -1,0 +1,6 @@
+2026-08-24 14:03:34.720 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] Successfully registered Syphon Server 'PIXEL Graphics'
+2026-08-24 14:03:34.886 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] Started successfully.
+2026-08-24 14:03:34.886 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] Syphon Server: PIXEL Graphics
+2026-08-24 14:03:34.886 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] URL: http://127.0.0.1:8081/graphics/volleyball/volleyball-master-overlay.html
+2026-08-24 14:03:34.886 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] Output: 1920x1080 @ 59.94fps (Alpha: YES)
+2026-08-24 14:03:35.401 pixel-graphics-renderer[19962:22136668] [PIXEL Syphon Renderer] Web overlay loaded and ready.
