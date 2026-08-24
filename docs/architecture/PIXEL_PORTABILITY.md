@@ -7,7 +7,7 @@ This document specifies the software requirements, deployment instructions, and 
 ## 1. System Requirements & Architecture
 
 ### Hardware & Operating System:
-- **Architecture**: Apple Silicon (`arm64` — M1 / M2 / M3 / M4 / Pro / Max / Ultra).
+- **Architecture**: **Universal 2** (Native Apple Silicon `arm64` + Intel `x86_64`).
 - **Operating System**: macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia).
 
 ### System Software (Host Mac Requirements):
@@ -23,7 +23,7 @@ This document specifies the software requirements, deployment instructions, and 
 All the following components reside entirely inside the `PIXEL` directory and have **zero hardcoded external drive dependencies (`/Volumes/VGC-01/`)**:
 
 - **PIXEL Native Graphics Renderer** (`graphics-renderer/`):
-  - Binary: `graphics-renderer/build/pixel-graphics-renderer` (`Mach-O 64-bit arm64`).
+  - Binary: `graphics-renderer/build/pixel-graphics-renderer` (`Mach-O Universal 2 fat binary: arm64 + x86_64`).
   - Source: `graphics-renderer/src/main.swift` (Native Cocoa `NSWindow` + `WKWebView` with hardware-accelerated `drawsBackground = false` alpha compositing).
   - Runtime Config: `graphics-renderer/config.json`.
 - **Production Bridge** (`production-bridge/`): ATEM OSC / Macro and hardware bridge API (Port 3000).
@@ -63,7 +63,7 @@ cd ..
 | :--- | :--- | :--- |
 | **Start Renderer** | `./graphics-renderer/run-pixel-renderer.sh` | Launches background daemon, writes PID to `.renderer.pid` |
 | **Stop Renderer** | `./graphics-renderer/stop-pixel-renderer.sh` | Sends `kill` specifically to recorded PID; zero collateral impact |
-| **Recompile Binary** | `swiftc -O src/main.swift -o build/pixel-graphics-renderer` | Compiles native 64-bit arm64 Mach-O executable |
+| **Recompile Binary** | Compile via `swiftc` (or universal lipo) into `build/pixel-graphics-renderer` | Compiles native Universal 2 (arm64 + x86_64) executable |
 
 ---
 
