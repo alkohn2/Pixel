@@ -18,10 +18,24 @@ if [ -n "$LISTEN_PIDS" ]; then
   lsof -tiTCP:3000,8081 -sTCP:LISTEN | xargs kill -9 2>/dev/null
 fi
 
+# Safely terminate any previous replay-watcher instance
+if [ -f "${BRIDGE_DIR}/.watcher.pid" ]; then
+  OLD_WATCHER_PID=$(cat "${BRIDGE_DIR}/.watcher.pid" 2>/dev/null)
+  if [ -n "$OLD_WATCHER_PID" ]; then
+    kill $OLD_WATCHER_PID 2>/dev/null
+  fi
+fi
+pgrep -f "node replay-watcher.js" | xargs kill 2>/dev/null
+
 echo "Starting Production Bridge API (Port 3000)..."
 nohup node monitor.js > "${BRIDGE_DIR}/bridge.log" 2>&1 &
 BRIDGE_PID=$!
 echo ${BRIDGE_PID} > "${BRIDGE_DIR}/.bridge.pid"
+
+echo "Starting Replay Watcher (Truck → Resolume)..."
+nohup node replay-watcher.js > "${BRIDGE_DIR}/replay-watcher.log" 2>&1 &
+WATCHER_PID=$!
+echo ${WATCHER_PID} > "${BRIDGE_DIR}/.watcher.pid"
 
 echo "Starting Canonical PIXEL React UI (Port 8081)..."
 cd "${FRONTEND_DIR}/dist" || { echo "Error: Frontend dist directory not found!"; exit 1; }
@@ -32,8 +46,9 @@ echo ${UI_PID} > "${FRONTEND_DIR}/.ui.pid"
 sleep 2
 
 echo "------------------------------------------"
-echo " PIXEL API:        http://127.0.0.1:3000/status"
-echo " PIXEL React UI:   http://127.0.0.1:8081/"
+echo " PIXEL API:        http://127.0.0.1:3000/status (PID: ${BRIDGE_PID})"
+echo " Replay Watcher:   Active (PID: ${WATCHER_PID})"
+echo " PIXEL React UI:   http://127.0.0.1:8081/ (PID: ${UI_PID})"
 echo " Diagnostic UI:    http://127.0.0.1:8081/diagnostics.html"
 echo "------------------------------------------"
 

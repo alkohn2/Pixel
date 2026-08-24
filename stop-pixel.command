@@ -21,6 +21,16 @@ else
   echo "No active PIXEL server listeners found on ports 3000 or 8081."
 fi
 
-rm -f "${BRIDGE_DIR}/.bridge.pid" "${FRONTEND_DIR}/.ui.pid" 2>/dev/null
+# Stop Replay Watcher process
+if [ -f "${BRIDGE_DIR}/.watcher.pid" ]; then
+  WATCHER_PID=$(cat "${BRIDGE_DIR}/.watcher.pid" 2>/dev/null)
+  if [ -n "$WATCHER_PID" ]; then
+    kill $WATCHER_PID 2>/dev/null
+    echo "Stopped Replay Watcher PID: $WATCHER_PID"
+  fi
+fi
+pgrep -f "node replay-watcher.js" | xargs kill 2>/dev/null
+
+rm -f "${BRIDGE_DIR}/.bridge.pid" "${BRIDGE_DIR}/.watcher.pid" "${FRONTEND_DIR}/.ui.pid" 2>/dev/null
 
 echo "PIXEL System stopped cleanly."
