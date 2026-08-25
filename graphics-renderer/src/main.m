@@ -46,7 +46,8 @@
     NSLog(@"[PIXEL Graphics Renderer] Online & Broadcasting");
     NSLog(@"[PIXEL Graphics Renderer] Official Transport: %@", [self.transportType uppercaseString]);
     NSLog(@"[PIXEL Graphics Renderer] Source Name: %@", self.config[@"sourceName"]);
-    NSLog(@"[PIXEL Graphics Renderer] Resolution: %@x%@ @ %@fps (Alpha: YES)",
+    NSLog(@"[PIXEL Graphics Renderer] Window Mode: %@", [self.config[@"showRendererWindow"] boolValue] ? @"VISIBLE (Debug)" : @"OFFSCREEN (Production)");
+    NSLog(@"[PIXEL Graphics Renderer] Resolution: %@x%@ @ %@fps (Alpha: YES / BGRA)",
           self.config[@"width"], self.config[@"height"], self.config[@"fps"]);
     NSLog(@"[PIXEL Graphics Renderer] URL: http://%@:%@%@", 
           self.config[@"host"], self.config[@"port"], self.config[@"overlayPath"]);
@@ -82,8 +83,7 @@
     CGFloat width = [self.config[@"width"] floatValue] ?: 1920.0;
     CGFloat height = [self.config[@"height"] floatValue] ?: 1080.0;
     
-    // Position offscreen when showRendererWindow is false to keep desktop clean
-    NSRect frame = showWindow ? NSMakeRect(0, 0, width, height) : NSMakeRect(-10000, -10000, width, height);
+    NSRect frame = NSMakeRect(0, 0, width, height);
 
     self.window = [[NSWindow alloc] initWithContentRect:frame
                                               styleMask:NSWindowStyleMaskBorderless
@@ -100,13 +100,15 @@
     if (showWindow) {
         self.window.level = NSFloatingWindowLevel;
     } else {
-        self.window.level = NSNormalWindowLevel - 1;
+        // Place below all application windows so it stays 100% invisible/non-intrusive without WebKit throttling
+        self.window.level = kCGDesktopWindowLevel;
     }
 
     WKWebViewConfiguration *webConfig = [[WKWebViewConfiguration alloc] init];
     [webConfig.preferences setValue:@YES forKey:@"allowFileAccessFromFileURLs"];
+    [webConfig.preferences setValue:@NO forKey:@"pageVisibilityBasedProcessSuppressionEnabled"];
 
-    self.webView = [[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, width, height) configuration:webConfig];
+    self.webView = [[WKWebView alloc] initWithFrame:frame configuration:webConfig];
     [self.webView setValue:@NO forKey:@"drawsBackground"];
     self.webView.navigationDelegate = self;
 
@@ -218,7 +220,33 @@
     }];
 }
 
-// ── NDI PUBLISH ──
+// ── DIAGNOSTIC TELEMETRY ──
+static uint64_t gFrameIndex = 0;
+static uint64_t gLastChecksum = 0;
+
+static uint64_t computeBufferChecksum(const uint8_t *bytes, size_t length) {
+    uint64_t hash = 14695981039346656037ULL;
+    // Fast sample hash (every 64 bytes)
+    for (size_t i = 0; i < length; i += 64) {
+        hash ^= bytes[i];
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+static void saveDiagnosticPNG(CGImageRef cgImage, NSString *path) {
+    if (!cgImage) return;
+    CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:path];
+    CGImageDestinationRef dest = CGImageDestinationCreateWithURL(url, (CFStringRef)@"public.png", 1, NULL);
+    if (dest) {
+        CGImageDestinationAddImage(dest, cgImage, NULL);
+        CGImageDestinationFinalize(dest);
+        CFRelease(dest);
+        NSLog(@"[DIAGNOSTIC] Saved snapshot to %@", path);
+    }
+}
+
+// ── NDI PUBLISH (BGRA 32-bit Straight/Premultiplied with Full Frame Clear) ──
 - (void)publishNDIFrame:(NSImage *)image width:(CGFloat)width height:(CGFloat)height {
     if (!self.ndiSender) return;
 
@@ -232,19 +260,34 @@
         self.pixelBuffer = [NSMutableData dataWithLength:w * h * 4];
     }
 
+    // 1. Explicit clean clear of buffer memory to prevent any stale pixels / ghosts
+    memset(self.pixelBuffer.mutableBytes, 0, w * h * 4);
+
+    // 2. Render into BGRA Little Endian bitmap context
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef ctx = CGBitmapContextCreate(self.pixelBuffer.mutableBytes,
                                              w, h, 8, w * 4,
                                              colorSpace,
-                                             kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+                                             kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGContextClearRect(ctx, CGRectMake(0, 0, w, h));
     CGContextDrawImage(ctx, CGRectMake(0, 0, w, h), cgImage);
     CGContextRelease(ctx);
     CGColorSpaceRelease(colorSpace);
 
+    gFrameIndex++;
+    uint64_t currentChecksum = computeBufferChecksum((const uint8_t *)self.pixelBuffer.bytes, self.pixelBuffer.length);
+
+    if (gFrameIndex % 60 == 0 || currentChecksum != gLastChecksum) {
+        NSLog(@"[RENDER_LOOP] Frame #%llu | Checksum: 0x%llX | Changed: %@",
+              gFrameIndex, currentChecksum, (currentChecksum != gLastChecksum) ? @"YES (State/DOM Changed)" : @"NO (Static)");
+        gLastChecksum = currentChecksum;
+    }
+
+    // 3. Publish NDI Frame synchronously to avoid buffer reuse collision
     NDIlib_video_frame_v2_t videoFrame;
     videoFrame.xres = (int)w;
     videoFrame.yres = (int)h;
-    videoFrame.FourCC = NDIlib_FourCC_video_type_RGBA;
+    videoFrame.FourCC = NDIlib_FourCC_video_type_BGRA;
     videoFrame.frame_rate_N = 60000;
     videoFrame.frame_rate_D = 1001;
     videoFrame.picture_aspect_ratio = 16.0f / 9.0f;
@@ -255,7 +298,7 @@
     videoFrame.p_metadata = NULL;
     videoFrame.timestamp = 0;
 
-    NDIlib_send_send_video_async_v2(self.ndiSender, &videoFrame);
+    NDIlib_send_send_video_v2(self.ndiSender, &videoFrame);
 }
 
 // ── SYPHON PUBLISH ──
@@ -268,11 +311,18 @@
     size_t w = CGImageGetWidth(cgImage);
     size_t h = CGImageGetHeight(cgImage);
 
+    if (self.pixelBuffer.length != w * h * 4) {
+        self.pixelBuffer = [NSMutableData dataWithLength:w * h * 4];
+    }
+
+    memset(self.pixelBuffer.mutableBytes, 0, w * h * 4);
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
     CGContextRef ctx = CGBitmapContextCreate(self.pixelBuffer.mutableBytes,
                                              w, h, 8, w * 4,
                                              colorSpace,
                                              kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGContextClearRect(ctx, CGRectMake(0, 0, w, h));
     CGContextDrawImage(ctx, CGRectMake(0, 0, w, h), cgImage);
     CGContextRelease(ctx);
     CGColorSpaceRelease(colorSpace);
