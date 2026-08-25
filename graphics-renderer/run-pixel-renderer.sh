@@ -20,10 +20,21 @@ if [ -f "${PID_FILE}" ]; then
 fi
 
 # Ensure executable exists
-if [ ! -f "${BUILD_DIR}/pixel-graphics-renderer" ]; then
-  echo "Error: Binary not found at ${BUILD_DIR}/pixel-graphics-renderer"
-  echo "Please compile with: swiftc -O src/main.swift -o build/pixel-graphics-renderer"
-  exit 1
+if [ ! -f "${BUILD_DIR}/pixel-graphics-renderer" ] || [ "${SCRIPT_DIR}/src/main.m" -nt "${BUILD_DIR}/pixel-graphics-renderer" ]; then
+  echo "Compiling PIXEL Graphics Renderer..."
+  mkdir -p "${BUILD_DIR}"
+  clang -O3 -fobjc-arc -Wno-deprecated-declarations \
+    -F"${SCRIPT_DIR}/Frameworks" \
+    -I"${SCRIPT_DIR}/src" \
+    -framework Cocoa -framework WebKit -framework OpenGL -framework Syphon \
+    -L"${SCRIPT_DIR}/Frameworks" -lndi \
+    -rpath @executable_path/../Frameworks \
+    "${SCRIPT_DIR}/src/main.m" \
+    -o "${BUILD_DIR}/pixel-graphics-renderer"
+  if [ $? -ne 0 ]; then
+    echo "Error: Compilation failed"
+    exit 1
+  fi
 fi
 
 chmod +x "${BUILD_DIR}/pixel-graphics-renderer"

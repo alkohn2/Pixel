@@ -28,6 +28,8 @@
 @implementation PixelRendererApp
 
 - (void)applicationDidFinishLaunching:(NSNotification *)notification {
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+
     [self loadConfig];
     [self setupTransparentWebView];
     [self loadOverlayURL];
@@ -95,13 +97,20 @@
     self.window.ignoresMouseEvents = YES;
     self.window.excludedFromWindowsMenu = YES;
     self.window.hidesOnDeactivate = NO;
+    self.window.sharingType = NSWindowSharingNone;
     [self.window setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces | NSWindowCollectionBehaviorStationary | NSWindowCollectionBehaviorIgnoresCycle];
 
     if (showWindow) {
+        self.window.alphaValue = 1.0;
         self.window.level = NSFloatingWindowLevel;
+        self.window.ignoresMouseEvents = NO;
     } else {
-        // Place below all application windows so it stays 100% invisible/non-intrusive without WebKit throttling
+        // Safe invisible desktop rendering:
+        // alphaValue 0.0 makes the window 100% invisible on the Mac desktop while WebKit
+        // continues rendering the full 1920x1080 buffer offscreen for takeSnapshotWithConfiguration:
+        self.window.alphaValue = 0.0;
         self.window.level = kCGDesktopWindowLevel;
+        self.window.ignoresMouseEvents = YES;
     }
 
     WKWebViewConfiguration *webConfig = [[WKWebViewConfiguration alloc] init];
