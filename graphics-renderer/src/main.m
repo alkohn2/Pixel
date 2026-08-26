@@ -291,6 +291,15 @@ static void saveDiagnosticPNG(CGImageRef cgImage, NSString *path) {
     gFrameIndex++;
     uint64_t currentChecksum = computeBufferChecksum((const uint8_t *)self.pixelBuffer.bytes, self.pixelBuffer.length);
 
+    NSString *snapReqPath = @"/tmp/pixel_snapshot_request.txt";
+    if ([[NSFileManager defaultManager] fileExistsAtPath:snapReqPath]) {
+        NSString *snapName = [[NSString stringWithContentsOfFile:snapReqPath encoding:NSUTF8StringEncoding error:nil] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (!snapName || snapName.length == 0) snapName = @"snapshot";
+        NSString *outPath = [NSString stringWithFormat:@"/Volumes/VGC-01/OBS Sports/PIXEL/graphics-renderer/snapshots/%@.png", snapName];
+        saveDiagnosticPNG(cgImage, outPath);
+        [[NSFileManager defaultManager] removeItemAtPath:snapReqPath error:nil];
+    }
+
     if (gFrameIndex % 60 == 0 || currentChecksum != gLastChecksum) {
         NSLog(@"[RENDER_LOOP] Frame #%llu | Checksum: 0x%llX | Changed: %@",
               gFrameIndex, currentChecksum, (currentChecksum != gLastChecksum) ? @"YES (State/DOM Changed)" : @"NO (Static)");
