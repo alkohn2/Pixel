@@ -151,12 +151,17 @@
 
     NSString *sourceName = self.config[@"sourceName"] ?: @"PIXEL Graphics";
     NDIlib_send_create_t createSettings;
+    memset(&createSettings, 0, sizeof(createSettings));
     createSettings.p_ndi_name = [sourceName UTF8String];
     createSettings.p_groups = NULL;
     createSettings.clock_video = true;
     createSettings.clock_audio = false;
 
-    self.ndiSender = NDIlib_send_create(&createSettings);
+    for (int retry = 0; retry < 5 && !self.ndiSender; retry++) {
+        if (retry > 0) [NSThread sleepForTimeInterval:0.5];
+        self.ndiSender = NDIlib_send_create(&createSettings);
+    }
+
     if (self.ndiSender) {
         NSLog(@"[PIXEL Graphics Renderer] NDI Sender created successfully: '%@'", sourceName);
     } else {
