@@ -2803,7 +2803,8 @@
                   if (!isPstatsVisible) loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
                   if (!isLineupVisible) renderLineupCards(lineupTeamKey);
                 }
-                if (data.state.graphics) handleGraphicsState(data.state.graphics);
+                const gfx = data.state.graphics || (data.state.visibility ? data.state : null);
+                if (gfx) handleGraphicsState(gfx);
               }
             } catch (err) {}
           };
@@ -2817,14 +2818,15 @@
       }
       connectBridgeSSE();
 
-      // Initial Fetch from Bridge
+      // Initial Fetch from Bridge (Phase G-SYNC1)
       try {
         fetch('http://127.0.0.1:3000/graphics/state')
           .then(r => r.json())
           .then(data => {
             if (data.match) renderMatchState(data.match);
             if (data.roster) rosterState = data.roster;
-            if (data.graphics) handleGraphicsState(data.graphics);
+            const gfx = data.graphics || (data.visibility ? data : null);
+            if (gfx) handleGraphicsState(gfx);
           })
           .catch(() => {});
       } catch (e) {}

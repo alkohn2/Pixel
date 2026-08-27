@@ -104,19 +104,21 @@
     state.preparedGraphic = raw.preparedGraphic || null;
 
     if (raw.visibility && typeof raw.visibility === 'object') {
+      const vis = raw.visibility;
       state.visibility = {
-        scorebug: Boolean(raw.visibility.scorebug ?? true),
-        playerLowerThird: Boolean(raw.visibility.playerLowerThird ?? false),
-        startingLineup: Boolean(raw.visibility.startingLineup ?? false),
-        playerStats: Boolean(raw.visibility.playerStats ?? false),
-        setResult: Boolean(raw.visibility.setResult ?? false),
-        matchResult: Boolean(raw.visibility.matchResult ?? false)
+        scorebug: Boolean(vis.scorebug ?? false),
+        playerLowerThird: Boolean(vis.playerLowerThird ?? false),
+        startingLineup: Boolean(vis.startingLineup ?? false),
+        playerStats: Boolean(vis.playerStats !== undefined ? vis.playerStats : (vis.stats !== undefined ? vis.stats : false)),
+        setResult: Boolean(vis.setResult ?? false),
+        matchResult: Boolean(vis.matchResult ?? false)
       };
     } else if (raw.graphicVisible !== undefined) {
       state.visibility.scorebug = Boolean(raw.graphicVisible);
     }
 
     if (raw.prepared && typeof raw.prepared === 'object') {
+      const pStats = raw.prepared.playerStats || raw.prepared.stats || {};
       state.prepared = {
         playerLowerThird: {
           team: raw.prepared.playerLowerThird?.team || 'home',
@@ -127,9 +129,9 @@
           team: raw.prepared.startingLineup?.team || 'home'
         },
         playerStats: {
-          team: raw.prepared.playerStats?.team || 'home',
-          playerId: raw.prepared.playerStats?.playerId || 'h7',
-          playerIndex: Number(raw.prepared.playerStats?.playerIndex) || 0
+          team: pStats.team || 'home',
+          playerId: pStats.playerId || 'h7',
+          playerIndex: Number(pStats.playerIndex) || 0
         },
         setResult: {
           setNumber: Number(raw.prepared.setResult?.setNumber) || 1

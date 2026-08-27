@@ -1084,7 +1084,7 @@
         });
       }
 
-      // Cross-Process Production Bridge Sync (Phase G6.3)
+      // Cross-Process Production Bridge Sync (Phase G6.3 & Phase G-SYNC1)
       try {
         fetch('http://127.0.0.1:3000/graphics/state', {
           method: 'POST',
@@ -1092,6 +1092,8 @@
           body: JSON.stringify({
             action: actionName,
             graphics: state,
+            visibility: state.visibility,
+            prepared: state.prepared,
             roster: rosterState,
             activeGame: (typeof PkgModel !== 'undefined' && PkgModel.getActivePackage) ? PkgModel.getActivePackage() : null
           })
@@ -1652,12 +1654,12 @@
 
     try {
       const rawGfx = localStorage.getItem(STORAGE_KEY);
-      if (rawGfx) state = JSON.parse(rawGfx);
+      if (rawGfx) state = GraphicsCore.normalizeGraphicsState(JSON.parse(rawGfx));
     } catch (e) {}
 
     updateUI();
 
-    // Initial Fetch from Bridge
+    // Initial Fetch from Bridge (Phase G-SYNC1)
     try {
       fetch('http://127.0.0.1:3000/graphics/state')
         .then(r => r.json())
@@ -1669,15 +1671,17 @@
             populatePstatsSelect();
             updateRosterStatusPills();
           }
-          if (data.graphics) {
-            state = data.graphics;
+          const gfx = data.graphics || (data.visibility ? data : null);
+          if (gfx) {
+            state = GraphicsCore.normalizeGraphicsState(gfx);
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
             updateUI();
           }
         })
         .catch(() => {});
     } catch (e) {}
 
-    // SSE Stream
+    // SSE Stream (Phase G-SYNC1)
     function connectBridgeSSE() {
       try {
         const es = new EventSource('http://127.0.0.1:3000/graphics/events');
@@ -1692,8 +1696,10 @@
                 populatePstatsSelect();
                 updateRosterStatusPills();
               }
-              if (data.state.graphics) {
-                state = data.state.graphics;
+              const gfx = data.state.graphics || (data.state.visibility ? data.state : null);
+              if (gfx) {
+                state = GraphicsCore.normalizeGraphicsState(gfx);
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
                 updateUI();
               }
             }
@@ -1705,6 +1711,9 @@
         };
       } catch (e) {
         setTimeout(connectBridgeSSE, 3000);
+      }
+    }
+
     function navigateToTab(tabName) {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage({ type: 'PIXEL_NAVIGATE_TAB', tab: tabName }, '*');

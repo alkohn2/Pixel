@@ -699,12 +699,87 @@ setInterval(pollTruck, 3000)
 pollTruck()
 
 // ============================================================================
-// GRAPHICS CROSS-PROCESS STATE & SSE (Phase G6.3)
+// GRAPHICS CROSS-PROCESS STATE & SSE (Phase G6.3 & Phase G-SYNC1)
 // ============================================================================
 let sseClients = []
+
+function createDefaultBridgeGraphics() {
+  return {
+    version: '1.0',
+    activeGraphic: 'SCOREBUG',
+    preparedGraphic: null,
+    visibility: {
+      scorebug: false,
+      playerLowerThird: false,
+      startingLineup: false,
+      playerStats: false,
+      setResult: false,
+      matchResult: false
+    },
+    prepared: {
+      playerLowerThird: { team: 'home', playerId: 'h7', playerIndex: 0 },
+      startingLineup: { team: 'home' },
+      playerStats: { team: 'home', playerId: 'h7', playerIndex: 0 },
+      setResult: { setNumber: 1 },
+      matchResult: {}
+    },
+    transitionState: 'VISIBLE',
+    language: 'en',
+    lastGraphicAction: 'INIT',
+    stateRevision: 1,
+    lastActionTimestamp: Date.now()
+  }
+}
+
+function normalizeGraphicsPayload(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const src = raw.graphics || raw
+  const vis = src.visibility || raw.visibility || {}
+  const prep = src.prepared || raw.prepared || {}
+
+  // Ingestion migration: normalize legacy 'stats' -> 'playerStats'
+  const playerStatsVis = Boolean(vis.playerStats !== undefined ? vis.playerStats : (vis.stats !== undefined ? vis.stats : false))
+  const pStatsPrep = prep.playerStats || prep.stats || { team: 'home', playerId: 'h7', playerIndex: 0 }
+
+  const normalizedGfx = {
+    version: src.version || '1.0',
+    activeGraphic: src.activeGraphic || (vis.scorebug ? 'SCOREBUG' : null),
+    preparedGraphic: src.preparedGraphic || null,
+    visibility: {
+      scorebug: Boolean(vis.scorebug ?? false),
+      playerLowerThird: Boolean(vis.playerLowerThird ?? false),
+      startingLineup: Boolean(vis.startingLineup ?? false),
+      playerStats: playerStatsVis,
+      setResult: Boolean(vis.setResult ?? false),
+      matchResult: Boolean(vis.matchResult ?? false)
+    },
+    prepared: {
+      playerLowerThird: prep.playerLowerThird || { team: 'home', playerId: 'h7', playerIndex: 0 },
+      startingLineup: prep.startingLineup || { team: 'home' },
+      playerStats: {
+        team: pStatsPrep.team || 'home',
+        playerId: pStatsPrep.playerId || 'h7',
+        playerIndex: Number(pStatsPrep.playerIndex) || 0
+      },
+      setResult: prep.setResult || { setNumber: 1 },
+      matchResult: prep.matchResult || {}
+    },
+    transitionState: src.transitionState || 'VISIBLE',
+    language: src.language || 'en',
+    lastGraphicAction: raw.action || src.lastGraphicAction || 'UPDATE',
+    stateRevision: Number(src.stateRevision) || (bridgeState.graphicsState?.graphics?.stateRevision || 0) + 1,
+    lastActionTimestamp: Date.now()
+  }
+
+  return normalizedGfx
+}
+
+const initialGfx = createDefaultBridgeGraphics()
 bridgeState.graphicsState = {
   match: null,
-  graphics: null,
+  graphics: initialGfx,
+  visibility: initialGfx.visibility,
+  prepared: initialGfx.prepared,
   roster: null,
   activeGame: null,
   timestamp: Date.now()
@@ -794,23 +869,34 @@ const server = http.createServer((request, response) => {
     return
   }
 
-  // Phase G6.3: Graphics State Mutation (Presentation & Match Safe Sync)
+  // Phase G6.3 & Phase G-SYNC1: Graphics State Mutation (Presentation & Match Safe Sync)
   if (request.method === 'POST' && request.url === '/graphics/state') {
     let body = ''
     request.on('data', chunk => { body += chunk })
     request.on('end', () => {
       try {
         const payload = JSON.parse(body || '{}')
-        if (payload.graphics !== undefined) bridgeState.graphicsState.graphics = payload.graphics
+        const normalizedGfx = normalizeGraphicsPayload(payload)
+        if (normalizedGfx) {
+          bridgeState.graphicsState.graphics = normalizedGfx
+          bridgeState.graphicsState.visibility = normalizedGfx.visibility
+          bridgeState.graphicsState.prepared = normalizedGfx.prepared
+        }
         if (payload.match !== undefined) bridgeState.graphicsState.match = payload.match
         if (payload.roster !== undefined) bridgeState.graphicsState.roster = payload.roster
         if (payload.activeGame !== undefined) bridgeState.graphicsState.activeGame = payload.activeGame
         bridgeState.graphicsState.timestamp = Date.now()
 
-        broadcastGraphicsUpdate(payload.action || 'GRAPHICS_UPDATE')
+        broadcastGraphicsUpdate(payload.action || normalizedGfx?.lastGraphicAction || 'GRAPHICS_UPDATE')
 
         response.writeHead(200)
-        response.end(JSON.stringify({ success: true, timestamp: bridgeState.graphicsState.timestamp }))
+        response.end(JSON.stringify({
+          success: true,
+          action: payload.action || normalizedGfx?.lastGraphicAction || 'GRAPHICS_UPDATE',
+          visibility: bridgeState.graphicsState.visibility,
+          prepared: bridgeState.graphicsState.prepared,
+          timestamp: bridgeState.graphicsState.timestamp
+        }))
       } catch (err) {
         response.writeHead(400)
         response.end(JSON.stringify({ error: err?.message }))
