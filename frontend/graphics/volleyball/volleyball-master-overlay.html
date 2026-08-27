@@ -1,0 +1,2836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Volleyball Master Multi-Layer Overlay (Phase G5)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --canvas-w: 1920px;
+      --canvas-h: 1080px;
+      --mdc-blue: #0032A0;
+      --mdc-blue-dark: #001f66;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --gold-grad: linear-gradient(90deg, #b8973a 0%, #fced9a 50%, #b8973a 100%);
+      --bg-surface: linear-gradient(180deg, rgba(22, 28, 42, 0.98) 0%, rgba(9, 13, 20, 0.98) 100%);
+      --card-border: 1px solid rgba(255, 255, 255, 0.14);
+      --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.4);
+      --txt-white: #ffffff;
+      --txt-muted: rgba(255, 255, 255, 0.65);
+      --txt-faint: rgba(255, 255, 255, 0.35);
+      --divider: rgba(255, 255, 255, 0.08);
+      --live-red: #e23b2e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      user-select: none;
+    }
+
+    /* ── MASTER 1920x1080 VIEWPORT CONTAINER ── */
+    #master-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--canvas-w);
+      height: var(--canvas-h);
+      transform-origin: top left;
+      overflow: hidden;
+      pointer-events: none;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========================================================================
+       LAYER Z1: SCOREBUG (CHROMA-SAFE BAR, TOP-CENTER SAFE AREA)
+       ======================================================================== */
+    #sb-wrapper {
+      position: absolute;
+      top: 36px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+      perspective: 1000px;
+    }
+
+    #sb-brand-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #e3c46a; /* 100% solid Gold */
+      border-radius: 2px;
+      z-index: 20;
+      box-shadow: none; /* Chroma-safe */
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    #sb-shell {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 68px;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue border */
+      border-radius: 6px;
+      box-shadow: none; /* Chroma-safe: Zero alpha drop shadow */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-20px);
+      will-change: transform, opacity;
+    }
+
+    .sb-brand-mark {
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid MDC Gradient */
+      color: #F8F8F8;
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 2px solid #0047FF;
+      flex-shrink: 0;
+    }
+    .sb-brand-title {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #C5D8FF;
+    }
+    .sb-brand-sport {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #e3c46a;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .sb-team-cell {
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 14px;
+      min-width: 250px;
+      position: relative;
+      overflow: hidden;
+      background: #0a1122; /* 100% solid Dark Neutral */
+    }
+
+    .sb-color-strip {
+      width: 5px;
+      height: 38px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .sb-team-details {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sb-team-name {
+      font-size: 16px;
+      font-weight: 900;
+      color: #F8F8F8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+
+    .sb-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .sb-sets-tag {
+      font-size: 10px;
+      font-weight: 900;
+      color: #C5D8FF;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      padding: 1px 6px;
+      background: #001956; /* 100% solid Deep Navy */
+      border: 1px solid #1a3268;
+      border-radius: 3px;
+      line-height: 1.3;
+      will-change: transform, background-color, border-color;
+    }
+
+    .sb-tmo-cluster {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .sb-tmo-pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: #1a3268; /* 100% solid unused pip */
+      border: 1px solid #0047FF;
+      transition: all 0.25s ease;
+    }
+    .sb-tmo-pip.used {
+      background: #e3c46a;
+      border-color: #fced9a;
+      box-shadow: none; /* Chroma-safe */
+    }
+
+    .sb-serve-indicator {
+      display: none;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #e3c46a;
+      border: 1px solid #ffffff;
+      box-shadow: none; /* Chroma-safe */
+      flex-shrink: 0;
+      z-index: 10;
+      vertical-align: middle;
+      will-change: transform, opacity;
+      transition: opacity 0.2s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .sb-serve-indicator.active {
+      display: inline-block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+
+    .sb-score-cell {
+      position: relative;
+      width: 56px;
+      height: 48px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #001956; /* 100% solid Deep Navy */
+      border-left: 1px solid #1a3268;
+      border-right: 1px solid #1a3268;
+    }
+
+    .sb-digit-stack {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 34px;
+      font-weight: 900;
+      color: #F8F8F8;
+      will-change: transform, opacity;
+    }
+
+    .sb-flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: #e3c46a;
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 4px;
+      will-change: opacity;
+    }
+
+    .sb-context-pill {
+      background: #001956; /* 100% solid Deep Navy */
+      border-left: 2px solid #0047FF;
+      border-right: 2px solid #0047FF;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-width: 90px;
+    }
+
+    .sb-set-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 900;
+      color: #e3c46a;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: #0a1122; /* 100% solid Dark Neutral */
+      border: 1px solid #1a3268;
+      border-bottom: 2px solid #e3c46a;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    #sb-history-drawer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 5px 20px;
+      height: 28px;
+      background: #001956; /* 100% solid Deep Navy */
+      border: 2px solid #0047FF;
+      border-top: none;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #C5D8FF;
+      opacity: 0;
+      transform: translateY(-10px);
+      box-shadow: none; /* Chroma-safe */
+      will-change: transform, opacity;
+    }
+
+    .sb-history-scores {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: #F8F8F8;
+    }
+
+    /* ========================================================================
+       LAYER Z2: NOTIFICATIONS (SET POINT / MATCH POINT / TIMEOUT)
+       ======================================================================== */
+    #notif-banner {
+      position: absolute;
+      top: 112px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      z-index: 20;
+      will-change: transform, opacity;
+    }
+
+    .notif-capsule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 24px;
+      border-radius: 20px;
+      box-shadow: none; /* Chroma-safe: Zero alpha shadow */
+      position: relative;
+      overflow: hidden;
+    }
+    .notif-capsule::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: #F8F8F8;
+    }
+    .notif-capsule.setpoint {
+      background: #001956;
+      border: 2px solid #e3c46a;
+      color: #F8F8F8;
+    }
+    .notif-capsule.matchpoint {
+      background: #001956;
+      border: 2px solid #e23b2e;
+      color: #F8F8F8;
+    }
+    .notif-capsule.timeout {
+      background: #001956;
+      border: 2px solid #0047FF;
+      color: #F8F8F8;
+    }
+    .notif-capsule.setwon {
+      background: #001956;
+      border: 2px solid #16a34a;
+      color: #F8F8F8;
+    }
+
+    .notif-headline {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .notif-subtext {
+      font-size: 11px;
+      font-weight: 800;
+      color: #C5D8FF;
+      letter-spacing: 0.5px;
+    }
+
+    /* ========================================================================
+       LAYER Z3: PLAYER LOWER THIRD (CHROMA-SAFE CARD, BOTTOM-LEFT SAFE AREA)
+       ======================================================================== */
+    #lt-wrapper {
+      position: absolute;
+      left: 96px;
+      bottom: 96px;
+      display: flex;
+      flex-direction: column;
+      z-index: 30;
+      perspective: 1000px;
+    }
+
+    #lt-accent-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #e3c46a; /* 100% solid Gold */
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: left center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: none; /* Chroma-safe */
+      will-change: transform, opacity;
+    }
+
+    #lt-shell {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 84px;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue border */
+      border-radius: 6px;
+      box-shadow: none; /* Chroma-safe: Zero alpha drop shadow */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-40px);
+      min-width: 580px;
+      will-change: transform, opacity;
+    }
+
+    .lt-jersey-cell {
+      width: 84px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid MDC Gradient */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 2px solid #0047FF;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .lt-jersey-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 38px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+      line-height: 1;
+    }
+    .lt-captain-star {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #e3c46a;
+      display: none;
+    }
+    .lt-captain-star.active { display: block; }
+
+    .lt-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 24px;
+      flex: 1;
+      background: #0a1122; /* 100% solid Dark Neutral Base */
+    }
+    .lt-name-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .lt-player-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .lt-pos-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      color: #F8F8F8;
+      background: #0032A0; /* Solid MDC Blue */
+      border: 1px solid #0047FF; /* Solid Electric Blue */
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .lt-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .lt-team-label { color: #C5D8FF; font-weight: 900; }
+    .lt-stats-summary { color: #e3c46a; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; }
+    .lt-brand-tag {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 2px solid #0047FF;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #C5D8FF;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* ========================================================================
+       LAYER Z4: STARTING LINEUP (CHROMA-SAFE HERO BOARD, BOTTOM-CENTER SAFE AREA)
+       ======================================================================== */
+    #lineup-wrapper {
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1280px;
+      display: flex;
+      flex-direction: column;
+      z-index: 40;
+      perspective: 1000px;
+    }
+
+    #lineup-accent-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #e3c46a; /* 100% solid Gold */
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: none; /* Chroma-safe */
+      will-change: transform, opacity;
+    }
+
+    #lineup-shell {
+      position: relative;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue border */
+      border-radius: 8px;
+      box-shadow: none; /* Chroma-safe: Zero alpha drop shadow */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      will-change: transform, opacity;
+    }
+
+    .lineup-header {
+      min-height: 74px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid Chroma-safe Gradient */
+      border-bottom: 2px solid #0047FF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 24px;
+    }
+    .lineup-brand-identity {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .lineup-logo-box {
+      width: 64px;
+      height: 56px;
+      background: #000c24; /* 100% solid Chroma-safe backing */
+      border: 1.5px solid rgba(255, 255, 255, 0.25);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .lineup-team-logo-img {
+      max-height: 48px;
+      max-width: 52px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: block;
+    }
+    .lineup-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .lineup-title-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lineup-badge-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #001956;
+      background: #e3c46a; /* Solid Gold */
+      border: 1px solid #fced9a;
+      padding: 2px 8px;
+      border-radius: 4px;
+      line-height: 1.2;
+    }
+    .lineup-team-name-text {
+      font-size: 24px;
+      font-weight: 900;
+      color: #F8F8F8;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+    .lineup-header-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #C5D8FF;
+      letter-spacing: 0.5px;
+    }
+    .lineup-coach-label { color: #e3c46a; }
+
+    .lineup-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      padding: 20px;
+      gap: 12px;
+      background: #0a1122; /* 100% solid Dark Neutral Base */
+    }
+    .lineup-player-card {
+      background: #001956; /* 100% solid Deep Navy */
+      border: 1px solid #1a3268;
+      border-bottom: 3px solid #0047FF; /* Solid Electric Blue footer */
+      border-radius: 6px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: none; /* Chroma-safe */
+      opacity: 0;
+      transform: translateY(24px);
+      will-change: transform, opacity;
+    }
+    .lineup-player-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: #0047FF;
+      border-top-left-radius: 6px;
+      border-top-right-radius: 6px;
+    }
+    .lineup-card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 36px;
+      font-weight: 900;
+      color: #F8F8F8;
+      line-height: 1;
+      margin-top: 4px;
+    }
+    .lineup-card-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #F8F8F8;
+      text-transform: uppercase;
+      margin-top: 10px;
+      line-height: 1.2;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .lineup-card-pos {
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 900;
+      color: #F8F8F8;
+      background: #0032A0; /* Solid MDC Blue */
+      border: 1px solid #0047FF; /* Solid Electric Blue */
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .lineup-card-captain {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #e3c46a;
+      display: none;
+    }
+    .lineup-card-captain.active { display: block; }
+
+    /* ========================================================================
+       LAYER Z5: PLAYER STATS (CHROMA-SAFE BROADCAST CARD, BOTTOM-LEFT SAFE AREA)
+       ======================================================================== */
+    #pstats-wrapper {
+      position: absolute;
+      left: 96px;
+      bottom: 96px;
+      display: flex;
+      flex-direction: column;
+      z-index: 32;
+      perspective: 1000px;
+    }
+
+    #pstats-accent-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #e3c46a;
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: left center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: none; /* Chroma-safe: No alpha glow */
+      will-change: transform, opacity;
+    }
+
+    #pstats-shell {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 104px;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue border */
+      border-radius: 6px;
+      box-shadow: none; /* Chroma-safe: 0 alpha fringe over chroma key */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-40px);
+      min-width: 720px;
+      will-change: transform, opacity;
+    }
+
+    .pstats-photo-cell {
+      width: 88px;
+      height: 100%;
+      background: #001956;
+      border-right: 2px solid #0047FF;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .pstats-photo-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .pstats-jersey-cell {
+      width: 96px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid MDC Blue */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 2px solid #0047FF;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .pstats-jersey-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 44px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+      line-height: 1;
+    }
+    .pstats-captain-star {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #e3c46a;
+      display: none;
+    }
+    .pstats-captain-star.active { display: block; }
+
+    .pstats-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8px 20px;
+      flex: 1;
+      background: #0a1122; /* 100% solid dark neutral base */
+    }
+
+    .pstats-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .pstats-team-label {
+      font-family: 'Inter', system-ui, sans-serif;
+      color: #C5D8FF; /* MDC Light Blue */
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .pstats-context-badge {
+      font-family: 'JetBrains Mono', monospace;
+      color: #e3c46a; /* Gold */
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .pstats-name-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .pstats-player-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .pstats-pos-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      color: #F8F8F8;
+      background: #0032A0; /* Solid MDC Blue */
+      border: 1px solid #0047FF; /* Solid Electric Blue */
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .pstats-grid-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      flex-wrap: nowrap;
+    }
+    .pstat-pill {
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 1px solid #1a3268;
+      border-bottom: 2px solid #e3c46a; /* Solid Gold accent footer */
+      border-radius: 4px;
+      padding: 3px 10px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      flex-shrink: 0;
+    }
+    .pstat-val {
+      font-size: 15px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+    }
+    .pstat-lbl {
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 800;
+      color: #e3c46a; /* Gold */
+      letter-spacing: 0.75px;
+      text-transform: uppercase;
+    }
+
+    .pstats-brand-tag {
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-left: 2px solid #0047FF;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      flex-shrink: 0;
+    }
+    .pstats-brand-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #C5D8FF; /* MDC Light Blue */
+      text-transform: uppercase;
+    }
+    .pstats-brand-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #e3c46a;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    /* ========================================================================
+       LAYER Z6: SET RESULT (CHROMA-SAFE HERO BOARD, CENTER SAFE AREA)
+       ======================================================================== */
+    #set-result-wrapper {
+      position: absolute;
+      bottom: 110px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 900px;
+      display: flex;
+      flex-direction: column;
+      z-index: 42;
+      perspective: 1000px;
+    }
+
+    #set-res-accent-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #e3c46a; /* 100% solid Gold */
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: none; /* Chroma-safe: Zero alpha glow */
+      will-change: transform, opacity;
+    }
+
+    #set-res-shell {
+      position: relative;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue */
+      border-radius: 8px;
+      box-shadow: none; /* Chroma-safe: No alpha-heavy drop shadows */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      will-change: transform, opacity;
+    }
+
+    .set-res-header {
+      height: 56px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid MDC Gradient */
+      border-bottom: 2px solid #0047FF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+    .set-res-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #F8F8F8; /* MDC Off-White */
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .set-res-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      color: #001956;
+      background: #e3c46a; /* Solid Gold */
+      border: 1px solid #fced9a;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .set-res-body {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      padding: 24px 36px;
+      align-items: center;
+      gap: 24px;
+      background: #0a1122; /* 100% solid Dark Neutral */
+    }
+    .set-res-team-box {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+    .set-res-team-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #F8F8F8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .set-res-score-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 48px;
+      font-weight: 900;
+      color: #F8F8F8;
+      padding: 4px 18px;
+      border-radius: 6px;
+      background: #001956; /* 100% solid Deep Navy */
+      border: 2px solid #1a3268;
+      min-width: 80px;
+      text-align: center;
+    }
+    .set-res-score-box.winner {
+      color: #F8F8F8;
+      background: #0032A0; /* Solid MDC Blue */
+      border-color: #e3c46a; /* Solid Gold border */
+      border-bottom: 4px solid #e3c46a;
+      box-shadow: none; /* Chroma-safe */
+    }
+    .set-res-divider {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 22px;
+      font-weight: 800;
+      color: #C5D8FF; /* MDC Light Blue */
+    }
+    .set-res-footer {
+      background: #001956; /* 100% solid Deep Navy */
+      border-top: 2px solid #0047FF;
+      padding: 10px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 800;
+      color: #C5D8FF;
+    }
+
+    /* ========================================================================
+       LAYER Z7: MATCH RESULT (CHROMA-SAFE HERO BOARD, CENTER SAFE AREA)
+       ======================================================================== */
+    #match-result-wrapper {
+      position: absolute;
+      bottom: 96px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1080px;
+      display: flex;
+      flex-direction: column;
+      z-index: 44;
+      perspective: 1000px;
+    }
+
+    #match-res-accent-line {
+      position: absolute;
+      top: -3px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: #e3c46a; /* 100% solid Gold */
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: none; /* Chroma-safe: Zero alpha glow */
+      will-change: transform, opacity;
+    }
+
+    #match-res-shell {
+      position: relative;
+      background: #001956; /* 100% solid MDC Deep Navy */
+      border: 2px solid #0047FF; /* 100% solid Electric Blue */
+      border-radius: 8px;
+      box-shadow: none; /* Chroma-safe: No alpha-heavy drop shadows */
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      will-change: transform, opacity;
+    }
+
+    .match-res-header {
+      height: 60px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%); /* 100% solid MDC Gradient */
+      border-bottom: 2px solid #0047FF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+    }
+    .match-res-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #F8F8F8;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .match-res-body {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      padding: 26px 40px;
+      align-items: center;
+      gap: 32px;
+      background: #0a1122; /* 100% solid Dark Neutral Base */
+    }
+    .match-res-team {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .match-res-team-name {
+      font-size: 24px;
+      font-weight: 900;
+      color: #F8F8F8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .match-res-sets-won {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 56px;
+      font-weight: 900;
+      color: #F8F8F8;
+      padding: 4px 24px;
+      border-radius: 6px;
+      background: #001956; /* 100% solid Deep Navy */
+      border: 2px solid #1a3268;
+      min-width: 90px;
+      text-align: center;
+    }
+    .match-res-sets-won.winner {
+      color: #F8F8F8;
+      background: #0032A0; /* Solid MDC Blue */
+      border-color: #e3c46a; /* Solid Gold border */
+      border-bottom: 4px solid #e3c46a;
+      box-shadow: none; /* Chroma-safe */
+    }
+
+    .match-res-history-strip {
+      background: #001956; /* 100% solid Deep Navy */
+      border-top: 2px solid #0047FF;
+      padding: 12px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .match-res-set-chip {
+      background: #0a1122; /* 100% solid Dark Neutral Base */
+      border: 1px solid #1a3268;
+      border-bottom: 2px solid #0047FF; /* Solid Electric Blue footer */
+      border-radius: 4px;
+      padding: 5px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .match-res-set-num { color: #e3c46a; font-size: 11px; }
+    .match-res-set-score { color: #F8F8F8; font-weight: 900; }
+
+    /* ========================================================================
+       LAYER Z999: DEV TEST PANEL (MINIMIZABLE OVERLAY)
+       ======================================================================== */
+    #dev-test-panel {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 999;
+      pointer-events: auto;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    #dev-test-panel.minimized {
+      transform: translateY(60px);
+      opacity: 0.2;
+    }
+    .dev-badge {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+    .dev-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .dev-btn:hover { background: #334155; }
+    .dev-btn.primary { background: var(--mdc-blue); border-color: rgba(255, 255, 255, 0.3); }
+    .dev-btn.panic { background: #dc2626; border-color: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <!-- MASTER 1920x1080 CANVAS CONTAINER -->
+  <div id="master-canvas">
+
+    <!-- TEMPORARY RUNTIME MARKER (PHASE G7.3A) -->
+    <div id="g73a-runtime-marker" style="position: absolute; top: 12px; right: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 900; color: #eab308; background: rgba(0,0,0,0.85); border: 1px solid #eab308; padding: 3px 8px; border-radius: 4px; z-index: 9999; pointer-events: none; letter-spacing: 1px;">G7.3A</div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z1: SIGNATURE SCOREBUG (TOP-CENTER)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="sb-wrapper">
+      <div id="sb-brand-line"></div>
+      <div id="sb-shell">
+        <div class="sb-brand-mark">
+          <span class="sb-brand-title">MDC-TV</span>
+          <span class="sb-brand-sport">VOLLEYBALL</span>
+        </div>
+        <!-- HOME TEAM (LEFT) -->
+        <div class="sb-team-cell" id="sb-home-cell">
+          <div id="sb-strip-home" class="sb-color-strip" style="background: #0032A0;"></div>
+          <div class="sb-team-details">
+            <div style="display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%;">
+              <span id="sb-name-home" class="sb-team-name">HOME TEAM</span>
+              <span id="sb-serve-home" class="sb-serve-indicator" title="Serving"></span>
+            </div>
+            <div class="sb-sub-row">
+              <span id="sb-sets-home" class="sb-sets-tag">SETS <strong style="color:#ffffff; font-family:'JetBrains Mono', monospace; margin-left:3px;">0</strong></span>
+              <div class="sb-tmo-cluster">
+                <div id="sb-tmo-h1" class="sb-tmo-pip"></div>
+                <div id="sb-tmo-h2" class="sb-tmo-pip"></div>
+              </div>
+            </div>
+          </div>
+          <div class="sb-score-cell">
+            <div id="sb-pts-flash-home" class="sb-flash-overlay"></div>
+            <div id="sb-pts-home" class="sb-digit-stack">0</div>
+          </div>
+        </div>
+        <!-- MATCH CONTEXT / SET -->
+        <div class="sb-context-pill">
+          <div id="sb-badge-set" class="sb-set-text">SET 1</div>
+        </div>
+        <!-- AWAY TEAM (RIGHT) -->
+        <div class="sb-team-cell" id="sb-away-cell" style="justify-content: flex-end;">
+          <div class="sb-score-cell">
+            <div id="sb-pts-flash-away" class="sb-flash-overlay"></div>
+            <div id="sb-pts-away" class="sb-digit-stack">0</div>
+          </div>
+          <div class="sb-team-details" style="text-align: right; align-items: flex-end;">
+            <div style="display: flex; align-items: center; gap: 8px; justify-content: flex-end; min-width: 0; max-width: 100%;">
+              <span id="sb-serve-away" class="sb-serve-indicator" title="Serving"></span>
+              <span id="sb-name-away" class="sb-team-name">AWAY TEAM</span>
+            </div>
+            <div class="sb-sub-row" style="flex-direction: row-reverse;">
+              <span id="sb-sets-away" class="sb-sets-tag">SETS <strong style="color:#ffffff; font-family:'JetBrains Mono', monospace; margin-left:3px;">0</strong></span>
+              <div class="sb-tmo-cluster">
+                <div id="sb-tmo-a1" class="sb-tmo-pip"></div>
+                <div id="sb-tmo-a2" class="sb-tmo-pip"></div>
+              </div>
+            </div>
+          </div>
+          <div id="sb-strip-away" class="sb-color-strip" style="background: #b91c1c;"></div>
+        </div>
+      </div>
+      <!-- SETS HISTORY DRAWER -->
+      <div id="sb-history-drawer">
+        <span style="color: var(--gold); letter-spacing: 0.5px;">SETS:</span>
+        <div id="sb-history-scores" class="sb-history-scores"></div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z2: NOTIFICATION CAPSULE (TOP-CENTER DROP)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="notif-banner">
+      <div id="notif-capsule" class="notif-capsule setpoint">
+        <div id="notif-headline" class="notif-headline">
+          <span id="notif-icon"><i class="ti ti-trophy"></i></span>
+          <span id="notif-title">SET POINT</span>
+        </div>
+        <span id="notif-sub" class="notif-subtext">HOME TEAM</span>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z3: PLAYER LOWER THIRD (BOTTOM-LEFT SAFE AREA)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="lt-wrapper">
+      <div id="lt-accent-line"></div>
+      <div id="lt-shell">
+        <div class="lt-photo-cell" id="lt-photo-cell" style="display: none; width: 68px; height: 100%; border-right: 1px solid var(--divider); overflow: hidden; background: #0b1120;">
+          <img id="lt-photo" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="document.getElementById('lt-photo-cell').style.display='none'">
+        </div>
+        <div class="lt-jersey-cell" id="lt-jersey-cell">
+          <span class="lt-captain-star" id="lt-captain-star">★</span>
+          <span class="lt-jersey-num" id="lt-number">7</span>
+        </div>
+        <div class="lt-body">
+          <div class="lt-name-row">
+            <span class="lt-player-name" id="lt-name">MARIA SANTOS</span>
+            <span class="lt-pos-pill" id="lt-position">OH</span>
+          </div>
+          <div class="lt-sub-row">
+            <span class="lt-team-label" id="lt-team">MIAMI DADE SHARKS</span>
+            <span style="opacity: 0.4;">•</span>
+            <span class="lt-stats-summary" id="lt-stats">14 KILLS • 3 ACES • 8 DIGS</span>
+          </div>
+        </div>
+        <div class="lt-brand-tag" id="lt-brand-tag">
+          <img id="lt-team-logo" src="" alt="" style="height: 24px; max-width: 32px; object-fit: contain; margin-right: 8px; display: none;" onerror="this.style.display='none'">
+          <span>MDC-TV</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z4: STARTING LINEUP (HERO BOARD, BOTTOM-CENTER SAFE AREA)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="lineup-wrapper">
+      <div id="lineup-accent-line"></div>
+      <div id="lineup-shell">
+        <div class="lineup-header" id="lineup-header">
+          <div class="lineup-brand-identity">
+            <div id="lineup-logo-container" class="lineup-logo-box" style="display: none;">
+              <img id="lineup-team-logo" src="" alt="Team Logo" class="lineup-team-logo-img" onerror="document.getElementById('lineup-logo-container').style.display='none'">
+            </div>
+            <div class="lineup-title-block">
+              <div class="lineup-title-top">
+                <span class="lineup-badge-pill" id="lineup-team-tag">STARTING 6</span>
+              </div>
+              <span class="lineup-team-name-text" id="lineup-team-name">MIAMI DADE SHARKS</span>
+            </div>
+          </div>
+          <div class="lineup-header-meta">
+            <span>HEAD COACH: <strong class="lineup-coach-label" id="lineup-coach">KIKO BENOIT</strong></span>
+            <span style="opacity: 0.3;">|</span>
+            <span style="color: var(--gold); font-family: 'JetBrains Mono', monospace;">MDC-TV LIVE</span>
+          </div>
+        </div>
+        <div class="lineup-grid" id="lineup-grid"></div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z5: PLAYER STATS (CHROMA-SAFE BROADCAST CARD, BOTTOM-LEFT SAFE AREA)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="pstats-wrapper">
+      <div id="pstats-accent-line"></div>
+      <div id="pstats-shell">
+        <div class="pstats-photo-cell" id="pstats-photo-cell" style="display: none;">
+          <img id="pstats-photo" src="" alt="" onerror="document.getElementById('pstats-photo-cell').style.display='none'">
+        </div>
+        <div class="pstats-jersey-cell" id="pstats-jersey-cell">
+          <span class="pstats-captain-star" id="pstats-captain-star">★</span>
+          <span class="pstats-jersey-num" id="pstats-number">7</span>
+        </div>
+        <div class="pstats-body">
+          <div class="pstats-meta-row">
+            <span class="pstats-team-label" id="pstats-team">MIAMI DADE SHARKS</span>
+            <span class="pstats-context-badge">MDC VOLLEYBALL</span>
+          </div>
+          <div class="pstats-name-row">
+            <span class="pstats-player-name" id="pstats-name">MARIA SANTOS</span>
+            <span class="pstats-pos-pill" id="pstats-position">OH</span>
+          </div>
+          <div class="pstats-grid-row" id="pstats-pills-row"></div>
+        </div>
+        <div class="pstats-brand-tag" id="pstats-brand-tag">
+          <img id="pstats-team-logo" src="" alt="" style="height: 22px; max-width: 30px; object-fit: contain; margin-bottom: 4px; display: none;" onerror="this.style.display='none'">
+          <span class="pstats-brand-title">MDC-TV</span>
+          <span class="pstats-brand-sub">LIVE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z6: SET RESULT (CHROMA-SAFE HERO BOARD, CENTER SAFE AREA)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="set-result-wrapper">
+      <div id="set-res-accent-line"></div>
+      <div id="set-res-shell">
+        <div class="set-res-header">
+          <div class="set-res-title">
+            <span class="set-res-badge" id="set-res-badge">FINAL</span>
+            <span id="set-res-title-text">SET 1 RESULT</span>
+          </div>
+          <span style="color: #C5D8FF; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800;">MDC-TV LIVE</span>
+        </div>
+        <div class="set-res-body">
+          <!-- HOME -->
+          <div class="set-res-team-box" style="justify-content: flex-start;">
+            <div class="sb-color-strip" id="set-res-strip-home" style="background: #0032A0; height: 48px;"></div>
+            <div>
+              <div class="set-res-team-name" id="set-res-home-name">MIAMI DADE SHARKS</div>
+            </div>
+            <div class="set-res-score-box winner" id="set-res-home-score">25</div>
+          </div>
+          <div class="set-res-divider">VS</div>
+          <!-- AWAY -->
+          <div class="set-res-team-box" style="justify-content: flex-end;">
+            <div class="set-res-score-box" id="set-res-away-score">23</div>
+            <div style="text-align: right;">
+              <div class="set-res-team-name" id="set-res-away-name">DAYTONA STATE</div>
+            </div>
+            <div class="sb-color-strip" id="set-res-strip-away" style="background: #b91c1c; height: 48px;"></div>
+          </div>
+        </div>
+        <div class="set-res-footer">
+          <span id="set-res-lead-text">MIAMI DADE LEADS MATCH 1–0</span>
+          <span style="color: #e3c46a; font-family: 'JetBrains Mono', monospace;" id="set-res-format-text">BEST OF 5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─────────────────────────────────────────────────────────────────
+         LAYER Z7: MATCH RESULT (CHROMA-SAFE HERO BOARD, CENTER SAFE AREA)
+         ───────────────────────────────────────────────────────────────── -->
+    <div id="match-result-wrapper">
+      <div id="match-res-accent-line"></div>
+      <div id="match-res-shell">
+        <div class="match-res-header">
+          <div class="match-res-title">
+            <span class="set-res-badge">MATCH FINAL</span>
+            <span id="match-res-headline">MIAMI DADE WINS</span>
+          </div>
+          <span style="color: #C5D8FF; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 800;">MDC-TV BROADCAST</span>
+        </div>
+        <div class="match-res-body">
+          <!-- HOME -->
+          <div class="match-res-team" style="justify-content: flex-start;">
+            <div class="sb-color-strip" id="match-res-strip-home" style="background: #0032A0; height: 56px;"></div>
+            <div>
+              <div class="match-res-team-name" id="match-res-home-name">MIAMI DADE SHARKS</div>
+            </div>
+            <div class="match-res-sets-won winner" id="match-res-home-sets">3</div>
+          </div>
+          <div class="set-res-divider" style="font-size: 28px;">-</div>
+          <!-- AWAY -->
+          <div class="match-res-team" style="justify-content: flex-end;">
+            <div class="match-res-sets-won" id="match-res-away-sets">1</div>
+            <div style="text-align: right;">
+              <div class="match-res-team-name" id="match-res-away-name">DAYTONA STATE</div>
+            </div>
+            <div class="sb-color-strip" id="match-res-strip-away" style="background: #b91c1c; height: 56px;"></div>
+          </div>
+        </div>
+        <div class="match-res-history-strip" id="match-res-sets-strip"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─────────────────────────────────────────────────────────────────
+       LAYER Z999: LOCAL DEV TEST PANEL (COLLAPSIBLE / LOCAL SIMULATION ONLY)
+       ───────────────────────────────────────────────────────────────── -->
+  <div id="dev-test-panel" class="minimized">
+    <span class="dev-badge">MASTER DEV</span>
+    <button class="dev-btn primary" onclick="toggleSb()">Scorebug</button>
+    <button class="dev-btn primary" onclick="toggleLt()">Lower Third</button>
+    <button class="dev-btn primary" onclick="toggleLineup()">Lineup</button>
+    <button class="dev-btn primary" onclick="togglePstats()">Player Stats</button>
+    <button class="dev-btn primary" onclick="toggleSetResult()">Set Result</button>
+    <button class="dev-btn primary" onclick="toggleMatchResult()">Match Result</button>
+    <button class="dev-btn" onclick="simScore('home')">Home +1</button>
+    <button class="dev-btn" onclick="simScore('away')">Away +1</button>
+    <button class="dev-btn" onclick="simNotif('SET_POINT', 'HOME TEAM')">Set Pt</button>
+    <button class="dev-btn" onclick="simNotif('MATCH_POINT', 'HOME TEAM')">Match Pt</button>
+    <button class="dev-btn panic" onclick="hideAll()">HIDE ALL</button>
+    <button class="dev-btn" style="opacity: 0.6;" onclick="document.getElementById('dev-test-panel').classList.toggle('minimized')">_</button>
+  </div>
+
+  <!-- OFFLINE PIXEL CORE MODULES -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/rosterModel.js"></script>
+  <script src="../core/motion.js"></script>
+  <script src="../prototypes/dev-roster-data.js"></script>
+
+  <script>
+    'use strict';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPreviewMode = (urlParams.get('mode') === 'preview');
+    const isProgramMode = (urlParams.get('mode') === 'program');
+
+    const { animate, createTimeline, stagger, remove } = window.anime;
+    const MatchCore = window.PixelMatchState;
+    const GraphicsCore = window.PixelGraphicsState;
+    const RosterModel = window.PixelRosterModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    // Viewport auto-scaler for resolution safety
+    function resizeMasterCanvas() {
+      const canvas = document.getElementById('master-canvas');
+      if (!canvas) return;
+      if (isPreviewMode || isProgramMode) {
+        canvas.style.transform = 'none';
+        return;
+      }
+      const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      canvas.style.transform = `scale(${scale})`;
+    }
+    window.addEventListener('resize', resizeMasterCanvas);
+    resizeMasterCanvas();
+
+    // DOM References Cache
+    const D = {
+      // Scorebug
+      sbWrapper: document.getElementById('sb-wrapper'),
+      sbBrandLine: document.getElementById('sb-brand-line'),
+      sbShell: document.getElementById('sb-shell'),
+      sbHomeCell: document.getElementById('sb-home-cell'),
+      sbAwayCell: document.getElementById('sb-away-cell'),
+      sbNameHome: document.getElementById('sb-name-home'),
+      sbNameAway: document.getElementById('sb-name-away'),
+      sbStripHome: document.getElementById('sb-strip-home'),
+      sbStripAway: document.getElementById('sb-strip-away'),
+      sbSetsHome: document.getElementById('sb-sets-home'),
+      sbSetsAway: document.getElementById('sb-sets-away'),
+      sbPtsHome: document.getElementById('sb-pts-home'),
+      sbPtsAway: document.getElementById('sb-pts-away'),
+      sbFlashHome: document.getElementById('sb-pts-flash-home'),
+      sbFlashAway: document.getElementById('sb-pts-flash-away'),
+      sbServeHome: document.getElementById('sb-serve-home'),
+      sbServeAway: document.getElementById('sb-serve-away'),
+      sbTmoH1: document.getElementById('sb-tmo-h1'),
+      sbTmoH2: document.getElementById('sb-tmo-h2'),
+      sbTmoA1: document.getElementById('sb-tmo-a1'),
+      sbTmoA2: document.getElementById('sb-tmo-a2'),
+      sbBadgeSet: document.getElementById('sb-badge-set'),
+      sbHistoryDrawer: document.getElementById('sb-history-drawer'),
+      sbHistoryScores: document.getElementById('sb-history-scores'),
+      // Notifications
+      notifBanner: document.getElementById('notif-banner'),
+      notifCapsule: document.getElementById('notif-capsule'),
+      notifIcon: document.getElementById('notif-icon'),
+      notifTitle: document.getElementById('notif-title'),
+      notifSub: document.getElementById('notif-sub'),
+      // Lower Third
+      ltWrapper: document.getElementById('lt-wrapper'),
+      ltAccentLine: document.getElementById('lt-accent-line'),
+      ltShell: document.getElementById('lt-shell'),
+      ltPhotoCell: document.getElementById('lt-photo-cell'),
+      ltPhoto: document.getElementById('lt-photo'),
+      ltJerseyCell: document.getElementById('lt-jersey-cell'),
+      ltNumber: document.getElementById('lt-number'),
+      ltCaptainStar: document.getElementById('lt-captain-star'),
+      ltName: document.getElementById('lt-name'),
+      ltPosition: document.getElementById('lt-position'),
+      ltTeam: document.getElementById('lt-team'),
+      ltStats: document.getElementById('lt-stats'),
+      ltTeamLogo: document.getElementById('lt-team-logo'),
+      // Lineup
+      lineupWrapper: document.getElementById('lineup-wrapper'),
+      lineupAccentLine: document.getElementById('lineup-accent-line'),
+      lineupShell: document.getElementById('lineup-shell'),
+      lineupHeader: document.getElementById('lineup-header'),
+      lineupTeamName: document.getElementById('lineup-team-name'),
+      lineupTeamLogo: document.getElementById('lineup-team-logo'),
+      lineupCoach: document.getElementById('lineup-coach'),
+      lineupGrid: document.getElementById('lineup-grid'),
+      // Player Stats
+      pstatsWrapper: document.getElementById('pstats-wrapper'),
+      pstatsAccentLine: document.getElementById('pstats-accent-line'),
+      pstatsShell: document.getElementById('pstats-shell'),
+      pstatsPhotoCell: document.getElementById('pstats-photo-cell'),
+      pstatsPhoto: document.getElementById('pstats-photo'),
+      pstatsJerseyCell: document.getElementById('pstats-jersey-cell'),
+      pstatsNumber: document.getElementById('pstats-number'),
+      pstatsCaptainStar: document.getElementById('pstats-captain-star'),
+      pstatsName: document.getElementById('pstats-name'),
+      pstatsPosition: document.getElementById('pstats-position'),
+      pstatsTeam: document.getElementById('pstats-team'),
+      pstatsPillsRow: document.getElementById('pstats-pills-row'),
+      pstatsTeamLogo: document.getElementById('pstats-team-logo'),
+      // Set Result
+      setResWrapper: document.getElementById('set-result-wrapper'),
+      setResAccentLine: document.getElementById('set-res-accent-line'),
+      setResShell: document.getElementById('set-res-shell'),
+      setResTitleText: document.getElementById('set-res-title-text'),
+      setResHomeName: document.getElementById('set-res-home-name'),
+      setResAwayName: document.getElementById('set-res-away-name'),
+      setResHomeScore: document.getElementById('set-res-home-score'),
+      setResAwayScore: document.getElementById('set-res-away-score'),
+      setResStripHome: document.getElementById('set-res-strip-home'),
+      setResStripAway: document.getElementById('set-res-strip-away'),
+      setResLeadText: document.getElementById('set-res-lead-text'),
+      setResFormatText: document.getElementById('set-res-format-text'),
+      // Match Result
+      matchResWrapper: document.getElementById('match-result-wrapper'),
+      matchResAccentLine: document.getElementById('match-res-accent-line'),
+      matchResShell: document.getElementById('match-res-shell'),
+      matchResHeadline: document.getElementById('match-res-headline'),
+      matchResHomeName: document.getElementById('match-res-home-name'),
+      matchResAwayName: document.getElementById('match-res-away-name'),
+      matchResHomeSets: document.getElementById('match-res-home-sets'),
+      matchResAwaySets: document.getElementById('match-res-away-sets'),
+      matchResStripHome: document.getElementById('match-res-strip-home'),
+      matchResStripAway: document.getElementById('match-res-strip-away'),
+      matchResSetsStrip: document.getElementById('match-res-sets-strip')
+    };
+
+    // State Tracking
+    let currentMatchState = null;
+    let isSbVisible = false;
+    let isLtVisible = false;
+    let isLineupVisible = false;
+    let isPstatsVisible = false;
+    let isSetResultVisible = false;
+    let isMatchResultVisible = false;
+
+    let sbTimeline = null;
+    let ltTimeline = null;
+    let lineupTimeline = null;
+    let pstatsTimeline = null;
+    let setResultTimeline = null;
+    let matchResultTimeline = null;
+
+    let notifQueue = [];
+    let notifRunning = false;
+
+    let ltTeamKey = 'home';
+    let ltPlayerIndex = 0;
+    let lineupTeamKey = 'home';
+    let pstatsTeamKey = 'home';
+    let pstatsPlayerIndex = 0;
+    let setResultNumber = 1;
+
+    let rosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+
+    // ========================================================================
+    // 1. SCOREBUG ANIMATIONS (~750ms IN / ~400ms OUT / ~260ms UPDATE)
+    // ========================================================================
+    function playSbIn(onComplete) {
+      if (sbTimeline) sbTimeline.cancel();
+
+      D.sbBrandLine.style.transform = 'scaleX(0)';
+      D.sbBrandLine.style.opacity = '1';
+      D.sbShell.style.opacity = '0';
+      D.sbShell.style.transform = 'translateY(-24px) scale(0.98)';
+      D.sbHomeCell.style.opacity = '0';
+      D.sbHomeCell.style.transform = 'translateX(-30px)';
+      D.sbAwayCell.style.opacity = '0';
+      D.sbAwayCell.style.transform = 'translateX(30px)';
+      D.sbPtsHome.style.opacity = '0';
+      D.sbPtsHome.style.transform = 'scale(0.7)';
+      D.sbPtsAway.style.opacity = '0';
+      D.sbPtsAway.style.transform = 'scale(0.7)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isSbVisible = true;
+          sbTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.sbBrandLine, { scaleX: [0, 1], duration: 320, ease: 'outQuart' }, 0);
+      tl.add(D.sbShell, { opacity: [0, 1], translateY: [-24, 0], scale: [0.98, 1], duration: 460, ease: 'outCubic' }, 100);
+      tl.add(D.sbHomeCell, { opacity: [0, 1], translateX: [-30, 0], duration: 420, ease: 'outBack' }, 200);
+      tl.add(D.sbAwayCell, { opacity: [0, 1], translateX: [30, 0], duration: 420, ease: 'outBack' }, 200);
+      tl.add([D.sbPtsHome, D.sbPtsAway], { opacity: [0, 1], scale: [0.7, 1], duration: 300, ease: 'outBack' }, 350);
+
+      if (currentMatchState && currentMatchState.setsHistory && currentMatchState.setsHistory.length > 0) {
+        tl.add(D.sbHistoryDrawer, { opacity: [0, 1], translateY: [-10, 0], duration: 300, ease: 'outQuad' }, 400);
+      }
+
+      sbTimeline = tl;
+    }
+
+    function playSbOut(onComplete) {
+      if (sbTimeline) sbTimeline.cancel();
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isSbVisible = false;
+          sbTimeline = null;
+          D.sbShell.style.opacity = '0';
+          D.sbHistoryDrawer.style.opacity = '0';
+          D.sbBrandLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.sbHistoryDrawer, { opacity: [1, 0], translateY: [0, -10], duration: 180, ease: 'inQuad' }, 0);
+      tl.add([D.sbPtsHome, D.sbPtsAway, D.sbHomeCell, D.sbAwayCell], { opacity: [1, 0], duration: 220, ease: 'inQuad' }, 50);
+      tl.add(D.sbShell, { opacity: [1, 0], translateY: [0, -20], scale: [1, 0.98], duration: 280, ease: 'inCubic' }, 100);
+      tl.add(D.sbBrandLine, { scaleX: [1, 0], opacity: [1, 0], duration: 240, ease: 'inQuad' }, 150);
+
+      sbTimeline = tl;
+    }
+
+    function animateScoreDigit(element, flashOverlay, newScore) {
+      remove(element);
+      remove(flashOverlay);
+      animate(flashOverlay, { opacity: [0.9, 0], duration: 380, ease: 'outQuad' });
+      animate(element, {
+        translateY: [-16, 0],
+        opacity: [0.3, 1],
+        scale: [1.28, 1],
+        color: ['#fced9a', '#ffffff'],
+        duration: 260,
+        ease: 'outBack',
+        onBegin: () => { element.textContent = newScore; },
+        onComplete: () => { element.style.transform = ''; element.style.color = ''; }
+      });
+    }
+
+    function animateSetBadge(newSetText) {
+      remove(D.sbBadgeSet);
+      animate(D.sbBadgeSet, {
+        scale: [0.85, 1.15, 1],
+        opacity: [0.4, 1],
+        duration: 300,
+        ease: 'outBack',
+        onBegin: () => { D.sbBadgeSet.textContent = newSetText; }
+      });
+    }
+
+    // ========================================================================
+    // 2. NOTIFICATIONS (~450ms IN / ~300ms OUT)
+    // ========================================================================
+    function enqueueNotification(capsuleClass, iconHtml, titleText, subText) {
+      notifQueue.push({ capsuleClass, iconHtml, titleText, subText });
+      if (!notifRunning) drainNotifQueue();
+    }
+
+    function drainNotifQueue() {
+      if (!notifQueue.length) {
+        notifRunning = false;
+        return;
+      }
+      notifRunning = true;
+      const { capsuleClass, iconHtml, titleText, subText } = notifQueue.shift();
+
+      D.notifCapsule.className = `notif-capsule ${capsuleClass}`;
+      D.notifIcon.innerHTML = iconHtml;
+      D.notifTitle.textContent = titleText;
+      D.notifSub.textContent = subText;
+
+      remove(D.notifBanner);
+      const notifTl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          setTimeout(() => {
+            animate(D.notifBanner, {
+              opacity: [1, 0],
+              translateY: [0, -16],
+              duration: 300,
+              ease: 'inQuad',
+              onComplete: () => { setTimeout(drainNotifQueue, 150); }
+            });
+          }, 3800);
+        }
+      });
+      notifTl.add(D.notifBanner, { opacity: [0, 1], translateY: [-16, 0], duration: 450, ease: 'outBack' });
+    }
+
+    function clearSpecialNotifications() {
+      notifQueue = notifQueue.filter(n => n.capsuleClass !== 'setpoint' && n.capsuleClass !== 'matchpoint');
+      if (D.notifCapsule && (D.notifCapsule.classList.contains('setpoint') || D.notifCapsule.classList.contains('matchpoint'))) {
+        remove(D.notifBanner);
+        D.notifBanner.style.opacity = '0';
+        notifRunning = false;
+        setTimeout(drainNotifQueue, 50);
+      }
+    }
+
+    // ========================================================================
+    // 3. PLAYER LOWER THIRD ANIMATIONS (~550ms IN / ~350ms OUT)
+    // ========================================================================
+    function loadPlayerData(teamKey, playerIndex) {
+      const team = rosterState[teamKey] || { players: [] };
+      const players = team.players || [];
+      if (!players.length) return;
+      const p = players[playerIndex % players.length];
+
+      D.ltNumber.textContent = p.jerseyNumber;
+      D.ltName.textContent = p.displayName.toUpperCase();
+      D.ltPosition.textContent = p.position;
+      D.ltTeam.textContent = (team.name || 'MIAMI DADE SHARKS').toUpperCase();
+      D.ltCaptainStar.className = 'lt-captain-star' + (p.captain ? ' active' : '');
+      if (teamKey === 'home') {
+        D.ltJerseyCell.style.background = 'linear-gradient(135deg, #0032A0 0%, #001956 100%)';
+      } else {
+        D.ltJerseyCell.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#b91c1c'} 0%, ${team.colorSecondary || '#7f1d1d'} 100%)`;
+      }
+
+      // Photo Portrait Binding
+      if (p.photo && p.photo.trim()) {
+        D.ltPhoto.src = p.photo.trim();
+        D.ltPhotoCell.style.display = 'block';
+      } else {
+        D.ltPhotoCell.style.display = 'none';
+        D.ltPhoto.src = '';
+      }
+
+      // Team Logo Binding
+      if (team.logo && team.logo.trim()) {
+        D.ltTeamLogo.src = team.logo.trim();
+        D.ltTeamLogo.style.display = 'inline-block';
+      } else {
+        D.ltTeamLogo.style.display = 'none';
+        D.ltTeamLogo.src = '';
+      }
+
+      const statParts = [];
+      if (p.stats && p.stats.kills !== undefined) statParts.push(`${p.stats.kills} KILLS`);
+      if (p.stats && p.stats.assists !== undefined) statParts.push(`${p.stats.assists} AST`);
+      if (p.stats && p.stats.blocks !== undefined) statParts.push(`${p.stats.blocks} BLK`);
+      if (p.stats && p.stats.digs !== undefined) statParts.push(`${p.stats.digs} DIGS`);
+      if (p.stats && p.stats.aces !== undefined) statParts.push(`${p.stats.aces} ACES`);
+      D.ltStats.textContent = statParts.join(' • ') || (p.starter ? 'STARTER' : 'ROSTER');
+    }
+
+    function playLtIn(onComplete) {
+      if (isPstatsVisible) playPstatsOut(); // Lower-third family exclusivity
+      if (isLineupVisible) playLineupOut();
+
+      if (ltTimeline) ltTimeline.cancel();
+
+      D.ltAccentLine.style.transform = 'scaleX(0)';
+      D.ltAccentLine.style.opacity = '1';
+      D.ltShell.style.opacity = '0';
+      D.ltShell.style.transform = 'translateX(-40px) scale(0.96)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isLtVisible = true;
+          ltTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.ltAccentLine, { scaleX: [0, 1], duration: 300, ease: 'outQuart' }, 0);
+      tl.add(D.ltShell, { opacity: [0, 1], translateX: [-40, 0], scale: [0.96, 1], duration: 480, ease: 'outCubic' }, 80);
+      tl.add(D.ltNumber, { scale: [0.7, 1], opacity: [0, 1], duration: 320, ease: 'outBack' }, 200);
+
+      ltTimeline = tl;
+    }
+
+    function playLtOut(onComplete) {
+      if (ltTimeline) ltTimeline.cancel();
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isLtVisible = false;
+          ltTimeline = null;
+          D.ltShell.style.opacity = '0';
+          D.ltAccentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.ltShell, { opacity: [1, 0], translateX: [0, -30], scale: [1, 0.96], duration: 280, ease: 'inCubic' }, 0);
+      tl.add(D.ltAccentLine, { scaleX: [1, 0], opacity: [1, 0], duration: 220, ease: 'inQuad' }, 100);
+
+      ltTimeline = tl;
+    }
+
+    function updateLtPlayerContent() {
+      if (!isLtVisible) {
+        loadPlayerData(ltTeamKey, ltPlayerIndex);
+        return;
+      }
+      animate(D.ltShell, {
+        opacity: [1, 0.3, 1],
+        translateY: [0, -4, 0],
+        duration: 260,
+        ease: 'outBack',
+        onBegin: () => { loadPlayerData(ltTeamKey, ltPlayerIndex); }
+      });
+    }
+
+    // ========================================================================
+    // 4. STARTING LINEUP ANIMATIONS (~750ms HERO IN / ~450ms OUT)
+    // ========================================================================
+    function renderLineupCards(teamKey) {
+      const team = rosterState[teamKey] || { name: 'TEAM', startingLineupIds: [], players: [] };
+      const lineupIds = team.startingLineupIds || [];
+      let lineup = lineupIds.map(id => team.players.find(p => p.id === id)).filter(Boolean);
+      if (!lineup.length && team.players && team.players.length) {
+        lineup = team.players.slice(0, 6);
+      }
+
+      const isHome = (teamKey === 'home');
+      const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#b91c1c');
+      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#7f1d1d');
+      const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#e3c46a');
+      const shellBorderColor = isHome ? '#0047FF' : primaryColor;
+
+      D.lineupTeamName.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
+      D.lineupCoach.textContent = team.coach || 'HEAD COACH';
+      D.lineupHeader.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      D.lineupHeader.style.borderBottom = `2px solid ${accentColor}`;
+      D.lineupShell.style.border = `2px solid ${shellBorderColor}`;
+      D.lineupAccentLine.style.background = accentColor;
+
+      // Team Logo in Dedicated Identity Block
+      const logoBox = document.getElementById('lineup-logo-container');
+      if (team.logo && team.logo.trim()) {
+        D.lineupTeamLogo.src = team.logo.trim();
+        D.lineupTeamLogo.style.display = 'block';
+        if (logoBox) logoBox.style.display = 'flex';
+      } else {
+        D.lineupTeamLogo.style.display = 'none';
+        D.lineupTeamLogo.src = '';
+        if (logoBox) logoBox.style.display = 'none';
+      }
+
+      D.lineupGrid.innerHTML = lineup.slice(0, 6).map((p, idx) => `
+        <div class="lineup-player-card" id="l-card-${idx}" style="border-top: 3px solid ${primaryColor}; border-bottom: 3px solid ${primaryColor};">
+          <span class="lineup-card-captain ${p.captain ? 'active' : ''}" style="color: ${accentColor};">★</span>
+          ${p.photo ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px auto; border: 2px solid ${accentColor};"><img src="${p.photo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+          <div class="lineup-card-num">${p.jerseyNumber}</div>
+          <div class="lineup-card-name">${p.displayName}</div>
+          <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor};">${p.position}</div>
+        </div>
+      `).join('');
+    }
+
+    function playLineupIn(onComplete) {
+      if (isLtVisible) playLtOut();
+      if (isPstatsVisible) playPstatsOut();
+      if (isSetResultVisible) playSetResultOut();
+      if (isMatchResultVisible) playMatchResultOut();
+
+      if (lineupTimeline) lineupTimeline.cancel();
+
+      D.lineupAccentLine.style.transform = 'scaleX(0)';
+      D.lineupAccentLine.style.opacity = '1';
+      D.lineupShell.style.opacity = '0';
+      D.lineupShell.style.transform = 'translateY(40px) scale(0.96)';
+
+      const cards = document.querySelectorAll('.lineup-player-card');
+      cards.forEach(c => { c.style.opacity = '0'; c.style.transform = 'translateY(24px)'; });
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isLineupVisible = true;
+          lineupTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.lineupAccentLine, { scaleX: [0, 1], duration: 350, ease: 'outQuart' }, 0);
+      tl.add(D.lineupShell, { opacity: [0, 1], translateY: [40, 0], scale: [0.96, 1], duration: 520, ease: 'outCubic' }, 100);
+      tl.add(cards, { opacity: [0, 1], translateY: [24, 0], duration: 400, ease: 'outBack', delay: stagger(45) }, 240);
+
+      lineupTimeline = tl;
+    }
+
+    function playLineupOut(onComplete) {
+      if (lineupTimeline) lineupTimeline.cancel();
+      const cards = document.querySelectorAll('.lineup-player-card');
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isLineupVisible = false;
+          lineupTimeline = null;
+          D.lineupShell.style.opacity = '0';
+          D.lineupAccentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(cards, { opacity: [1, 0], translateY: [0, 16], duration: 220, ease: 'inQuad', delay: stagger(25, { from: 'last' }) }, 0);
+      tl.add(D.lineupShell, { opacity: [1, 0], translateY: [0, 30], scale: [1, 0.96], duration: 300, ease: 'inCubic' }, 100);
+      tl.add(D.lineupAccentLine, { scaleX: [1, 0], opacity: [1, 0], duration: 240, ease: 'inQuad' }, 180);
+
+      lineupTimeline = tl;
+    }
+
+    // ========================================================================
+    // 5. PLAYER STATS ANIMATIONS (STANDARD MOTION)
+    // ========================================================================
+    function loadPstatsData(teamKey, playerIndex) {
+      const team = rosterState[teamKey] || { players: [] };
+      const players = team.players || [];
+      if (!players.length) return;
+      const p = players[playerIndex % players.length];
+
+      D.pstatsNumber.textContent = p.jerseyNumber;
+      D.pstatsName.textContent = (p.displayName || p.name || 'PLAYER').toUpperCase();
+      D.pstatsPosition.textContent = p.position || 'OH';
+      D.pstatsTeam.textContent = (team.name || 'MIAMI DADE SHARKS').toUpperCase();
+      D.pstatsCaptainStar.className = 'pstats-captain-star' + (p.captain ? ' active' : '');
+      if (teamKey === 'home') {
+        D.pstatsJerseyCell.style.background = 'linear-gradient(135deg, #0032A0 0%, #001956 100%)';
+      } else {
+        D.pstatsJerseyCell.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#b91c1c'} 0%, ${team.colorSecondary || '#7f1d1d'} 100%)`;
+      }
+
+      if (p.photo && p.photo.trim()) {
+        D.pstatsPhoto.src = p.photo.trim();
+        D.pstatsPhotoCell.style.display = 'block';
+      } else {
+        D.pstatsPhotoCell.style.display = 'none';
+        D.pstatsPhoto.src = '';
+      }
+
+      if (team.logo && team.logo.trim()) {
+        D.pstatsTeamLogo.src = team.logo.trim();
+        D.pstatsTeamLogo.style.display = 'inline-block';
+      } else {
+        D.pstatsTeamLogo.style.display = 'none';
+        D.pstatsTeamLogo.src = '';
+      }
+
+      // Populate Pills (only authoritative fields that exist)
+      const pills = [];
+      if (p.stats) {
+        if (p.stats.kills !== undefined && p.stats.kills !== null) pills.push({ val: p.stats.kills, lbl: 'Kills' });
+        if (p.stats.aces !== undefined && p.stats.aces !== null) pills.push({ val: p.stats.aces, lbl: 'Aces' });
+        if (p.stats.digs !== undefined && p.stats.digs !== null) pills.push({ val: p.stats.digs, lbl: 'Digs' });
+        if (p.stats.blocks !== undefined && p.stats.blocks !== null) pills.push({ val: p.stats.blocks, lbl: 'Blocks' });
+        if (p.stats.assists !== undefined && p.stats.assists !== null) pills.push({ val: p.stats.assists, lbl: 'Assists' });
+        if (p.stats.attackPct !== undefined && p.stats.attackPct !== null) pills.push({ val: p.stats.attackPct, lbl: 'Att %' });
+      }
+
+      if (!pills.length) {
+        pills.push({ val: p.starter ? 'STARTER' : 'ROSTER', lbl: 'Status' });
+      }
+
+      D.pstatsPillsRow.innerHTML = pills.map(item => `
+        <div class="pstat-pill">
+          <span class="pstat-val">${item.val}</span>
+          <span class="pstat-lbl">${item.lbl}</span>
+        </div>
+      `).join('');
+    }
+
+    function playPstatsIn(onComplete) {
+      if (isLtVisible) playLtOut(); // Lower-third exclusivity
+      if (isLineupVisible) playLineupOut();
+
+      if (pstatsTimeline) pstatsTimeline.cancel();
+
+      D.pstatsAccentLine.style.transform = 'scaleX(0)';
+      D.pstatsAccentLine.style.opacity = '1';
+      D.pstatsShell.style.opacity = '0';
+      D.pstatsShell.style.transform = 'translateX(-40px) scale(0.96)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isPstatsVisible = true;
+          pstatsTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.pstatsAccentLine, { scaleX: [0, 1], duration: 320, ease: 'outQuart' }, 0);
+      tl.add(D.pstatsShell, { opacity: [0, 1], translateX: [-40, 0], scale: [0.96, 1], duration: 480, ease: 'outCubic' }, 80);
+      tl.add(D.pstatsNumber, { scale: [0.7, 1], opacity: [0, 1], duration: 300, ease: 'outBack' }, 200);
+
+      pstatsTimeline = tl;
+    }
+
+    function playPstatsOut(onComplete) {
+      if (pstatsTimeline) pstatsTimeline.cancel();
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isPstatsVisible = false;
+          pstatsTimeline = null;
+          D.pstatsShell.style.opacity = '0';
+          D.pstatsAccentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.pstatsShell, { opacity: [1, 0], translateX: [0, -30], scale: [1, 0.96], duration: 280, ease: 'inCubic' }, 0);
+      tl.add(D.pstatsAccentLine, { scaleX: [1, 0], opacity: [1, 0], duration: 220, ease: 'inQuad' }, 100);
+
+      pstatsTimeline = tl;
+    }
+
+    // ========================================================================
+    // 6. SET RESULT ANIMATIONS (HERO/STANDARD MOTION)
+    // ========================================================================
+    function renderSetResult(setNumber) {
+      const history = currentMatchState?.setsHistory || [];
+      const setRecord = history.find(s => s.setNumber === setNumber);
+
+      const hName = currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
+      const aName = currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
+      const hColor = currentMatchState?.teamHome?.color || '#0032A0';
+      const aColor = currentMatchState?.teamAway?.color || '#b91c1c';
+
+      D.setResHomeName.textContent = hName;
+      D.setResAwayName.textContent = aName;
+      D.setResStripHome.style.background = hColor;
+      D.setResStripAway.style.background = aColor;
+      D.setResTitleText.textContent = `SET ${setNumber} FINAL`;
+      D.setResFormatText.textContent = currentMatchState?.matchFormat || 'BEST OF 5';
+
+      if (setRecord) {
+        D.setResHomeScore.textContent = setRecord.homePoints;
+        D.setResAwayScore.textContent = setRecord.awayPoints;
+
+        // Cumulative series lead up to this set
+        const completedSetsUpToThis = history.filter(s => s.setNumber <= setNumber);
+        const homeSetsUpTo = completedSetsUpToThis.filter(s => s.winner === 'home').length;
+        const awaySetsUpTo = completedSetsUpToThis.filter(s => s.winner === 'away').length;
+
+        if (setRecord.winner === 'home') {
+          D.setResHomeScore.className = 'set-res-score-box winner';
+          D.setResAwayScore.className = 'set-res-score-box';
+          if (homeSetsUpTo > awaySetsUpTo) {
+            D.setResLeadText.textContent = `${hName} LEADS ${homeSetsUpTo}–${awaySetsUpTo}`;
+          } else if (homeSetsUpTo === awaySetsUpTo) {
+            D.setResLeadText.textContent = `SERIES TIED ${homeSetsUpTo}–${awaySetsUpTo}`;
+          } else {
+            D.setResLeadText.textContent = `${hName} WON SET ${setNumber}`;
+          }
+        } else {
+          D.setResHomeScore.className = 'set-res-score-box';
+          D.setResAwayScore.className = 'set-res-score-box winner';
+          if (awaySetsUpTo > homeSetsUpTo) {
+            D.setResLeadText.textContent = `${aName} LEADS ${awaySetsUpTo}–${homeSetsUpTo}`;
+          } else if (homeSetsUpTo === awaySetsUpTo) {
+            D.setResLeadText.textContent = `SERIES TIED ${homeSetsUpTo}–${awaySetsUpTo}`;
+          } else {
+            D.setResLeadText.textContent = `${aName} WON SET ${setNumber}`;
+          }
+        }
+      } else {
+        D.setResHomeScore.textContent = '-';
+        D.setResAwayScore.textContent = '-';
+        D.setResHomeScore.className = 'set-res-score-box';
+        D.setResAwayScore.className = 'set-res-score-box';
+        D.setResLeadText.textContent = `SET ${setNumber} NOT COMPLETED`;
+      }
+    }
+
+    function playSetResultIn(onComplete) {
+      if (isLineupVisible) playLineupOut();
+      if (isMatchResultVisible) playMatchResultOut();
+      if (isLtVisible) playLtOut();
+      if (isPstatsVisible) playPstatsOut();
+
+      if (setResultTimeline) setResultTimeline.cancel();
+
+      D.setResAccentLine.style.transform = 'scaleX(0)';
+      D.setResAccentLine.style.opacity = '1';
+      D.setResShell.style.opacity = '0';
+      D.setResShell.style.transform = 'translateY(40px) scale(0.96)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isSetResultVisible = true;
+          setResultTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.setResAccentLine, { scaleX: [0, 1], duration: 320, ease: 'outQuart' }, 0);
+      tl.add(D.setResShell, { opacity: [0, 1], translateY: [40, 0], scale: [0.96, 1], duration: 480, ease: 'outCubic' }, 80);
+
+      setResultTimeline = tl;
+    }
+
+    function playSetResultOut(onComplete) {
+      if (setResultTimeline) setResultTimeline.cancel();
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isSetResultVisible = false;
+          setResultTimeline = null;
+          D.setResShell.style.opacity = '0';
+          D.setResAccentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.setResShell, { opacity: [1, 0], translateY: [0, 30], scale: [1, 0.96], duration: 280, ease: 'inCubic' }, 0);
+      tl.add(D.setResAccentLine, { scaleX: [1, 0], opacity: [1, 0], duration: 220, ease: 'inQuad' }, 80);
+
+      setResultTimeline = tl;
+    }
+
+    // ========================================================================
+    // 7. MATCH RESULT ANIMATIONS (HERO MOTION)
+    // ========================================================================
+    function renderMatchResult() {
+      const hName = currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
+      const aName = currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
+      const hColor = currentMatchState?.teamHome?.color || '#0032A0';
+      const aColor = currentMatchState?.teamAway?.color || '#b91c1c';
+      const hSets = currentMatchState?.teamHome?.setsWon ?? 0;
+      const aSets = currentMatchState?.teamAway?.setsWon ?? 0;
+      const history = currentMatchState?.setsHistory || [];
+      const isFinished = (currentMatchState?.matchStatus === 'FINISHED');
+
+      D.matchResHomeName.textContent = hName;
+      D.matchResAwayName.textContent = aName;
+      D.matchResStripHome.style.background = hColor;
+      D.matchResStripAway.style.background = aColor;
+      D.matchResHomeSets.textContent = hSets;
+      D.matchResAwaySets.textContent = aSets;
+
+      if (isFinished) {
+        if (hSets > aSets) {
+          D.matchResHeadline.textContent = `${hName} WINS MATCH`;
+          D.matchResHomeSets.className = 'match-res-sets-won winner';
+          D.matchResAwaySets.className = 'match-res-sets-won';
+        } else if (aSets > hSets) {
+          D.matchResHeadline.textContent = `${aName} WINS MATCH`;
+          D.matchResHomeSets.className = 'match-res-sets-won';
+          D.matchResAwaySets.className = 'match-res-sets-won winner';
+        } else {
+          D.matchResHeadline.textContent = `MATCH FINAL`;
+          D.matchResHomeSets.className = 'match-res-sets-won';
+          D.matchResAwaySets.className = 'match-res-sets-won';
+        }
+      } else {
+        D.matchResHeadline.textContent = `MATCH IN PROGRESS (NOT FINAL)`;
+        D.matchResHomeSets.className = 'match-res-sets-won';
+        D.matchResAwaySets.className = 'match-res-sets-won';
+      }
+
+      // Sets history breakdown
+      if (history.length) {
+        D.matchResSetsStrip.innerHTML = history.map(s => `
+          <div class="match-res-set-chip">
+            <span class="match-res-set-num">SET ${s.setNumber}:</span>
+            <span class="match-res-set-score">${s.homePoints} – ${s.awayPoints}</span>
+          </div>
+        `).join('');
+      } else {
+        D.matchResSetsStrip.innerHTML = `<span style="font-size:12px; color:#C5D8FF; font-family:'JetBrains Mono', monospace;">SETS: ${hSets} - ${aSets}</span>`;
+      }
+    }
+
+    function playMatchResultIn(onComplete) {
+      if (isLineupVisible) playLineupOut();
+      if (isSetResultVisible) playSetResultOut();
+      if (isLtVisible) playLtOut();
+      if (isPstatsVisible) playPstatsOut();
+
+      if (matchResultTimeline) matchResultTimeline.cancel();
+
+      D.matchResAccentLine.style.transform = 'scaleX(0)';
+      D.matchResAccentLine.style.opacity = '1';
+      D.matchResShell.style.opacity = '0';
+      D.matchResShell.style.transform = 'translateY(40px) scale(0.96)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isMatchResultVisible = true;
+          matchResultTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.matchResAccentLine, { scaleX: [0, 1], duration: 350, ease: 'outQuart' }, 0);
+      tl.add(D.matchResShell, { opacity: [0, 1], translateY: [40, 0], scale: [0.96, 1], duration: 520, ease: 'outCubic' }, 100);
+
+      matchResultTimeline = tl;
+    }
+
+    function playMatchResultOut(onComplete) {
+      if (matchResultTimeline) matchResultTimeline.cancel();
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isMatchResultVisible = false;
+          matchResultTimeline = null;
+          D.matchResShell.style.opacity = '0';
+          D.matchResAccentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      tl.add(D.matchResShell, { opacity: [1, 0], translateY: [0, 30], scale: [1, 0.96], duration: 300, ease: 'inCubic' }, 0);
+      tl.add(D.matchResAccentLine, { scaleX: [1, 0], opacity: [1, 0], duration: 240, ease: 'inQuad' }, 100);
+
+      matchResultTimeline = tl;
+    }
+
+    // ========================================================================
+    // 8. LIVE SPORT STATE CONSUMER (Pure Renderer)
+    // ========================================================================
+    function renderMatchState(rawState) {
+      if (!rawState) return;
+      const state = MatchCore.normalizeMatchState(rawState);
+      const isInitial = (currentMatchState === null);
+
+      // Names & Colors
+      D.sbNameHome.textContent = state.teamHome.name;
+      D.sbNameAway.textContent = state.teamAway.name;
+      D.sbStripHome.style.background = state.teamHome.color;
+      D.sbStripAway.style.background = state.teamAway.color;
+
+      D.sbSetsHome.innerHTML = `SETS <strong style="color:#ffffff; font-family:'JetBrains Mono', monospace; margin-left:3px;">${state.teamHome.setsWon || 0}</strong>`;
+      D.sbSetsAway.innerHTML = `SETS <strong style="color:#ffffff; font-family:'JetBrains Mono', monospace; margin-left:3px;">${state.teamAway.setsWon || 0}</strong>`;
+
+      // Sets Won Win Confirmation Animation
+      if (!isInitial && currentMatchState) {
+        if (state.teamHome.setsWon > currentMatchState.teamHome.setsWon) {
+          animate(D.sbSetsHome, {
+            scale: [1, 1.25, 1],
+            backgroundColor: ['rgba(34, 197, 94, 0.45)', 'rgba(255, 255, 255, 0.08)'],
+            borderColor: ['#4ade80', 'rgba(255, 255, 255, 0.12)'],
+            duration: 450,
+            ease: 'outBack'
+          });
+        }
+        if (state.teamAway.setsWon > currentMatchState.teamAway.setsWon) {
+          animate(D.sbSetsAway, {
+            scale: [1, 1.25, 1],
+            backgroundColor: ['rgba(34, 197, 94, 0.45)', 'rgba(255, 255, 255, 0.08)'],
+            borderColor: ['#4ade80', 'rgba(255, 255, 255, 0.12)'],
+            duration: 450,
+            ease: 'outBack'
+          });
+        }
+      }
+
+      // Points
+      if (!isInitial && isSbVisible) {
+        if (state.teamHome.currentPoints !== currentMatchState.teamHome.currentPoints) {
+          animateScoreDigit(D.sbPtsHome, D.sbFlashHome, state.teamHome.currentPoints);
+        }
+        if (state.teamAway.currentPoints !== currentMatchState.teamAway.currentPoints) {
+          animateScoreDigit(D.sbPtsAway, D.sbFlashAway, state.teamAway.currentPoints);
+        }
+      } else {
+        D.sbPtsHome.textContent = state.teamHome.currentPoints;
+        D.sbPtsAway.textContent = state.teamAway.currentPoints;
+      }
+
+      // Sets
+      const setLabel = state.matchStatus === 'FINISHED' ? 'FINAL' : `SET ${state.currentSet}`;
+      if (!isInitial && currentMatchState && currentMatchState.currentSet !== state.currentSet) {
+        animateSetBadge(setLabel);
+      } else {
+        D.sbBadgeSet.textContent = setLabel;
+      }
+
+      // Serve Indicator
+      if (state.servingTeam === 'home') {
+        D.sbServeHome.classList.add('active');
+        D.sbServeAway.classList.remove('active');
+      } else if (state.servingTeam === 'away') {
+        D.sbServeAway.classList.add('active');
+        D.sbServeHome.classList.remove('active');
+      } else {
+        D.sbServeHome.classList.remove('active');
+        D.sbServeAway.classList.remove('active');
+      }
+
+      // Timeouts
+      D.sbTmoH1.className = 'sb-tmo-pip' + (state.teamHome.timeouts >= 1 ? ' used' : '');
+      D.sbTmoH2.className = 'sb-tmo-pip' + (state.teamHome.timeouts >= 2 ? ' used' : '');
+      D.sbTmoA1.className = 'sb-tmo-pip' + (state.teamAway.timeouts >= 1 ? ' used' : '');
+      D.sbTmoA2.className = 'sb-tmo-pip' + (state.teamAway.timeouts >= 2 ? ' used' : '');
+
+      // History
+      if (state.setsHistory && state.setsHistory.length > 0) {
+        D.sbHistoryScores.innerHTML = state.setsHistory.map(s => 
+          `<span style="color:var(--txt-muted)">S${s.setNumber}:</span> <strong>${s.homePoints}-${s.awayPoints}</strong>`
+        ).join('<span style="color:var(--divider); margin: 0 4px;">|</span>');
+      }
+
+      // Special triggers (Set/Match Point & Timeouts)
+      if (!isInitial && currentMatchState) {
+        if (currentMatchState.currentSet !== state.currentSet || state.matchStatus === 'FINISHED') {
+          clearSpecialNotifications();
+        }
+
+        if (state.teamHome.timeouts > currentMatchState.teamHome.timeouts) {
+          enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', 'TIMEOUT', state.teamHome.name);
+        }
+        if (state.teamAway.timeouts > currentMatchState.teamAway.timeouts) {
+          enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', 'TIMEOUT', state.teamAway.name);
+        }
+        const special = MatchCore.evaluateSpecialPoint(state);
+        if (special) {
+          const ptsChanged = (special.team === 'home' && state.teamHome.currentPoints !== currentMatchState.teamHome.currentPoints) ||
+                             (special.team === 'away' && state.teamAway.currentPoints !== currentMatchState.teamAway.currentPoints);
+          if (ptsChanged) {
+            const isMatch = (special.type === 'MATCH_POINT');
+            enqueueNotification(
+              isMatch ? 'matchpoint' : 'setpoint',
+              '<i class="ti ti-trophy"></i>',
+              isMatch ? 'MATCH POINT' : 'SET POINT',
+              special.teamName
+            );
+          }
+        } else {
+          clearSpecialNotifications();
+
+          // Trigger SET WON on the exact winning transition
+          const setJustWon = typeof MatchCore.isSetWon === 'function' ? MatchCore.isSetWon(state) : false;
+          const wasSetWon = typeof MatchCore.isSetWon === 'function' ? MatchCore.isSetWon(currentMatchState) : false;
+          if (setJustWon && !wasSetWon) {
+            const hPts = state.teamHome.currentPoints;
+            const aPts = state.teamAway.currentPoints;
+            const winnerName = hPts > aPts ? state.teamHome.name : state.teamAway.name;
+            const setsWon = hPts > aPts ? state.teamHome.setsWon : state.teamAway.setsWon;
+            const setsToWin = state.matchFormat === 'BEST_OF_3' ? 2 : 3;
+            const isMatchWon = (setsWon + 1 >= setsToWin);
+            enqueueNotification(
+              'setwon',
+              '<i class="ti ti-trophy"></i>',
+              isMatchWon ? 'MATCH WON' : 'SET WON',
+              winnerName
+            );
+          }
+        }
+      }
+
+      currentMatchState = JSON.parse(JSON.stringify(state));
+
+      // Sync sub-graphics if visible
+      if (isSetResultVisible) renderSetResult(setResultNumber);
+      if (isMatchResultVisible) renderMatchResult();
+    }
+
+    // ========================================================================
+    // 9. LIVE GRAPHICS PRESENTATION STATE CONSUMER
+    // ========================================================================
+    function handleGraphicsState(rawState) {
+      if (!rawState) return;
+      const gState = GraphicsCore.normalizeGraphicsState(rawState);
+
+      // --- DETERMINISTIC STATIC PREVIEW MODE ---
+      if (isPreviewMode) {
+        if (sbTimeline) { sbTimeline.cancel(); sbTimeline = null; }
+        if (ltTimeline) { ltTimeline.cancel(); ltTimeline = null; }
+        if (lineupTimeline) { lineupTimeline.cancel(); lineupTimeline = null; }
+        if (pstatsTimeline) { pstatsTimeline.cancel(); pstatsTimeline = null; }
+        if (setResultTimeline) { setResultTimeline.cancel(); setResultTimeline = null; }
+        if (matchResultTimeline) { matchResultTimeline.cancel(); matchResultTimeline = null; }
+
+        D.sbShell.style.opacity = '0';
+        D.sbBrandLine.style.opacity = '0';
+        D.sbHistoryDrawer.style.opacity = '0';
+
+        D.ltShell.style.opacity = '0';
+        D.ltAccentLine.style.opacity = '0';
+
+        D.pstatsShell.style.opacity = '0';
+        D.pstatsAccentLine.style.opacity = '0';
+
+        D.lineupShell.style.opacity = '0';
+        D.lineupAccentLine.style.opacity = '0';
+
+        D.setResShell.style.opacity = '0';
+        D.setResAccentLine.style.opacity = '0';
+
+        D.matchResShell.style.opacity = '0';
+        D.matchResAccentLine.style.opacity = '0';
+
+        const prep = gState.preparedGraphic;
+
+        if (prep === 'PLAYER_LOWER_THIRD') {
+          const prepData = gState.prepared?.playerLowerThird || { team: 'home', playerIndex: 0 };
+          ltTeamKey = prepData.team || 'home';
+          ltPlayerIndex = Number(prepData.playerIndex) || 0;
+          loadPlayerData(ltTeamKey, ltPlayerIndex);
+
+          D.ltShell.style.opacity = '1';
+          D.ltShell.style.transform = 'none';
+          D.ltAccentLine.style.opacity = '1';
+          D.ltAccentLine.style.transform = 'none';
+          D.ltNumber.style.opacity = '1';
+          D.ltNumber.style.transform = 'none';
+        } else if (prep === 'PLAYER_STATS') {
+          const prepData = gState.prepared?.playerStats || { team: 'home', playerIndex: 0 };
+          pstatsTeamKey = prepData.team || 'home';
+          pstatsPlayerIndex = Number(prepData.playerIndex) || 0;
+          loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
+
+          D.pstatsShell.style.opacity = '1';
+          D.pstatsShell.style.transform = 'none';
+          D.pstatsAccentLine.style.opacity = '1';
+          D.pstatsAccentLine.style.transform = 'none';
+          D.pstatsNumber.style.opacity = '1';
+          D.pstatsNumber.style.transform = 'none';
+        } else if (prep === 'STARTING_LINEUP') {
+          const prepData = gState.prepared?.startingLineup || { team: 'home' };
+          lineupTeamKey = prepData.team || 'home';
+          renderLineupCards(lineupTeamKey);
+
+          D.lineupShell.style.opacity = '1';
+          D.lineupShell.style.transform = 'none';
+          D.lineupAccentLine.style.opacity = '1';
+          D.lineupAccentLine.style.transform = 'none';
+          D.lineupGrid.querySelectorAll('.lineup-player-card').forEach(c => {
+            c.style.opacity = '1';
+            c.style.transform = 'none';
+          });
+        } else if (prep === 'SET_RESULT') {
+          const prepData = gState.prepared?.setResult || { setNumber: 1 };
+          setResultNumber = Number(prepData.setNumber) || 1;
+          renderSetResult(setResultNumber);
+
+          D.setResShell.style.opacity = '1';
+          D.setResShell.style.transform = 'none';
+          D.setResAccentLine.style.opacity = '1';
+          D.setResAccentLine.style.transform = 'none';
+        } else if (prep === 'MATCH_RESULT') {
+          renderMatchResult();
+
+          D.matchResShell.style.opacity = '1';
+          D.matchResShell.style.transform = 'none';
+          D.matchResAccentLine.style.opacity = '1';
+          D.matchResAccentLine.style.transform = 'none';
+        } else if (prep === 'SCOREBUG') {
+          D.sbShell.style.opacity = '1';
+          D.sbShell.style.transform = 'none';
+          D.sbBrandLine.style.opacity = '1';
+          D.sbBrandLine.style.transform = 'none';
+          D.sbHomeCell.style.opacity = '1';
+          D.sbHomeCell.style.transform = 'none';
+          D.sbAwayCell.style.opacity = '1';
+          D.sbAwayCell.style.transform = 'none';
+          D.sbPtsHome.style.opacity = '1';
+          D.sbPtsHome.style.transform = 'none';
+          D.sbPtsAway.style.opacity = '1';
+          D.sbPtsAway.style.transform = 'none';
+          if (currentMatchState?.setsHistory?.length) {
+            D.sbHistoryDrawer.style.opacity = '1';
+            D.sbHistoryDrawer.style.transform = 'none';
+          }
+        }
+        return;
+      }
+
+      // 1. Prepared Player Lower Third
+      if (gState.prepared && gState.prepared.playerLowerThird) {
+        const prep = gState.prepared.playerLowerThird;
+        const newTeam = prep.team || 'home';
+        const newIdx = Number(prep.playerIndex) || 0;
+        if (newTeam !== ltTeamKey || newIdx !== ltPlayerIndex) {
+          ltTeamKey = newTeam;
+          ltPlayerIndex = newIdx;
+          updateLtPlayerContent();
+        }
+      }
+
+      // 2. Prepared Starting Lineup
+      if (gState.prepared && gState.prepared.startingLineup) {
+        const prep = gState.prepared.startingLineup;
+        const newTeam = prep.team || 'home';
+        if (newTeam !== lineupTeamKey) {
+          lineupTeamKey = newTeam;
+          renderLineupCards(lineupTeamKey);
+        }
+      }
+
+      // 3. Prepared Player Stats
+      if (gState.prepared && gState.prepared.playerStats) {
+        const prep = gState.prepared.playerStats;
+        const newTeam = prep.team || 'home';
+        const newIdx = Number(prep.playerIndex) || 0;
+        pstatsTeamKey = newTeam;
+        pstatsPlayerIndex = newIdx;
+        loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
+      }
+
+      // 4. Prepared Set Result
+      if (gState.prepared && gState.prepared.setResult) {
+        const prep = gState.prepared.setResult;
+        setResultNumber = Number(prep.setNumber) || 1;
+        renderSetResult(setResultNumber);
+      }
+
+      // 5. Prepared Match Result
+      if (gState.prepared && gState.prepared.matchResult) {
+        renderMatchResult();
+      }
+
+      // 6. Multi-Layer Visibility Controls
+      if (gState.visibility) {
+        // Scorebug
+        if (gState.visibility.scorebug !== undefined) {
+          const targetSb = Boolean(gState.visibility.scorebug);
+          if (targetSb !== isSbVisible) {
+            if (targetSb) playSbIn();
+            else playSbOut();
+          }
+        }
+
+        // Lower Third
+        if (gState.visibility.playerLowerThird !== undefined) {
+          const targetLt = Boolean(gState.visibility.playerLowerThird);
+          if (targetLt !== isLtVisible) {
+            if (targetLt) playLtIn();
+            else playLtOut();
+          }
+        }
+
+        // Player Stats
+        if (gState.visibility.playerStats !== undefined) {
+          const targetPstats = Boolean(gState.visibility.playerStats);
+          if (targetPstats !== isPstatsVisible) {
+            if (targetPstats) playPstatsIn();
+            else playPstatsOut();
+          }
+        }
+
+        // Starting Lineup
+        if (gState.visibility.startingLineup !== undefined) {
+          const targetLineup = Boolean(gState.visibility.startingLineup);
+          if (targetLineup !== isLineupVisible) {
+            if (targetLineup) playLineupIn();
+            else playLineupOut();
+          }
+        }
+
+        // Set Result
+        if (gState.visibility.setResult !== undefined) {
+          const targetSetRes = Boolean(gState.visibility.setResult);
+          if (targetSetRes !== isSetResultVisible) {
+            if (targetSetRes) playSetResultIn();
+            else playSetResultOut();
+          }
+        }
+
+        // Match Result
+        if (gState.visibility.matchResult !== undefined) {
+          const targetMatchRes = Boolean(gState.visibility.matchResult);
+          if (targetMatchRes !== isMatchResultVisible) {
+            if (targetMatchRes) playMatchResultIn();
+            else playMatchResultOut();
+          }
+        }
+      }
+    }
+
+    // ========================================================================
+    // 10. DEV TEST HELPERS (Local Visual Simulation Only)
+    // ========================================================================
+    function toggleSb() { if (isSbVisible) playSbOut(); else playSbIn(); }
+    function toggleLt() { if (isLtVisible) playLtOut(); else playLtIn(); }
+    function toggleLineup() { if (isLineupVisible) playLineupOut(); else playLineupIn(); }
+    function togglePstats() { if (isPstatsVisible) playPstatsOut(); else playPstatsIn(); }
+    function toggleSetResult() { if (isSetResultVisible) playSetResultOut(); else playSetResultIn(); }
+    function toggleMatchResult() { if (isMatchResultVisible) playMatchResultOut(); else playMatchResultIn(); }
+    function hideAll() {
+      if (isSbVisible) playSbOut();
+      if (isLtVisible) playLtOut();
+      if (isLineupVisible) playLineupOut();
+      if (isPstatsVisible) playPstatsOut();
+      if (isSetResultVisible) playSetResultOut();
+      if (isMatchResultVisible) playMatchResultOut();
+    }
+    function simScore(team) {
+      if (!currentMatchState) currentMatchState = MatchCore.createDefaultMatchState();
+      const mock = JSON.parse(JSON.stringify(currentMatchState));
+      if (team === 'home') mock.teamHome.currentPoints++;
+      else mock.teamAway.currentPoints++;
+      mock.servingTeam = team;
+      renderMatchState(mock);
+    }
+    function simNotif(type, teamName) {
+      enqueueNotification(
+        type === 'MATCH_POINT' ? 'matchpoint' : 'setpoint',
+        '<i class="ti ti-trophy"></i>',
+        type === 'MATCH_POINT' ? 'MATCH POINT' : 'SET POINT',
+        teamName
+      );
+    }
+
+    // ========================================================================
+    // 11. INITIALIZATION & TRANSPORT BINDINGS
+    // ========================================================================
+    function init() {
+      if (isPreviewMode || isProgramMode) {
+        const devPanel = document.getElementById('dev-test-panel');
+        if (devPanel) devPanel.style.display = 'none';
+      }
+
+      loadPlayerData('home', 0);
+      loadPstatsData('home', 0);
+      renderLineupCards('home');
+      renderSetResult(1);
+      renderMatchResult();
+
+      // 1. Initial Match State Fallback
+      try {
+        const rawMatch = localStorage.getItem(MatchCore.STORAGE_KEY);
+        if (rawMatch) renderMatchState(JSON.parse(rawMatch));
+        else renderMatchState(MatchCore.createDefaultMatchState());
+      } catch (e) {
+        renderMatchState(MatchCore.createDefaultMatchState());
+      }
+
+      // 2. Initial Graphics State Fallback
+      try {
+        const rawGfx = localStorage.getItem(GraphicsCore.STORAGE_KEY);
+        if (rawGfx) handleGraphicsState(JSON.parse(rawGfx));
+      } catch (e) {}
+
+      // 3. Match State BroadcastChannel Listener
+      try {
+        const matchChannel = new BroadcastChannel(MatchCore.LIVE_CHANNEL_NAME);
+        matchChannel.onmessage = (event) => {
+          if (event.data && event.data.type === 'STATE_UPDATE' && event.data.state) {
+            renderMatchState(event.data.state);
+          }
+        };
+      } catch (e) { console.warn('Match BroadcastChannel fallback', e); }
+
+      // 4. Graphics State BroadcastChannel Listener
+      try {
+        const gfxChannel = new BroadcastChannel(GraphicsCore.CHANNEL_NAME);
+        gfxChannel.onmessage = (event) => {
+          if (event.data && event.data.state) {
+            handleGraphicsState(event.data.state);
+          }
+        };
+      } catch (e) { console.warn('Graphics BroadcastChannel fallback', e); }
+
+      // 5. Roster State BroadcastChannel Listener (Phase G5.5)
+      try {
+        const rosterChannel = new BroadcastChannel(RosterModel.CHANNEL_NAME);
+        rosterChannel.onmessage = (event) => {
+          if (event.data && event.data.roster) {
+            rosterState = event.data.roster;
+            if (!isLtVisible) loadPlayerData(ltTeamKey, ltPlayerIndex);
+            if (!isPstatsVisible) loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
+            if (!isLineupVisible) renderLineupCards(lineupTeamKey);
+          }
+        };
+      } catch (e) {}
+
+      // 6. Window Storage Listener Fallback
+      window.addEventListener('storage', (e) => {
+        if (e.key === MatchCore.STORAGE_KEY && e.newValue) {
+          try { renderMatchState(JSON.parse(e.newValue)); } catch (err) {}
+        }
+        if (e.key === GraphicsCore.STORAGE_KEY && e.newValue) {
+          try { handleGraphicsState(JSON.parse(e.newValue)); } catch (err) {}
+        }
+        if (e.key === RosterModel.STORAGE_KEY && e.newValue) {
+          try {
+            rosterState = JSON.parse(e.newValue);
+            if (!isLtVisible) loadPlayerData(ltTeamKey, ltPlayerIndex);
+            if (!isPstatsVisible) loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
+            if (!isLineupVisible) renderLineupCards(lineupTeamKey);
+          } catch (err) {}
+        }
+      });
+
+      // 7. Cross-Process Production Bridge SSE Stream (Phase G6.3)
+      function connectBridgeSSE() {
+        try {
+          const es = new EventSource('http://127.0.0.1:3000/graphics/events');
+          es.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              if (data && data.state) {
+                if (data.state.match) renderMatchState(data.state.match);
+                if (data.state.roster) {
+                  rosterState = data.state.roster;
+                  if (!isLtVisible) loadPlayerData(ltTeamKey, ltPlayerIndex);
+                  if (!isPstatsVisible) loadPstatsData(pstatsTeamKey, pstatsPlayerIndex);
+                  if (!isLineupVisible) renderLineupCards(lineupTeamKey);
+                }
+                if (data.state.graphics) handleGraphicsState(data.state.graphics);
+              }
+            } catch (err) {}
+          };
+          es.onerror = () => {
+            es.close();
+            setTimeout(connectBridgeSSE, 3000);
+          };
+        } catch (e) {
+          setTimeout(connectBridgeSSE, 3000);
+        }
+      }
+      connectBridgeSSE();
+
+      // Initial Fetch from Bridge
+      try {
+        fetch('http://127.0.0.1:3000/graphics/state')
+          .then(r => r.json())
+          .then(data => {
+            if (data.match) renderMatchState(data.match);
+            if (data.roster) rosterState = data.roster;
+            if (data.graphics) handleGraphicsState(data.graphics);
+          })
+          .catch(() => {});
+      } catch (e) {}
+    }
+
+    init();
+  </script>
+</body>
+</html>

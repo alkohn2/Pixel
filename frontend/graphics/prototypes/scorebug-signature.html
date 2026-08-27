@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Signature Volleyball Scorebug (Phase G2.5)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --canvas-w: 1920px;
+      --canvas-h: 1080px;
+      --mdc-blue: #0032A0;
+      --mdc-blue-dark: #001f66;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --gold-deep: #b8973a;
+      --gold-grad: linear-gradient(90deg, #b8973a 0%, #fced9a 50%, #b8973a 100%);
+      --bg-dark: rgba(9, 12, 18, 0.96);
+      --bg-surface: linear-gradient(180deg, rgba(22, 28, 42, 0.98) 0%, rgba(11, 15, 24, 0.98) 100%);
+      --card-border: 1px solid rgba(255, 255, 255, 0.14);
+      --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.4);
+      --txt-white: #ffffff;
+      --txt-muted: rgba(255, 255, 255, 0.65);
+      --txt-faint: rgba(255, 255, 255, 0.35);
+      --divider: rgba(255, 255, 255, 0.08);
+      --live-red: #e23b2e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      width: var(--canvas-w);
+      height: var(--canvas-h);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 36px;
+      user-select: none;
+    }
+
+    /* ── BROADCAST CONTAINER ── */
+    #scorebug-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      perspective: 1000px;
+    }
+
+    /* ── TOP ACCENT BRAND LINE ── */
+    #brand-sweep-line {
+      position: absolute;
+      top: -2px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--gold-grad);
+      border-radius: 2px;
+      z-index: 20;
+      box-shadow: 0 0 12px rgba(227, 196, 106, 0.6);
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      will-change: transform, opacity;
+    }
+
+    /* ── MAIN SCOREBUG SHELL ── */
+    #scorebug-shell {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 68px;
+      background: var(--bg-surface);
+      border: var(--card-border);
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-20px);
+      will-change: transform, opacity, clip-path;
+    }
+
+    /* ── BRAND MARK ── */
+    .brand-mark {
+      background: linear-gradient(135deg, var(--mdc-blue) 0%, var(--mdc-blue-dark) 100%);
+      color: var(--txt-white);
+      padding: 0 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--divider);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .brand-mark::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 12px;
+      bottom: 12px;
+      width: 1px;
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .brand-title {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .brand-sport {
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    /* ── TEAM SECTIONS ── */
+    .team-cell {
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 14px;
+      min-width: 250px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .team-color-strip {
+      width: 5px;
+      height: 38px;
+      border-radius: 2px;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      transition: background 0.3s ease;
+    }
+
+    .team-details {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .team-name {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--txt-white);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .team-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .sets-won-tag {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--txt-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* Timeout Indicators */
+    .tmo-cluster {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tmo-pip {
+      width: 6px;
+      height: 6px;
+      border-radius: 1px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tmo-pip.used {
+      background: var(--gold);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 6px rgba(227, 196, 106, 0.7);
+    }
+
+    /* Serving Indicator */
+    .serve-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0;
+      transform: scale(0.8);
+      color: var(--gold);
+      font-size: 13px;
+      will-change: transform, opacity;
+    }
+    .serve-indicator.active {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ── NUMERIC SCORE ROLLER BOX ── */
+    .score-roller-cell {
+      position: relative;
+      width: 56px;
+      height: 48px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .digit-stack {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 34px;
+      font-weight: 900;
+      color: var(--txt-white);
+      will-change: transform, opacity;
+    }
+
+    .digit-flash-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle, rgba(240, 217, 138, 0.35) 0%, transparent 70%);
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 4px;
+      will-change: opacity;
+    }
+
+    /* ── MATCH CONTEXT / SET PILL ── */
+    .match-context-pill {
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 1px solid var(--divider);
+      border-right: 1px solid var(--divider);
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-width: 90px;
+    }
+
+    .set-display-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      background: rgba(227, 196, 106, 0.12);
+      border: 1px solid rgba(227, 196, 106, 0.25);
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* ── SETS HISTORY DRAWER BAR ── */
+    #history-drawer {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 5px 20px;
+      height: 28px;
+      background: rgba(14, 18, 28, 0.95);
+      border: var(--card-border);
+      border-top: none;
+      border-bottom-left-radius: 6px;
+      border-bottom-right-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--txt-muted);
+      opacity: 0;
+      transform: translateY(-10px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      will-change: transform, opacity;
+    }
+
+    .history-scores-list {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--txt-white);
+    }
+
+    /* ── SIGNATURE NOTIFICATION BANNER ── */
+    #notification-banner {
+      position: absolute;
+      top: 112px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+      z-index: 50;
+      will-change: transform, opacity;
+    }
+
+    .notif-capsule {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 24px;
+      border-radius: 24px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .notif-capsule::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .notif-capsule.setpoint {
+      background: linear-gradient(135deg, #a17c24 0%, #634a0f 100%);
+      border: 1px solid #f0d98a;
+      color: #ffffff;
+    }
+
+    .notif-capsule.matchpoint {
+      background: linear-gradient(135deg, #c52216 0%, #7a1008 100%);
+      border: 1px solid #ff9994;
+      color: #ffffff;
+    }
+
+    .notif-capsule.timeout {
+      background: linear-gradient(135deg, #0369a1 0%, #0c4a6e 100%);
+      border: 1px solid #7dd3fc;
+      color: #ffffff;
+    }
+
+    .notif-headline {
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .notif-subtext {
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.9;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── DEV TEST CONTROLS (Floating Overlay) ── */
+    #dev-test-panel {
+      position: fixed;
+      bottom: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 999;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #dev-test-panel.minimized {
+      transform: translateY(60px);
+      opacity: 0.2;
+    }
+
+    .dev-badge {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+
+    .dev-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .dev-btn:hover {
+      background: #334155;
+    }
+    .dev-btn.primary {
+      background: var(--mdc-blue);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCOREBUG SYSTEM -->
+  <div id="scorebug-wrapper">
+
+    <!-- TOP ACCENT LINE -->
+    <div id="brand-sweep-line"></div>
+
+    <!-- MAIN SCOREBUG SHELL -->
+    <div id="scorebug-shell">
+
+      <!-- BRAND MARK -->
+      <div class="brand-mark">
+        <span class="brand-title">MDC-TV</span>
+        <span class="brand-sport">VOLLEYBALL</span>
+      </div>
+
+      <!-- HOME TEAM BLOCK (LEFT) -->
+      <div class="team-cell" id="home-cell">
+        <div id="home-strip" class="team-color-strip" style="background: #0032A0;"></div>
+        <div class="team-details">
+          <span id="name-home" class="team-name">HOME TEAM</span>
+          <div class="team-sub-row">
+            <span id="sets-home" class="sets-won-tag">SETS: 0</span>
+            <div class="tmo-cluster">
+              <div id="tmo-h1" class="tmo-pip"></div>
+              <div id="tmo-h2" class="tmo-pip"></div>
+            </div>
+            <span id="serve-home" class="serve-indicator"><i class="ti ti-volleyball"></i></span>
+          </div>
+        </div>
+        <div class="score-roller-cell">
+          <div id="pts-home-flash" class="digit-flash-overlay"></div>
+          <div id="pts-home" class="digit-stack">0</div>
+        </div>
+      </div>
+
+      <!-- MATCH CONTEXT / SET BLOCK (CENTER) -->
+      <div class="match-context-pill">
+        <div id="badge-set" class="set-display-text">SET 1</div>
+      </div>
+
+      <!-- AWAY TEAM BLOCK (RIGHT) -->
+      <div class="team-cell" id="away-cell" style="justify-content: flex-end;">
+        <div class="score-roller-cell">
+          <div id="pts-away-flash" class="digit-flash-overlay"></div>
+          <div id="pts-away" class="digit-stack">0</div>
+        </div>
+        <div class="team-details" style="text-align: right; align-items: flex-end;">
+          <span id="name-away" class="team-name">AWAY TEAM</span>
+          <div class="team-sub-row" style="flex-direction: row-reverse;">
+            <span id="sets-away" class="sets-won-tag">SETS: 0</span>
+            <div class="tmo-cluster">
+              <div id="tmo-a1" class="tmo-pip"></div>
+              <div id="tmo-a2" class="tmo-pip"></div>
+            </div>
+            <span id="serve-away" class="serve-indicator"><i class="ti ti-volleyball"></i></span>
+          </div>
+        </div>
+        <div id="away-strip" class="team-color-strip" style="background: #b91c1c;"></div>
+      </div>
+
+    </div>
+
+    <!-- SETS HISTORY DRAWER -->
+    <div id="history-drawer">
+      <span style="color: var(--gold); letter-spacing: 0.5px;">SETS:</span>
+      <div id="history-scores" class="history-scores-list"></div>
+    </div>
+
+    <!-- NOTIFICATION CAPSULE -->
+    <div id="notification-banner">
+      <div id="notif-capsule" class="notif-capsule setpoint">
+        <div id="notif-headline" class="notif-headline">
+          <span id="notif-icon"><i class="ti ti-trophy"></i></span>
+          <span id="notif-title">SET POINT</span>
+        </div>
+        <span id="notif-sub" class="notif-subtext">HOME TEAM</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DEV TEST CONTROLS (Local Mock Simulator - Does NOT touch Live BroadcastChannel) -->
+  <div id="dev-test-panel">
+    <span class="dev-badge">DEV TEST</span>
+    <button class="dev-btn primary" onclick="toggleVisibility()">Toggle Visibility</button>
+    <button class="dev-btn" onclick="simScore('home')">Home +1</button>
+    <button class="dev-btn" onclick="simScore('away')">Away +1</button>
+    <button class="dev-btn" onclick="simTrigger('SET_POINT', 'HOME TEAM')">Sim Set Point</button>
+    <button class="dev-btn" onclick="simTrigger('MATCH_POINT', 'HOME TEAM')">Sim Match Point</button>
+    <button class="dev-btn" onclick="simTimeout('home')">Sim Timeout</button>
+    <button class="dev-btn" style="opacity: 0.6;" onclick="document.getElementById('dev-test-panel').classList.toggle('minimized')">_</button>
+  </div>
+
+  <!-- OFFLINE ANIME.JS VENDOR BUNDLE & PIXEL GRAPHICS CORE -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/motion.js"></script>
+
+  <script>
+    'use strict';
+
+    // Core references
+    const { animate, createTimeline, stagger, remove } = window.anime;
+    const MatchCore = window.PixelMatchState;
+    const Motion = window.PixelMotion;
+
+    // Transport constants
+    const STORAGE_KEY = MatchCore.STORAGE_KEY; // 'mdcVolleyballMatchStateV1'
+    const CHANNEL_NAME = MatchCore.LIVE_CHANNEL_NAME; // 'mdc-volleyball-live-state'
+
+    // DOM Elements Cache
+    const DOM = {
+      wrapper: document.getElementById('scorebug-wrapper'),
+      shell: document.getElementById('scorebug-shell'),
+      brandLine: document.getElementById('brand-sweep-line'),
+      homeCell: document.getElementById('home-cell'),
+      awayCell: document.getElementById('away-cell'),
+      nameHome: document.getElementById('name-home'),
+      nameAway: document.getElementById('name-away'),
+      stripHome: document.getElementById('home-strip'),
+      stripAway: document.getElementById('away-strip'),
+      setsHome: document.getElementById('sets-home'),
+      setsAway: document.getElementById('sets-away'),
+      ptsHome: document.getElementById('pts-home'),
+      ptsAway: document.getElementById('pts-away'),
+      flashHome: document.getElementById('pts-home-flash'),
+      flashAway: document.getElementById('pts-away-flash'),
+      serveHome: document.getElementById('serve-home'),
+      serveAway: document.getElementById('serve-away'),
+      tmoH1: document.getElementById('tmo-h1'),
+      tmoH2: document.getElementById('tmo-h2'),
+      tmoA1: document.getElementById('tmo-a1'),
+      tmoA2: document.getElementById('tmo-a2'),
+      badgeSet: document.getElementById('badge-set'),
+      historyDrawer: document.getElementById('history-drawer'),
+      historyScores: document.getElementById('history-scores'),
+      notifBanner: document.getElementById('notification-banner'),
+      notifCapsule: document.getElementById('notif-capsule'),
+      notifIcon: document.getElementById('notif-icon'),
+      notifTitle: document.getElementById('notif-title'),
+      notifSub: document.getElementById('notif-sub')
+    };
+
+    // State Tracking
+    let currentMatchState = null;
+    let isScorebugVisible = false;
+    let isTransitioning = false;
+    let activeTimeline = null;
+    let notifQueue = [];
+    let notifRunning = false;
+
+    // ========================================================================
+    // SIGNATURE IN ANIMATION (Coordinated Timeline: ~750ms)
+    // ========================================================================
+    function playSignatureIn(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      // 1. Initial Pre-flight Positioning
+      DOM.brandLine.style.transform = 'scaleX(0)';
+      DOM.brandLine.style.opacity = '1';
+
+      DOM.shell.style.opacity = '0';
+      DOM.shell.style.transform = 'translateY(-24px) scale(0.98)';
+
+      DOM.homeCell.style.opacity = '0';
+      DOM.homeCell.style.transform = 'translateX(-30px)';
+
+      DOM.awayCell.style.opacity = '0';
+      DOM.awayCell.style.transform = 'translateX(30px)';
+
+      DOM.ptsHome.style.opacity = '0';
+      DOM.ptsHome.style.transform = 'scale(0.7)';
+
+      DOM.ptsAway.style.opacity = '0';
+      DOM.ptsAway.style.transform = 'scale(0.7)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isScorebugVisible = true;
+          isTransitioning = false;
+          activeTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // A. Brand line sweeps across
+      tl.add(DOM.brandLine, {
+        scaleX: [0, 1],
+        duration: 320,
+        ease: 'outQuart'
+      }, 0);
+
+      // B. Shell expands and descends
+      tl.add(DOM.shell, {
+        opacity: [0, 1],
+        translateY: [-24, 0],
+        scale: [0.98, 1],
+        duration: 460,
+        ease: 'outCubic'
+      }, 100);
+
+      // C. Team Blocks enter from opposite flanks
+      tl.add(DOM.homeCell, {
+        opacity: [0, 1],
+        translateX: [-30, 0],
+        duration: 420,
+        ease: 'outBack'
+      }, 200);
+
+      tl.add(DOM.awayCell, {
+        opacity: [0, 1],
+        translateX: [30, 0],
+        duration: 420,
+        ease: 'outBack'
+      }, 200);
+
+      // D. Scores snap into place
+      tl.add([DOM.ptsHome, DOM.ptsAway], {
+        opacity: [0, 1],
+        scale: [0.7, 1],
+        duration: 300,
+        ease: 'outBack'
+      }, 350);
+
+      // E. Drawer opens if history exists
+      if (currentMatchState && currentMatchState.setsHistory && currentMatchState.setsHistory.length > 0) {
+        tl.add(DOM.historyDrawer, {
+          opacity: [0, 1],
+          translateY: [-10, 0],
+          duration: 300,
+          ease: 'outQuad'
+        }, 400);
+      }
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // SIGNATURE OUT ANIMATION (Fast Retraction: ~400ms)
+    // ========================================================================
+    function playSignatureOut(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isScorebugVisible = false;
+          isTransitioning = false;
+          activeTimeline = null;
+          DOM.shell.style.opacity = '0';
+          DOM.historyDrawer.style.opacity = '0';
+          DOM.brandLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // A. Drawer retracts first
+      tl.add(DOM.historyDrawer, {
+        opacity: [1, 0],
+        translateY: [0, -10],
+        duration: 180,
+        ease: 'inQuad'
+      }, 0);
+
+      // B. Scores and minor data fade
+      tl.add([DOM.ptsHome, DOM.ptsAway, DOM.homeCell, DOM.awayCell], {
+        opacity: [1, 0],
+        duration: 220,
+        ease: 'inQuad'
+      }, 50);
+
+      // C. Shell collapses upward
+      tl.add(DOM.shell, {
+        opacity: [1, 0],
+        translateY: [0, -20],
+        scale: [1, 0.98],
+        duration: 280,
+        ease: 'inCubic'
+      }, 100);
+
+      // D. Brand line snaps closed
+      tl.add(DOM.brandLine, {
+        scaleX: [1, 0],
+        opacity: [1, 0],
+        duration: 240,
+        ease: 'inQuad'
+      }, 150);
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // REFINED NUMERIC SCORE UPDATE (Vertical Roll + Gold Flash: ~260ms)
+    // ========================================================================
+    function animateScoreDigit(element, flashOverlay, newScore) {
+      remove(element);
+      remove(flashOverlay);
+
+      // 1. Gold flash pulse
+      animate(flashOverlay, {
+        opacity: [0.9, 0],
+        duration: 380,
+        ease: 'outQuad'
+      });
+
+      // 2. Numeric vertical punch
+      animate(element, {
+        translateY: [-16, 0],
+        opacity: [0.3, 1],
+        scale: [1.28, 1],
+        color: ['#fced9a', '#ffffff'],
+        duration: 260,
+        ease: 'outBack',
+        onBegin: () => {
+          element.textContent = newScore;
+        },
+        onComplete: () => {
+          element.style.transform = '';
+          element.style.color = '';
+        }
+      });
+    }
+
+    // ========================================================================
+    // SET CHANGE ANIMATION (Wipe / Slide on Set Badge)
+    // ========================================================================
+    function animateSetBadge(newSetText) {
+      remove(DOM.badgeSet);
+      animate(DOM.badgeSet, {
+        scale: [0.85, 1.15, 1],
+        opacity: [0.4, 1],
+        duration: 300,
+        ease: 'outBack',
+        onBegin: () => {
+          DOM.badgeSet.textContent = newSetText;
+        }
+      });
+    }
+
+    // ========================================================================
+    // NOTIFICATION BANNER (Set Point / Match Point / Timeouts)
+    // ========================================================================
+    function enqueueNotification(capsuleClass, iconHtml, titleText, subText) {
+      notifQueue.push({ capsuleClass, iconHtml, titleText, subText });
+      if (!notifRunning) drainNotifQueue();
+    }
+
+    function drainNotifQueue() {
+      if (!notifQueue.length) {
+        notifRunning = false;
+        return;
+      }
+
+      notifRunning = true;
+      const { capsuleClass, iconHtml, titleText, subText } = notifQueue.shift();
+
+      DOM.notifCapsule.className = `notif-capsule ${capsuleClass}`;
+      DOM.notifIcon.innerHTML = iconHtml;
+      DOM.notifTitle.textContent = titleText;
+      DOM.notifSub.textContent = subText;
+
+      remove(DOM.notifBanner);
+
+      const notifTl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          setTimeout(() => {
+            // Dismiss notification
+            animate(DOM.notifBanner, {
+              opacity: [1, 0],
+              translateY: [0, -16],
+              duration: 300,
+              ease: 'inQuad',
+              onComplete: () => {
+                setTimeout(drainNotifQueue, 150);
+              }
+            });
+          }, 3800);
+        }
+      });
+
+      notifTl.add(DOM.notifBanner, {
+        opacity: [0, 1],
+        translateY: [-16, 0],
+        duration: 450,
+        ease: 'outBack'
+      });
+    }
+
+    // ========================================================================
+    // MAIN RENDER ENGINE (Consumes MatchState)
+    // ========================================================================
+    function renderScorebug(rawState) {
+      if (!rawState) return;
+
+      const state = MatchCore.normalizeMatchState(rawState);
+      const targetVisible = rawState.overlayVisible !== false;
+      const isInitial = (currentMatchState === null);
+
+      // 1. VISIBILITY MANAGEMENT (IN / OUT)
+      if (isInitial && targetVisible) {
+        currentMatchState = state;
+        playSignatureIn();
+      } else if (!isInitial && targetVisible !== isScorebugVisible && !isTransitioning) {
+        if (targetVisible) {
+          playSignatureIn();
+        } else {
+          playSignatureOut();
+        }
+      }
+
+      // 2. TEAM METADATA
+      DOM.nameHome.textContent = state.teamHome.name;
+      DOM.nameAway.textContent = state.teamAway.name;
+      DOM.stripHome.style.background = state.teamHome.color;
+      DOM.stripAway.style.background = state.teamAway.color;
+
+      DOM.setsHome.textContent = `SETS: ${state.teamHome.setsWon}`;
+      DOM.setsAway.textContent = `SETS: ${state.teamAway.setsWon}`;
+
+      // 3. INDEPENDENT POINT UPDATES
+      if (!isInitial && isScorebugVisible) {
+        if (state.teamHome.currentPoints !== currentMatchState.teamHome.currentPoints) {
+          animateScoreDigit(DOM.ptsHome, DOM.flashHome, state.teamHome.currentPoints);
+        }
+        if (state.teamAway.currentPoints !== currentMatchState.teamAway.currentPoints) {
+          animateScoreDigit(DOM.ptsAway, DOM.flashAway, state.teamAway.currentPoints);
+        }
+      } else {
+        DOM.ptsHome.textContent = state.teamHome.currentPoints;
+        DOM.ptsAway.textContent = state.teamAway.currentPoints;
+      }
+
+      // 4. SET BADGE UPDATE
+      const setLabel = state.matchStatus === 'FINISHED' ? 'FINAL' : `SET ${state.currentSet}`;
+      if (!isInitial && currentMatchState.currentSet !== state.currentSet) {
+        animateSetBadge(setLabel);
+      } else {
+        DOM.badgeSet.textContent = setLabel;
+      }
+
+      // 5. SERVING INDICATOR
+      if (state.servingTeam === 'home') {
+        DOM.serveHome.classList.add('active');
+        DOM.serveAway.classList.remove('active');
+      } else if (state.servingTeam === 'away') {
+        DOM.serveAway.classList.add('active');
+        DOM.serveHome.classList.remove('active');
+      } else {
+        DOM.serveHome.classList.remove('active');
+        DOM.serveAway.classList.remove('active');
+      }
+
+      // 6. TIMEOUTS
+      DOM.tmoH1.className = 'tmo-pip' + (state.teamHome.timeouts >= 1 ? ' used' : '');
+      DOM.tmoH2.className = 'tmo-pip' + (state.teamHome.timeouts >= 2 ? ' used' : '');
+      DOM.tmoA1.className = 'tmo-pip' + (state.teamAway.timeouts >= 1 ? ' used' : '');
+      DOM.tmoA2.className = 'tmo-pip' + (state.teamAway.timeouts >= 2 ? ' used' : '');
+
+      // 7. SETS HISTORY
+      if (state.setsHistory && state.setsHistory.length > 0) {
+        DOM.historyScores.innerHTML = state.setsHistory.map(s => 
+          `<span style="color:var(--txt-muted)">S${s.setNumber}:</span> <strong>${s.homePoints}-${s.awayPoints}</strong>`
+        ).join('<span style="color:var(--divider); margin: 0 4px;">|</span>');
+      }
+
+      // 8. SPECIAL TRIGGERS (SET POINT / MATCH POINT / TIMEOUTS)
+      if (!isInitial) {
+        if (state.teamHome.timeouts > currentMatchState.teamHome.timeouts) {
+          enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', 'TIMEOUT', state.teamHome.name);
+        }
+        if (state.teamAway.timeouts > currentMatchState.teamAway.timeouts) {
+          enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', 'TIMEOUT', state.teamAway.name);
+        }
+
+        const special = MatchCore.evaluateSpecialPoint(state);
+        if (special) {
+          const ptsChanged = (special.team === 'home' && state.teamHome.currentPoints !== currentMatchState.teamHome.currentPoints) ||
+                             (special.team === 'away' && state.teamAway.currentPoints !== currentMatchState.teamAway.currentPoints);
+          if (ptsChanged) {
+            const isMatch = (special.type === 'MATCH_POINT');
+            enqueueNotification(
+              isMatch ? 'matchpoint' : 'setpoint',
+              '<i class="ti ti-trophy"></i>',
+              isMatch ? 'MATCH POINT' : 'SET POINT',
+              special.teamName
+            );
+          }
+        }
+      }
+
+      currentMatchState = JSON.parse(JSON.stringify(state));
+    }
+
+    // ========================================================================
+    // DEV TEST SIMULATION HELPERS (Local State Only - Isolated)
+    // ========================================================================
+    function toggleVisibility() {
+      if (isScorebugVisible) playSignatureOut();
+      else playSignatureIn();
+    }
+
+    function simScore(team) {
+      if (!currentMatchState) currentMatchState = MatchCore.createDefaultMatchState();
+      const mock = JSON.parse(JSON.stringify(currentMatchState));
+      if (team === 'home') mock.teamHome.currentPoints++;
+      else mock.teamAway.currentPoints++;
+      mock.servingTeam = team;
+      renderScorebug(mock);
+    }
+
+    function simTrigger(type, teamName) {
+      enqueueNotification(
+        type === 'MATCH_POINT' ? 'matchpoint' : 'setpoint',
+        '<i class="ti ti-trophy"></i>',
+        type === 'MATCH_POINT' ? 'MATCH POINT' : 'SET POINT',
+        teamName
+      );
+    }
+
+    function simTimeout(team) {
+      enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', 'TIMEOUT', team === 'home' ? 'HOME TEAM' : 'AWAY TEAM');
+    }
+
+    // ========================================================================
+    // INITIALIZATION & REAL BROADCAST CHANNEL BINDING
+    // ========================================================================
+    function init() {
+      // 1. Initial fallback load from LocalStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          renderScorebug(JSON.parse(raw));
+        } else {
+          renderScorebug(MatchCore.createDefaultMatchState());
+        }
+      } catch (e) {
+        renderScorebug(MatchCore.createDefaultMatchState());
+      }
+
+      // 2. Real Live BroadcastChannel binding
+      try {
+        const channel = new BroadcastChannel(CHANNEL_NAME);
+        channel.onmessage = (event) => {
+          if (event.data && event.data.type === 'STATE_UPDATE' && event.data.state) {
+            renderScorebug(event.data.state);
+          }
+        };
+      } catch (e) { console.warn('BroadcastChannel unavailable:', e); }
+
+      // 3. Storage Event Listener fallback
+      window.addEventListener('storage', (e) => {
+        if (e.key === STORAGE_KEY && e.newValue) {
+          try { renderScorebug(JSON.parse(e.newValue)); } catch (err) { console.error(err); }
+        }
+      });
+
+      // 4. Graphics Presentation State Listener (Phase G4)
+      try {
+        const gfxChannel = new BroadcastChannel(PixelGraphicsState.CHANNEL_NAME);
+        gfxChannel.onmessage = (event) => {
+          if (event.data && event.data.state && event.data.state.visibility) {
+            const sbVisible = event.data.state.visibility.scorebug;
+            if (sbVisible !== isScorebugVisible && !isTransitioning) {
+              if (sbVisible) playSignatureIn();
+              else playSignatureOut();
+            }
+          }
+        };
+      } catch (e) { console.warn('Graphics channel init fallback', e); }
+    }
+
+    init();
+  </script>
+</body>
+</html>

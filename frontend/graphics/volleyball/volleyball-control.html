@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MDC-TV Volleyball Control Panel v1.0</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0a0d14;
+      --panel-bg: #141923;
+      --panel-border: rgba(255, 255, 255, 0.1);
+      --mdc-blue: #0032A0;
+      --mdc-blue-hover: #002577;
+      --mdc-gray: #5B6770;
+      --gold: #e3c46a;
+      --gold-dark: #b8973a;
+      --danger: #dc3545;
+      --danger-hover: #bd2130;
+      --success: #28a745;
+      --success-hover: #218838;
+      --txt-white: #ffffff;
+      --txt-muted: #8b949e;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; user-select: none; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--txt-white);
+      padding: 10px 16px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 1200px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    /* ── ZONE A: TOP BAR ── */
+    .zone-a {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .brand-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand-title h1 {
+      font-size: 0.95rem;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      color: var(--txt-white);
+      text-transform: uppercase;
+    }
+    .brand-title .badge-module {
+      background: var(--mdc-blue);
+      color: var(--txt-white);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .lang-toggle-group {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 1px;
+      gap: 2px;
+    }
+    .btn-lang {
+      background: transparent;
+      border: none;
+      color: var(--txt-muted);
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-lang.active {
+      background: var(--mdc-blue);
+      color: var(--txt-white);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--txt-muted);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px var(--success);
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .zone-a-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-undo-giant {
+      background: linear-gradient(180deg, #f3d479 0%, var(--gold-dark) 100%);
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 16px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(227, 196, 106, 0.25);
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-undo-giant:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn-undo-giant:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; filter: grayscale(1); }
+
+    .btn-vis {
+      border: none;
+      border-radius: 5px;
+      padding: 7px 12px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.15s ease;
+    }
+    .btn-show-overlay { background: var(--success); color: white; }
+    .btn-show-overlay:hover { background: var(--success-hover); }
+    .btn-hide-overlay { background: var(--danger); color: white; }
+    .btn-hide-overlay:hover { background: var(--danger-hover); }
+
+    /* ── ZONE B: CENTER ENGINE (COMPACT CARDS) ── */
+    .zone-b {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      flex: 0 0 auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .team-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      max-height: 380px;
+      box-sizing: border-box;
+    }
+
+    .team-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 8px;
+    }
+    .team-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .color-preview {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .team-name-disp {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .serve-indicator-btn {
+      background: #1c2333;
+      border: 1px solid var(--panel-border);
+      color: var(--txt-muted);
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .serve-indicator-btn.active {
+      background: var(--gold);
+      color: #000;
+      border-color: var(--gold);
+      box-shadow: 0 0 8px rgba(227, 196, 106, 0.4);
+    }
+
+    .point-engine {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .points-display-large {
+      font-size: 3.6rem;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: var(--txt-white);
+      text-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+
+    .btn-add-point {
+      width: 100%;
+      height: 64px;
+      background: var(--mdc-blue);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      font-size: 1.35rem;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 50, 160, 0.35);
+      transition: all 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-add-point:hover:not(.debouncing) { background: var(--mdc-blue-hover); transform: translateY(-1px); }
+    .btn-add-point.debouncing {
+      opacity: 0.6;
+      cursor: not-allowed;
+      filter: grayscale(0.5);
+    }
+    .btn-add-point:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      box-shadow: none;
+      filter: grayscale(0.85);
+      pointer-events: none;
+    }
+    .btn-add-point.debouncing::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; height: 3px;
+      background: var(--gold);
+      animation: debounceBar 0.8s linear forwards;
+    }
+    @keyframes debounceBar { 0% { width: 100%; } 100% { width: 0%; } }
+
+    .btn-sub-point {
+      background: transparent;
+      color: var(--txt-muted);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-sub-point:hover { color: var(--txt-white); border-color: rgba(255,255,255,0.3); }
+
+    /* ── ZONE C: BOTTOM BAR ── */
+    .zone-c {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .match-info-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 8px;
+    }
+
+    .info-pill {
+      background: rgba(255,255,255,0.05);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--txt-white);
+    }
+    .info-pill span { color: var(--gold); }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .timeout-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .tmo-group { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; }
+    .tmo-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+    .tmo-dot.used { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+
+    .btn-tmo {
+      background: #1c2333;
+      border: 1px solid var(--panel-border);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-tmo:hover { background: #283248; }
+
+    .btn-finish-set {
+      background: linear-gradient(180deg, #28a745 0%, #1e7e34 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 7px 16px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(40, 167, 69, 0.25);
+      transition: all 0.15s ease;
+    }
+    .btn-finish-set:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn-finish-set:disabled { opacity: 0.3; cursor: not-allowed; box-shadow: none; filter: grayscale(1); }
+    .btn-finish-set.ready {
+      box-shadow: 0 0 15px rgba(40, 167, 69, 0.75);
+      border: 1px solid #4ade80;
+      animation: readyGlow 1.2s infinite alternate ease-in-out;
+    }
+    @keyframes readyGlow {
+      from { box-shadow: 0 0 8px rgba(40, 167, 69, 0.5); }
+      to { box-shadow: 0 0 20px rgba(74, 222, 128, 0.95); }
+    }
+
+    .btn-override {
+      background: transparent;
+      border: 1px solid var(--mdc-gray);
+      color: var(--txt-white);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-override:hover { background: var(--mdc-gray); }
+
+    /* OVERRIDE & RESET MODALS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-body {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 480px;
+      max-width: 90vw;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.8);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 10px;
+    }
+    .modal-header h2 { font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.8rem; font-weight: 700; color: var(--txt-muted); }
+    .form-group input {
+      background: #0d1117;
+      border: 1px solid var(--panel-border);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+
+    .history-strip {
+      display: flex;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+      overflow-x: auto;
+      padding-top: 4px;
+    }
+    .history-chip {
+      background: rgba(255,255,255,0.06);
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ZONE A: TOP BAR -->
+  <header class="zone-a">
+    <div class="brand-title">
+      <h1>MDC-TV Sports Engine</h1>
+      <span class="badge-module" id="txt-module-title">VOLLEYBALL v1.0</span>
+    </div>
+
+    <!-- LIVE BROADCAST STATUS -->
+    <div class="live-status">
+      <div class="status-dot"></div>
+      <span id="status-text">LIVE BROADCAST</span>
+    </div>
+
+    <!-- MANDATORY PIXEL REMOTE COMMANDS SECURITY TOGGLE -->
+    <div id="vento-control-pill" title="Allows authorized PIXEL remote commands. Local match controls remain active." style="display: flex; align-items: center; gap: 8px; background: rgba(220, 53, 69, 0.15); border: 1px solid rgba(220, 53, 69, 0.4); border-radius: 6px; padding: 6px 12px; transition: all 0.2s ease; cursor: pointer;">
+      <label style="font-size: 0.78rem; font-weight: 800; color: #ffffff; cursor: pointer; display: flex; align-items: center; gap: 8px;" title="Allows authorized PIXEL remote commands. Local match controls remain active.">
+        <input type="checkbox" id="chk-allow-vento" style="cursor: pointer; width: 15px; height: 15px; accent-color: var(--success);">
+        <span id="lbl-vento-status" style="color: #f87171; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace;">PIXEL REMOTE: LOCKED</span>
+      </label>
+    </div>
+
+    <!-- LANGUAGE TOGGLE SWITCH [ EN | ES ] -->
+    <div class="lang-toggle-group">
+      <button class="btn-lang active" id="btn-lang-en">EN</button>
+      <button class="btn-lang" id="btn-lang-es">ES</button>
+    </div>
+
+    <div class="zone-a-controls">
+      <button class="btn-undo-giant" id="btn-undo" title="Revert last match action" disabled>
+        <span id="txt-undo">UNDO</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ZONE B: TACTICAL CENTER ENGINE -->
+  <main class="zone-b">
+    <!-- HOME TEAM CARD -->
+    <section class="team-card" id="card-home">
+      <div class="team-header">
+        <div class="team-title-group">
+          <div class="color-preview" id="preview-color-home"></div>
+          <span class="team-name-disp" id="disp-home-name">HOME TEAM</span>
+        </div>
+        <button class="serve-indicator-btn" id="btn-serve-home">● SERVE</button>
+      </div>
+
+      <div class="point-engine">
+        <div class="points-display-large" id="disp-home-points">0</div>
+        <button class="btn-add-point" id="btn-home-add-point">+1 POINT</button>
+        <button class="btn-sub-point" id="btn-home-sub-point">-1 Point Correction</button>
+      </div>
+    </section>
+
+    <!-- AWAY TEAM CARD -->
+    <section class="team-card" id="card-away">
+      <div class="team-header">
+        <div class="team-title-group">
+          <div class="color-preview" id="preview-color-away"></div>
+          <span class="team-name-disp" id="disp-away-name">AWAY TEAM</span>
+        </div>
+        <button class="serve-indicator-btn" id="btn-serve-away">● SERVE</button>
+      </div>
+
+      <div class="point-engine">
+        <div class="points-display-large" id="disp-away-points">0</div>
+        <button class="btn-add-point" id="btn-away-add-point">+1 POINT</button>
+        <button class="btn-sub-point" id="btn-away-sub-point">-1 Point Correction</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ZONE C: BOTTOM BAR & MATCH CONTROL -->
+  <footer class="zone-c">
+    <div class="match-info-strip">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div class="info-pill"><span id="lbl-current-set">CURRENT SET</span>: <span id="disp-set-num">1</span></div>
+        <div class="info-pill"><span id="lbl-sets">SETS</span>: <span id="disp-home-sets">0</span> - <span id="disp-away-sets">0</span></div>
+        <div class="info-pill"><span id="lbl-status">STATUS</span>: <span id="disp-match-status">IN_PROGRESS</span></div>
+      </div>
+
+      <button class="btn-finish-set" id="btn-finish-set" disabled>✓ FINISH SET</button>
+    </div>
+
+    <div class="controls-row">
+      <!-- Timeout Controls -->
+      <div class="timeout-controls">
+        <div class="tmo-group">
+          <span id="lbl-tmo-home">TMO HOME:</span>
+          <div class="tmo-dot" id="tmo-home-1"></div>
+          <div class="tmo-dot" id="tmo-home-2"></div>
+          <button class="btn-tmo" id="btn-tmo-home-add">+1 TMO</button>
+          <button class="btn-tmo" id="btn-tmo-home-reset">Reset</button>
+        </div>
+
+        <div style="width: 1px; height: 20px; background: var(--panel-border);"></div>
+
+        <div class="tmo-group">
+          <span id="lbl-tmo-away">TMO AWAY:</span>
+          <div class="tmo-dot" id="tmo-away-1"></div>
+          <div class="tmo-dot" id="tmo-away-2"></div>
+          <button class="btn-tmo" id="btn-tmo-away-add">+1 TMO</button>
+          <button class="btn-tmo" id="btn-tmo-away-reset">Reset</button>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-override" id="btn-open-modal">⚙ SETTINGS / OVERRIDE</button>
+        <button class="btn-override" id="btn-reset-match" style="border-color: var(--danger); color: var(--danger);">⚠ RESET MATCH</button>
+      </div>
+    </div>
+
+    <!-- History Bar -->
+    <div class="history-strip" id="history-strip">
+      <span id="lbl-history">SETS HISTORY:</span>
+      <div id="history-chips-container" style="display: flex; gap: 6px;"></div>
+    </div>
+  </footer>
+
+  <!-- MANUAL OVERRIDE MODAL -->
+  <div class="modal-overlay" id="modal-override">
+    <div class="modal-body">
+      <div class="modal-header">
+        <h2 id="modal-title">Settings & Manual Override</h2>
+        <button id="btn-close-modal" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label id="lbl-home-name">Home Team Name:</label>
+        <input type="text" id="inp-home-name" value="HOME TEAM">
+      </div>
+      <div class="form-group">
+        <label id="lbl-home-color">Home Team Color:</label>
+        <input type="color" id="inp-home-color" value="#0032A0" style="height:40px; cursor:pointer;">
+      </div>
+
+      <div class="form-group">
+        <label id="lbl-away-name">Away Team Name:</label>
+        <input type="text" id="inp-away-name" value="AWAY TEAM">
+      </div>
+      <div class="form-group">
+        <label id="lbl-away-color">Away Team Color:</label>
+        <input type="color" id="inp-away-color" value="#b91c1c" style="height:40px; cursor:pointer;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label id="lbl-match-format">Match Format:</label>
+          <select id="inp-match-format" style="background:#0d1117; border:1px solid var(--panel-border); color:white; padding:8px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">
+            <option value="BEST_OF_5">BEST OF 5 (Sets 1-4 to 25, Set 5 to 15)</option>
+            <option value="BEST_OF_3">BEST OF 3 (Sets 1-2 to 25, Set 3 to 15)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label id="lbl-auto-advance">Set Advancement:</label>
+          <select id="inp-auto-advance" style="background:#0d1117; border:1px solid var(--panel-border); color:white; padding:8px 12px; border-radius:6px; font-size:0.85rem; font-weight:700;">
+            <option value="manual">MANUAL CONFIRMATION (Operator Click)</option>
+            <option value="auto">AUTO ADVANCE (Instant Close)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label id="lbl-home-sets">Home Sets Won:</label>
+          <input type="number" id="inp-home-sets" value="0" min="0" max="3">
+        </div>
+        <div class="form-group">
+          <label id="lbl-away-sets">Away Sets Won:</label>
+          <input type="number" id="inp-away-sets" value="0" min="0" max="3">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-override" id="btn-save-modal" style="background: var(--mdc-blue);">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTERNAL RESET CONFIRMATION MODAL (FLUID UX IN OBS DOCK) -->
+  <div class="modal-overlay" id="modal-reset">
+    <div class="modal-body" style="border-color: var(--danger);">
+      <div class="modal-header">
+        <h2 id="modal-reset-title" style="color: var(--danger);">⚠ RESET MATCH</h2>
+        <button id="btn-close-reset-modal" style="background:none; border:none; color:white; font-size:1.2rem; cursor:pointer;">✕</button>
+      </div>
+
+      <p id="modal-reset-desc" style="color: var(--txt-muted); font-size: 0.9rem; line-height: 1.5;">
+        Are you sure you want to reset the entire match? Points, sets, and history will be permanently cleared.
+      </p>
+
+      <div class="modal-actions" style="margin-top: 12px;">
+        <button class="btn-override" id="btn-cancel-reset">CANCEL</button>
+        <button class="btn-override" id="btn-confirm-reset" style="background: var(--danger); border-color: var(--danger); font-weight: 900;">CONFIRM RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OFFLINE SPORT ENGINE CORE -->
+  <script src="../core/matchState.js"></script>
+  <script>
+    // ── EMBEDDED I18N DICTIONARY ──
+    const I18N = {
+      en: {
+        moduleTitle: "VOLLEYBALL v1.0",
+        liveStatus: "LIVE BROADCAST",
+        undo: "UNDO",
+        showOverlay: "▶ SHOW OVERLAY",
+        hideOverlay: "⏹ HIDE OVERLAY",
+        serve: "● SERVE",
+        addPoint: "+1 POINT",
+        subPoint: "-1 Point Correction",
+        currentSet: "CURRENT SET",
+        sets: "SETS",
+        status: "STATUS",
+        finishSet: "✓ FINISH SET",
+        tmoHome: "TMO HOME:",
+        tmoAway: "TMO AWAY:",
+        reset: "Reset",
+        configOverride: "⚙ SETTINGS / OVERRIDE",
+        resetMatch: "⚠ RESET MATCH",
+        historyTitle: "SETS HISTORY:",
+        noHistory: "No completed sets",
+        modalTitle: "Settings & Manual Override",
+        homeNameLabel: "Home Team Name:",
+        homeColorLabel: "Home Team Color:",
+        awayNameLabel: "Away Team Name:",
+        awayColorLabel: "Away Team Color:",
+        homeSetsLabel: "Home Sets Won:",
+        awaySetsLabel: "Away Sets Won:",
+        saveChanges: "Save Changes",
+        resetModalTitle: "⚠ RESET MATCH",
+        resetModalDesc: "Are you sure you want to reset the entire match? Points, sets, and history will be permanently cleared.",
+        cancel: "CANCEL",
+        confirmResetBtn: "CONFIRM RESET"
+      },
+      es: {
+        moduleTitle: "VOLEIBOL v1.0",
+        liveStatus: "EN VIVO",
+        undo: "DESHACER",
+        showOverlay: "▶ MOSTRAR OVERLAY",
+        hideOverlay: "⏹ OCULTAR OVERLAY",
+        serve: "● SAQUE",
+        addPoint: "+1 PUNTO",
+        subPoint: "-1 Punto Corrección",
+        currentSet: "SET ACTUAL",
+        sets: "SETS",
+        status: "ESTADO",
+        finishSet: "✓ CERRAR SET",
+        tmoHome: "TMO LOCAL:",
+        tmoAway: "TMO VISITANTE:",
+        reset: "Reiniciar",
+        configOverride: "⚙ CONFIGURACIÓN / OVERRIDE",
+        resetMatch: "⚠ REINICIAR PARTIDO",
+        historyTitle: "HISTORIAL SETS:",
+        noHistory: "Sin sets finalizados",
+        modalTitle: "Ajustes y Override Manual",
+        homeNameLabel: "Nombre Equipo Local:",
+        homeColorLabel: "Color Equipo Local:",
+        awayNameLabel: "Nombre Equipo Visitante:",
+        awayColorLabel: "Color Equipo Visitante:",
+        homeSetsLabel: "Sets Ganados Local:",
+        awaySetsLabel: "Sets Ganados Visitante:",
+        saveChanges: "Guardar Cambios",
+        resetModalTitle: "⚠ REINICIAR PARTIDO",
+        resetModalDesc: "¿Estás seguro de que deseas reiniciar todo el partido? Se borrarán permanentemente los puntos, sets e historial.",
+        cancel: "CANCELAR",
+        confirmResetBtn: "CONFIRMAR REINICIO"
+      }
+    };
+
+    const STORAGE_KEY = 'mdcVolleyballMatchStateV1';
+    const CHANNEL_NAME = 'mdc-volleyball-live-state';
+    const CMD_CHANNEL_NAME = 'mdc-volleyball-command-v1';
+    const ACK_CHANNEL_NAME = 'mdc-volleyball-command-ack-v1';
+    const DEBOUNCE_MS = 800;
+
+    const DEFAULT_STATE = {
+      version: "1.0",
+      language: "en",
+      matchFormat: "BEST_OF_5",
+      autoAdvanceSet: false,
+      overlayVisible: true,
+      allowVentoControl: false,
+      stateRevision: 1,
+      teamHome: { name: "MIAMI DADE SHARKS", color: "#0032A0", setsWon: 0, currentPoints: 0, timeouts: 0 },
+      teamAway: { name: "DAYTONA STATE FALCONS", color: "#b91c1c", setsWon: 0, currentPoints: 0, timeouts: 0 },
+      servingTeam: "home",
+      currentSet: 1,
+      setsHistory: [],
+      matchStatus: "IN_PROGRESS",
+      timestamp: Date.now()
+    };
+
+    let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+    const undoStack = [];
+    const MAX_UNDO = 50;
+
+    let lastPointClickTime = 0;
+
+    let channel;
+    let cmdChannel;
+    let ackChannel;
+
+    try {
+      channel = new BroadcastChannel(CHANNEL_NAME);
+    } catch (e) {
+      console.warn('BroadcastChannel init fallback', e);
+    }
+
+    try {
+      cmdChannel = new BroadcastChannel(CMD_CHANNEL_NAME);
+      ackChannel = new BroadcastChannel(ACK_CHANNEL_NAME);
+    } catch (e) {
+      console.warn('Command BroadcastChannel fallback', e);
+    }
+
+    function sendAck(commandId, status, reason) {
+      if (ackChannel && commandId) {
+        try {
+          ackChannel.postMessage({
+            protocolVersion: '1.0',
+            commandId: commandId,
+            status: status, // 'ACCEPTED' | 'REJECTED'
+            reason: reason || '',
+            timestamp: Date.now()
+          });
+        } catch (e) { console.error('Failed to post ACK:', e); }
+      }
+    }
+
+    // ── VENTO REMOTE CONTROL LISTENER ──
+    if (cmdChannel) {
+      cmdChannel.onmessage = (event) => {
+        const payload = event.data;
+        if (!payload || payload.protocolVersion !== '1.0') return;
+
+        const { commandId, action, params } = payload;
+
+        // Security Barrier: Check if remote commands are allowed
+        if (!state.allowVentoControl) {
+          sendAck(commandId, 'REJECTED', 'PIXEL remote commands are locked by local operator');
+          return;
+        }
+
+        if (action === 'ADD_POINT') {
+          const team = params && params.team;
+          if (team !== 'home' && team !== 'away') {
+            sendAck(commandId, 'REJECTED', 'Invalid team parameter');
+            return;
+          }
+          addPointDebounced(team);
+          sendAck(commandId, 'ACCEPTED', 'OK');
+        } else if (action === 'SUB_POINT') {
+          const team = params && params.team;
+          if (team !== 'home' && team !== 'away') {
+            sendAck(commandId, 'REJECTED', 'Invalid team parameter');
+            return;
+          }
+          subPoint(team);
+          sendAck(commandId, 'ACCEPTED', 'OK');
+        } else if (action === 'TOGGLE_SERVE') {
+          const team = params && params.team;
+          if (team !== 'home' && team !== 'away') {
+            sendAck(commandId, 'REJECTED', 'Invalid team parameter');
+            return;
+          }
+          pushUndoState();
+          state.servingTeam = team;
+          persistAndBroadcast();
+          sendAck(commandId, 'ACCEPTED', 'OK');
+        } else if (action === 'TOGGLE_OVERLAY') {
+          const visible = Boolean(params && params.visible);
+          pushUndoState();
+          state.overlayVisible = visible;
+          persistAndBroadcast();
+          sendAck(commandId, 'ACCEPTED', 'OK');
+        } else if (action === 'UNDO_ACTION') {
+          if (undoStack.length === 0) {
+            sendAck(commandId, 'REJECTED', 'Undo stack is empty');
+            return;
+          }
+          popUndoState();
+          sendAck(commandId, 'ACCEPTED', 'OK');
+        } else {
+          sendAck(commandId, 'REJECTED', "Action '" + action + "' is excluded from remote control");
+        }
+      };
+    }
+
+    // ── UNDO ENGINE ──
+    function pushUndoState() {
+      if (undoStack.length >= MAX_UNDO) undoStack.shift();
+      undoStack.push(JSON.parse(JSON.stringify(state)));
+      updateUndoUI();
+    }
+
+    function popUndoState() {
+      if (undoStack.length === 0) return;
+      state = undoStack.pop();
+      updateUndoUI();
+      persistAndBroadcast();
+    }
+
+    function updateUndoUI() {
+      const btn = document.getElementById('btn-undo');
+      if (btn) {
+        btn.disabled = (undoStack.length === 0);
+      }
+    }
+
+    // ── PERSISTENCE & TRANSMISSION ──
+    function persistAndBroadcast() {
+      state.timestamp = Date.now();
+      state.stateRevision = (state.stateRevision || 0) + 1;
+      const serialized = JSON.stringify(state);
+
+      try { localStorage.setItem(STORAGE_KEY, serialized); } catch (e) { console.error(e); }
+
+      if (channel) {
+        try { channel.postMessage({ type: 'STATE_UPDATE', state: state }); } catch (e) { console.error(e); }
+      }
+
+      try {
+        fetch('http://127.0.0.1:3000/graphics/state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'MATCH_STATE_SYNC',
+            match: state
+          })
+        }).catch(() => {});
+      } catch (e) {}
+
+      renderUI();
+    }
+
+    function loadInitialState() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.teamHome && parsed.teamAway) {
+            state = parsed;
+            if (!state.language) state.language = 'en';
+            if (!state.matchFormat) state.matchFormat = 'BEST_OF_5';
+            if (typeof state.autoAdvanceSet !== 'boolean') state.autoAdvanceSet = false;
+          }
+        }
+      } catch (e) { console.error(e); }
+
+      // MANDATORY REQUIREMENT: Always start DISABLED upon open/reload
+      state.allowVentoControl = false;
+      if (typeof state.stateRevision !== 'number') state.stateRevision = 1;
+
+      renderUI();
+    }
+
+    // ── COLLEGE VOLLEYBALL MATCH MATH (BEST OF 5 / BEST OF 3) ──
+    function isSetWonNow() {
+      if (typeof PixelMatchState !== 'undefined' && typeof PixelMatchState.isSetWon === 'function') {
+        return PixelMatchState.isSetWon(state);
+      }
+      if (state.matchStatus === 'FINISHED') return false;
+      const format = state.matchFormat === 'BEST_OF_3' ? 'BEST_OF_3' : 'BEST_OF_5';
+      const decidingSet = format === 'BEST_OF_3' ? 3 : 5;
+      const target = Number(state.currentSet) >= decidingSet ? 15 : 25;
+
+      const hPts = Number(state.teamHome?.currentPoints) || 0;
+      const aPts = Number(state.teamAway?.currentPoints) || 0;
+      const maxPts = Math.max(hPts, aPts);
+      const diff = Math.abs(hPts - aPts);
+
+      return (maxPts >= target) && (diff >= 2);
+    }
+
+    function checkSetFinishEligibility() {
+      const btnFinish = document.getElementById('btn-finish-set');
+      if (state.matchStatus === 'FINISHED') {
+        if (btnFinish) {
+          btnFinish.disabled = true;
+          btnFinish.classList.remove('ready');
+        }
+        return false;
+      }
+
+      const isEligible = isSetWonNow();
+      if (btnFinish) {
+        btnFinish.disabled = !isEligible;
+        if (isEligible) {
+          btnFinish.classList.add('ready');
+        } else {
+          btnFinish.classList.remove('ready');
+        }
+      }
+      return isEligible;
+    }
+
+    // ── POINT ENGINE DEBOUNCE (800ms) ──
+    function addPointDebounced(team) {
+      if (state.matchStatus === 'FINISHED') {
+        console.warn('[Match Engine] Match is already finished. Point rejected.');
+        return;
+      }
+
+      // Lock forward scoring if set is won and awaiting confirmation
+      if (isSetWonNow()) {
+        console.warn('[Match Engine] Set is already won (awaiting confirmation). Forward scoring locked.');
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastPointClickTime < DEBOUNCE_MS) {
+        console.warn('[Anti-Fat-Fingering] Click blocked (< 800ms)');
+        return;
+      }
+      lastPointClickTime = now;
+
+      const btnId = team === 'home' ? 'btn-home-add-point' : 'btn-away-add-point';
+      const btn = document.getElementById(btnId);
+      if (btn) {
+        btn.classList.add('debouncing');
+        setTimeout(() => btn.classList.remove('debouncing'), DEBOUNCE_MS);
+      }
+
+      pushUndoState();
+      state.matchStatus = "IN_PROGRESS";
+
+      if (state.servingTeam !== team) {
+        state.servingTeam = team;
+      }
+
+      if (team === 'home') state.teamHome.currentPoints++;
+      else state.teamAway.currentPoints++;
+
+      // Check auto-advance condition
+      if (state.autoAdvanceSet && isSetWonNow()) {
+        finishSetInternal();
+        return;
+      }
+
+      persistAndBroadcast();
+    }
+
+    function subPoint(team) {
+      pushUndoState();
+      if (team === 'home' && state.teamHome.currentPoints > 0) state.teamHome.currentPoints--;
+      else if (team === 'away' && state.teamAway.currentPoints > 0) state.teamAway.currentPoints--;
+      persistAndBroadcast();
+    }
+
+    function finishSet() {
+      pushUndoState();
+      finishSetInternal();
+    }
+
+    function finishSetInternal() {
+      const hPts = state.teamHome.currentPoints;
+      const aPts = state.teamAway.currentPoints;
+      const winner = hPts > aPts ? 'home' : 'away';
+
+      if (winner === 'home') state.teamHome.setsWon++;
+      else state.teamAway.setsWon++;
+
+      state.setsHistory.push({
+        setNumber: state.currentSet,
+        homePoints: hPts,
+        awayPoints: aPts,
+        winner: winner
+      });
+
+      const format = state.matchFormat === 'BEST_OF_3' ? 'BEST_OF_3' : 'BEST_OF_5';
+      const setsToWin = format === 'BEST_OF_3' ? 2 : 3;
+      const maxSets = format === 'BEST_OF_3' ? 3 : 5;
+
+      if (state.teamHome.setsWon >= setsToWin || state.teamAway.setsWon >= setsToWin || state.currentSet >= maxSets) {
+        state.matchStatus = "FINISHED";
+      } else {
+        state.currentSet++;
+        state.teamHome.currentPoints = 0;
+        state.teamAway.currentPoints = 0;
+        state.teamHome.timeouts = 0;
+        state.teamAway.timeouts = 0;
+      }
+
+      persistAndBroadcast();
+    }
+
+    // ── RENDER UI WITH I18N BINDING ──
+    function renderUI() {
+      const lang = state.language || 'en';
+      const dict = I18N[lang] || I18N.en;
+
+      // PIXEL Remote Commands checkbox & status pill UI
+      const chkAllow = document.getElementById('chk-allow-vento');
+      const lblVento = document.getElementById('lbl-vento-status');
+      const pillVento = document.getElementById('vento-control-pill');
+
+      if (chkAllow && lblVento && pillVento) {
+        chkAllow.checked = Boolean(state.allowVentoControl);
+        if (state.allowVentoControl) {
+          lblVento.textContent = 'PIXEL REMOTE: ARMED';
+          lblVento.style.color = '#34d399';
+          pillVento.style.background = 'rgba(40, 167, 69, 0.2)';
+          pillVento.style.borderColor = 'rgba(40, 167, 69, 0.6)';
+        } else {
+          lblVento.textContent = 'PIXEL REMOTE: LOCKED';
+          lblVento.style.color = '#f87171';
+          pillVento.style.background = 'rgba(220, 53, 69, 0.15)';
+          pillVento.style.borderColor = 'rgba(220, 53, 69, 0.4)';
+        }
+      }
+
+      // Language Switcher UI
+      document.getElementById('btn-lang-en').className = 'btn-lang' + (lang === 'en' ? ' active' : '');
+      document.getElementById('btn-lang-es').className = 'btn-lang' + (lang === 'es' ? ' active' : '');
+
+      // Translate Zone A
+      const txtMod = document.getElementById('txt-module-title');
+      if (txtMod) txtMod.textContent = dict.moduleTitle;
+      const statTxt = document.getElementById('status-text');
+      if (statTxt) statTxt.textContent = dict.liveStatus;
+      const txtUndo = document.getElementById('txt-undo');
+      if (txtUndo) txtUndo.textContent = dict.undo;
+      const btnShow = document.getElementById('btn-show-overlay');
+      if (btnShow) btnShow.textContent = dict.showOverlay;
+      const btnHide = document.getElementById('btn-hide-overlay');
+      if (btnHide) btnHide.textContent = dict.hideOverlay;
+
+      // Check if set is won and awaiting confirmation
+      const setWonPending = isSetWonNow() && !state.autoAdvanceSet && state.matchStatus !== 'FINISHED';
+      const isMatchFinished = (state.matchStatus === 'FINISHED');
+
+      // Translate Zone B Buttons and enforce scoring lock
+      const btnHomeAdd = document.getElementById('btn-home-add-point');
+      const btnAwayAdd = document.getElementById('btn-away-add-point');
+      btnHomeAdd.textContent = dict.addPoint;
+      btnAwayAdd.textContent = dict.addPoint;
+      btnHomeAdd.disabled = Boolean(setWonPending || isMatchFinished);
+      btnAwayAdd.disabled = Boolean(setWonPending || isMatchFinished);
+
+      const btnHomeSub = document.getElementById('btn-home-sub-point');
+      const btnAwaySub = document.getElementById('btn-away-sub-point');
+      btnHomeSub.textContent = dict.subPoint;
+      btnAwaySub.textContent = dict.subPoint;
+      btnHomeSub.disabled = Boolean(isMatchFinished || state.teamHome.currentPoints === 0);
+      btnAwaySub.disabled = Boolean(isMatchFinished || state.teamAway.currentPoints === 0);
+
+      document.getElementById('btn-serve-home').textContent = dict.serve;
+      document.getElementById('btn-serve-away').textContent = dict.serve;
+
+      // Home & Away Teams Data
+      document.getElementById('disp-home-name').textContent = state.teamHome.name;
+      document.getElementById('preview-color-home').style.background = state.teamHome.color;
+      document.getElementById('disp-home-points').textContent = state.teamHome.currentPoints;
+      document.getElementById('btn-serve-home').className = 'serve-indicator-btn' + (state.servingTeam === 'home' ? ' active' : '');
+      document.getElementById('tmo-home-1').className = 'tmo-dot' + (state.teamHome.timeouts >= 1 ? ' used' : '');
+      document.getElementById('tmo-home-2').className = 'tmo-dot' + (state.teamHome.timeouts >= 2 ? ' used' : '');
+
+      document.getElementById('disp-away-name').textContent = state.teamAway.name;
+      document.getElementById('preview-color-away').style.background = state.teamAway.color;
+      document.getElementById('disp-away-points').textContent = state.teamAway.currentPoints;
+      document.getElementById('btn-serve-away').className = 'serve-indicator-btn' + (state.servingTeam === 'away' ? ' active' : '');
+      document.getElementById('tmo-away-1').className = 'tmo-dot' + (state.teamAway.timeouts >= 1 ? ' used' : '');
+      document.getElementById('tmo-away-2').className = 'tmo-dot' + (state.teamAway.timeouts >= 2 ? ' used' : '');
+
+      // Translate Zone C
+      document.getElementById('lbl-current-set').textContent = dict.currentSet;
+      document.getElementById('lbl-sets').textContent = dict.sets;
+      document.getElementById('lbl-status').textContent = dict.status;
+      document.getElementById('btn-finish-set').textContent = dict.finishSet;
+      document.getElementById('lbl-tmo-home').textContent = dict.tmoHome;
+      document.getElementById('lbl-tmo-away').textContent = dict.tmoAway;
+      document.getElementById('btn-tmo-home-reset').textContent = dict.reset;
+      document.getElementById('btn-tmo-away-reset').textContent = dict.reset;
+      document.getElementById('btn-open-modal').textContent = dict.configOverride;
+      document.getElementById('btn-reset-match').textContent = dict.resetMatch;
+      document.getElementById('lbl-history').textContent = dict.historyTitle;
+
+      // Translate Override Modal
+      document.getElementById('modal-title').textContent = dict.modalTitle;
+      document.getElementById('lbl-home-name').textContent = dict.homeNameLabel;
+      document.getElementById('lbl-home-color').textContent = dict.homeColorLabel;
+      document.getElementById('lbl-away-name').textContent = dict.awayNameLabel;
+      document.getElementById('lbl-away-color').textContent = dict.awayColorLabel;
+      document.getElementById('lbl-home-sets').textContent = dict.homeSetsLabel;
+      document.getElementById('lbl-away-sets').textContent = dict.awaySetsLabel;
+      document.getElementById('btn-save-modal').textContent = dict.saveChanges;
+
+      // Translate Internal Reset Modal
+      document.getElementById('modal-reset-title').textContent = dict.resetModalTitle;
+      document.getElementById('modal-reset-desc').textContent = dict.resetModalDesc;
+      document.getElementById('btn-cancel-reset').textContent = dict.cancel;
+      document.getElementById('btn-confirm-reset').textContent = dict.confirmResetBtn;
+
+      document.getElementById('disp-set-num').textContent = state.currentSet;
+      document.getElementById('disp-home-sets').textContent = state.teamHome.setsWon;
+      document.getElementById('disp-away-sets').textContent = state.teamAway.setsWon;
+      document.getElementById('disp-match-status').textContent = state.matchStatus;
+
+      // History Chips
+      const chipsCont = document.getElementById('history-chips-container');
+      if (state.setsHistory.length === 0) {
+        chipsCont.innerHTML = `<span style="font-style:italic;">${dict.noHistory}</span>`;
+      } else {
+        chipsCont.innerHTML = state.setsHistory.map(s =>
+          `<div class="history-chip">S${s.setNumber}: ${s.homePoints}-${s.awayPoints}</div>`
+        ).join('');
+      }
+
+      checkSetFinishEligibility();
+    }
+
+    // ── EVENT LISTENERS ──
+    document.getElementById('chk-allow-vento').addEventListener('change', (e) => {
+      state.allowVentoControl = e.target.checked;
+      persistAndBroadcast();
+    });
+
+    document.getElementById('btn-lang-en').addEventListener('click', () => {
+      if (state.language !== 'en') {
+        pushUndoState();
+        state.language = 'en';
+        persistAndBroadcast();
+      }
+    });
+    document.getElementById('btn-lang-es').addEventListener('click', () => {
+      if (state.language !== 'es') {
+        pushUndoState();
+        state.language = 'es';
+        persistAndBroadcast();
+      }
+    });
+
+    document.getElementById('btn-home-add-point').addEventListener('click', () => addPointDebounced('home'));
+    document.getElementById('btn-away-add-point').addEventListener('click', () => addPointDebounced('away'));
+    document.getElementById('btn-home-sub-point').addEventListener('click', () => subPoint('home'));
+    document.getElementById('btn-away-sub-point').addEventListener('click', () => subPoint('away'));
+
+    document.getElementById('btn-serve-home').addEventListener('click', () => { pushUndoState(); state.servingTeam = 'home'; persistAndBroadcast(); });
+    document.getElementById('btn-serve-away').addEventListener('click', () => { pushUndoState(); state.servingTeam = 'away'; persistAndBroadcast(); });
+
+    document.getElementById('btn-undo').addEventListener('click', popUndoState);
+    document.getElementById('btn-finish-set').addEventListener('click', finishSet);
+
+    const btnShow = document.getElementById('btn-show-overlay');
+    if (btnShow) btnShow.addEventListener('click', () => { pushUndoState(); state.overlayVisible = true; persistAndBroadcast(); });
+    const btnHide = document.getElementById('btn-hide-overlay');
+    if (btnHide) btnHide.addEventListener('click', () => { pushUndoState(); state.overlayVisible = false; persistAndBroadcast(); });
+
+    document.getElementById('btn-tmo-home-add').addEventListener('click', () => { if (state.teamHome.timeouts < 2) { pushUndoState(); state.teamHome.timeouts++; persistAndBroadcast(); } });
+    document.getElementById('btn-tmo-home-reset').addEventListener('click', () => { pushUndoState(); state.teamHome.timeouts = 0; persistAndBroadcast(); });
+    document.getElementById('btn-tmo-away-add').addEventListener('click', () => { if (state.teamAway.timeouts < 2) { pushUndoState(); state.teamAway.timeouts++; persistAndBroadcast(); } });
+    document.getElementById('btn-tmo-away-reset').addEventListener('click', () => { pushUndoState(); state.teamAway.timeouts = 0; persistAndBroadcast(); });
+
+    // Override Modal
+    const modalOverride = document.getElementById('modal-override');
+    document.getElementById('btn-open-modal').addEventListener('click', () => {
+      document.getElementById('inp-home-name').value = state.teamHome.name;
+      document.getElementById('inp-home-color').value = state.teamHome.color;
+      document.getElementById('inp-away-name').value = state.teamAway.name;
+      document.getElementById('inp-away-color').value = state.teamAway.color;
+      document.getElementById('inp-home-sets').value = state.teamHome.setsWon;
+      document.getElementById('inp-away-sets').value = state.teamAway.setsWon;
+      document.getElementById('inp-match-format').value = state.matchFormat || 'BEST_OF_5';
+      document.getElementById('inp-auto-advance').value = state.autoAdvanceSet ? 'auto' : 'manual';
+      modalOverride.classList.add('open');
+    });
+    document.getElementById('btn-close-modal').addEventListener('click', () => modalOverride.classList.remove('open'));
+    document.getElementById('btn-save-modal').addEventListener('click', () => {
+      const oldFormat = state.matchFormat || 'BEST_OF_5';
+      const newFormat = document.getElementById('inp-match-format').value;
+      const isMatchStarted = (state.currentSet > 1 || state.teamHome.currentPoints > 0 || state.teamAway.currentPoints > 0 || (state.setsHistory && state.setsHistory.length > 0));
+
+      if (oldFormat !== newFormat && isMatchStarted) {
+        const confirmed = confirm("The match is currently in progress. Changing format from " + oldFormat + " to " + newFormat + " will update the set thresholds. Do you want to proceed?");
+        if (!confirmed) return;
+      }
+
+      pushUndoState();
+      state.teamHome.name = document.getElementById('inp-home-name').value.trim() || 'HOME';
+      state.teamHome.color = document.getElementById('inp-home-color').value;
+      state.teamAway.name = document.getElementById('inp-away-name').value.trim() || 'AWAY';
+      state.teamAway.color = document.getElementById('inp-away-color').value;
+      state.teamHome.setsWon = parseInt(document.getElementById('inp-home-sets').value) || 0;
+      state.teamAway.setsWon = parseInt(document.getElementById('inp-away-sets').value) || 0;
+      state.matchFormat = newFormat;
+      state.autoAdvanceSet = (document.getElementById('inp-auto-advance').value === 'auto');
+      modalOverride.classList.remove('open');
+      persistAndBroadcast();
+    });
+
+    // Reset Modal (Internal HTML Popup)
+    const modalReset = document.getElementById('modal-reset');
+    document.getElementById('btn-reset-match').addEventListener('click', () => {
+      modalReset.classList.add('open');
+    });
+    document.getElementById('btn-close-reset-modal').addEventListener('click', () => modalReset.classList.remove('open'));
+    document.getElementById('btn-cancel-reset').addEventListener('click', () => modalReset.classList.remove('open'));
+    document.getElementById('btn-confirm-reset').addEventListener('click', () => {
+      pushUndoState();
+      const currentLang = state.language;
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      state.language = currentLang;
+      modalReset.classList.remove('open');
+      persistAndBroadcast();
+    });
+
+    // Boot Init
+    loadInitialState();
+    updateUndoUI();
+  </script>
+</body>
+</html>

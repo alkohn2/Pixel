@@ -1,0 +1,27 @@
+# macOS System & Metadata
+.DS_Store
+._*
+**/._*
+*.Spotlight-V100
+*.Trashes
+
+# Runtime PID files & logs
+*.pid
+.*.pid
+**/*.pid
+**/.*.pid
+*.log
+**/*.log
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Temporary Diagnostic Snapshots & Backups
+backups/
+**/snapshots/
+diagnostics/capture_reference
+docs/decklink/decklink_capabilities_investigation
+docs/decklink/decklink_quad3_audit
+docs/decklink/decklink_test_read
+

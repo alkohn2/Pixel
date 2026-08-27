@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Volleyball Unified Graphics Dashboard (Phase G6.6)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --panel-bg: rgba(15, 20, 32, 0.95);
+      --card-bg: rgba(22, 29, 45, 0.85);
+      --panel-border: 1px solid rgba(255, 255, 255, 0.12);
+      --mdc-blue: #0032A0;
+      --mdc-blue-hover: #002577;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --txt-white: #ffffff;
+      --txt-muted: #94a3b8;
+      --txt-faint: #64748b;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; user-select: none; }
+
+    html {
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--txt-white);
+      padding: 12px 18px 48px 18px;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 1640px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+
+    /* ── HEADER ── */
+    .header-bar {
+      background: var(--panel-bg);
+      border: var(--panel-border);
+      border-radius: var(--radius);
+      padding: 9px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+      width: 100%;
+      box-sizing: border-box;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .brand-group h1 {
+      font-size: 0.92rem;
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--txt-white);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-chip {
+      background: var(--mdc-blue);
+      color: var(--txt-white);
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .telemetry-chip {
+      font-size: 0.68rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .global-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-panic {
+      background: linear-gradient(135deg, #dc2626, #991b1b);
+      border: 1px solid #ef4444;
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      padding: 6px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4);
+      transition: transform 0.1s ease, filter 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-panic:hover {
+      filter: brightness(1.15);
+    }
+    .btn-panic:active {
+      transform: scale(0.97);
+    }
+
+    /* ── SCALABLE EQUAL 3-COLUMN DASHBOARD GRID (PHASE G6.6D) ── */
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      width: 100%;
+      box-sizing: border-box;
+      align-items: start;
+    }
+
+    @media (min-width: 768px) and (max-width: 1179px) {
+      .grid-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+    }
+
+    @media (min-width: 1180px) {
+      .grid-container {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+    }
+
+    .module-card {
+      background: var(--panel-bg);
+      border: var(--panel-border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+      height: 248px;
+      min-height: 248px;
+      max-height: 248px;
+    }
+
+    .module-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gold);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .module-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 5px;
+      flex-shrink: 0;
+    }
+
+    .module-title {
+      font-size: 0.78rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .status-pill.on-air {
+      background: rgba(22, 163, 74, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(22, 163, 74, 0.4);
+    }
+    .status-pill.off-air {
+      background: rgba(100, 116, 139, 0.15);
+      color: var(--txt-muted);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    .status-pill.prepared {
+      background: rgba(234, 179, 8, 0.15);
+      color: #facc15;
+      border: 1px solid rgba(234, 179, 8, 0.4);
+    }
+
+    /* ── PREVIEW BOX ── */
+    .preview-box {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 5px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      overflow: hidden;
+    }
+
+    .preview-label {
+      font-size: 0.58rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-main-text {
+      font-size: 0.82rem;
+      font-weight: 900;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preview-sub-text {
+      font-size: 0.64rem;
+      font-weight: 700;
+      color: var(--gold-bright);
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── SELECTION CONTROLS ── */
+    .control-row {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .tab-group {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      padding: 1px;
+      width: 100%;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--txt-muted);
+      font-size: 0.66rem;
+      font-weight: 800;
+      padding: 3px 6px;
+      border-radius: 3px;
+      cursor: pointer;
+      pointer-events: auto;
+      position: relative;
+      z-index: 2;
+      transition: all 0.15s ease;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-btn.active {
+      background: var(--mdc-blue);
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    }
+
+    select.player-select {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 4px 6px;
+      border-radius: 4px;
+      width: 100%;
+      cursor: pointer;
+      pointer-events: auto;
+      position: relative;
+      z-index: 2;
+    }
+    select.player-select:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    /* ── ACTION BUTTONS ── */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    button.act-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      pointer-events: auto;
+      position: relative;
+      z-index: 2;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    button.act-btn:hover {
+      background: #334155;
+    }
+    button.act-btn.show {
+      background: linear-gradient(135deg, var(--success), #15803d);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    button.act-btn.show:hover { filter: brightness(1.15); }
+    button.act-btn.hide {
+      background: linear-gradient(135deg, var(--danger), #991b1b);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    button.act-btn.hide:hover { filter: brightness(1.15); }
+    button.act-btn.prepare {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    button.act-btn.prepare:hover { filter: brightness(1.15); }
+
+    /* ── BROADCAST CONFIDENCE MONITORS (TRUE PREVIEW / PROGRAM) ── */
+    .confidence-monitor-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      width: 100%;
+      box-sizing: border-box;
+      margin-top: 6px;
+    }
+
+    @media (min-width: 768px) {
+      .confidence-monitor-container {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+    }
+
+    .confidence-card {
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .confidence-card.preview-panel {
+      border-top: 3px solid #eab308;
+    }
+
+    .confidence-card.program-panel {
+      border-top: 3px solid #ef4444;
+    }
+
+    .confidence-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 6px;
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .confidence-title {
+      font-size: 0.74rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .confidence-title.preview-title {
+      color: #facc15;
+    }
+
+    .confidence-title.program-title {
+      color: #f87171;
+    }
+
+    .tally-led {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .tally-led.amber {
+      background: #facc15;
+      box-shadow: 0 0 10px #facc15, 0 0 4px #facc15;
+    }
+    .tally-led.red {
+      background: #ef4444;
+      box-shadow: 0 0 12px #ef4444, 0 0 4px #ef4444;
+    }
+    .tally-led.off {
+      background: #475569;
+    }
+
+    .btn-clear-preview {
+      background: rgba(234, 179, 8, 0.12);
+      border: 1px solid rgba(234, 179, 8, 0.35);
+      color: #facc15;
+      font-size: 0.64rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+    .btn-clear-preview:hover {
+      background: rgba(234, 179, 8, 0.25);
+      border-color: #facc15;
+    }
+    .btn-clear-preview:active {
+      transform: scale(0.96);
+    }
+
+    .confidence-screen {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #020408;
+      border: 1.5px solid #1e293b;
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.95);
+      box-sizing: border-box;
+    }
+
+    .confidence-iframe-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 1920px;
+      height: 1080px;
+      transform-origin: top left;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .confidence-iframe {
+      width: 1920px;
+      height: 1080px;
+      border: none;
+      background: transparent;
+      pointer-events: none;
+      display: block;
+    }
+
+    .screen-safe-guides {
+      position: absolute;
+      inset: 6px;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      border-radius: 4px;
+      z-index: 10;
+    }
+
+    .screen-res-watermark {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.5px;
+      color: rgba(255, 255, 255, 0.3);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      pointer-events: none;
+      z-index: 11;
+    }
+
+    .confidence-screen-empty {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      color: var(--txt-muted);
+      text-align: center;
+      pointer-events: none;
+      z-index: 15;
+      background: rgba(2, 4, 8, 0.85);
+    }
+
+    /* ── FOOTER LOG ── */
+    .footer-log {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius);
+      padding: 6px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--txt-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header-bar">
+    <div class="brand-group">
+      <h1><i class="ti ti-layers-intersect"></i> PIXEL Graphics</h1>
+      <span class="badge-chip">VOLLEYBALL</span>
+      <span id="game-package-pill" class="telemetry-chip" style="background: rgba(227,196,106,0.15); color: var(--gold); border: 1px solid rgba(227,196,106,0.3);">MATCH: MIAMI DADE VS DAYTONA STATE</span>
+      <span id="transport-status" class="telemetry-chip" style="color: #4ade80; background: rgba(22,163,74,0.15); border: 1px solid rgba(22,163,74,0.3);">● NDI BROADCASTING</span>
+      <span id="roster-home-pill" class="telemetry-chip" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">HOME: 6/6</span>
+      <span id="roster-away-pill" class="telemetry-chip" style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">AWAY: 6/6</span>
+    </div>
+    <div class="global-actions">
+      <button class="act-btn" style="padding: 6px 10px; font-size: 0.72rem; background: #1e293b; color: var(--gold); border-color: rgba(227,196,106,0.3);" onclick="navigateToTab('game_package')" title="Open Game Package Manager in PIXEL Hub">
+        <i class="ti ti-folders"></i> GAME PACKAGES
+      </button>
+      <button class="act-btn" style="padding: 6px 10px; font-size: 0.72rem; background: #1e293b;" onclick="navigateToTab('roster')" title="Open Roster & Lineup Editor in PIXEL Hub">
+        <i class="ti ti-users"></i> ROSTER EDITOR
+      </button>
+      <button class="btn-panic" onclick="hideAllGraphics()">
+        <i class="ti ti-eye-off"></i>
+        <span>HIDE ALL GRAPHICS</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODULES 3x2 GRID -->
+  <div class="grid-container">
+
+    <!-- ROW 1 / MODULE 1: SCOREBUG -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-scoreboard"></i> 1. Scorebug</span>
+        <span id="pill-scorebug" class="status-pill on-air">ON AIR</span>
+      </div>
+
+      <div class="preview-box" style="flex: 1; justify-content: center;">
+        <span class="preview-label">PERSISTENT BROADCAST OVERLAY</span>
+        <div class="preview-main-text" id="sb-telemetry-text">
+          <span>SIGNATURE SCOREBUG</span>
+          <span style="font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; color: var(--gold); background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.1);">LIVE FEED BOUND</span>
+        </div>
+        <span class="preview-sub-text" id="sb-match-summary">SET 1 (SETS 0-0) • MDC 0 - 0 DSC</span>
+      </div>
+
+      <div class="btn-grid">
+        <button class="act-btn show" onclick="setScorebugVisibility(true)">
+          <i class="ti ti-eye"></i> SHOW SCOREBUG
+        </button>
+        <button class="act-btn hide" onclick="setScorebugVisibility(false)">
+          <i class="ti ti-eye-off"></i> HIDE SCOREBUG
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 1 / MODULE 2: PLAYER LOWER THIRD -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-id-badge-2"></i> 2. Player Lower Third</span>
+        <span id="pill-lt" class="status-pill off-air">OFF AIR</span>
+      </div>
+
+      <div class="tab-group">
+        <button id="tab-lt-home" class="tab-btn active" onclick="selectLtTeam('home')">HOME</button>
+        <button id="tab-lt-away" class="tab-btn" onclick="selectLtTeam('away')">AWAY</button>
+      </div>
+
+      <select id="select-player" class="player-select" onchange="onPlayerSelectChange()">
+        <!-- Options -->
+      </select>
+
+      <div class="preview-box">
+        <div class="preview-main-text">
+          <span id="prev-lt-num" style="color: var(--gold); font-family: 'JetBrains Mono', monospace;">#7</span>
+          <span id="prev-lt-name">MARIA SANTOS</span>
+          <span id="prev-lt-pos" style="font-size: 0.65rem; background: rgba(227,196,106,0.2); padding: 1px 5px; border-radius: 3px; color: var(--gold);">OH</span>
+        </div>
+        <span id="prev-lt-stats" class="preview-sub-text">14 KILLS • 3 ACES • 8 DIGS</span>
+      </div>
+
+      <div class="control-row">
+        <button class="act-btn" style="flex: 1;" onclick="stepPlayer(-1)"><i class="ti ti-chevron-left"></i> PREV</button>
+        <button class="act-btn prepare" style="flex: 1.5;" onclick="preparePlayer()"><i class="ti ti-clipboard-check"></i> PREPARE</button>
+        <button class="act-btn" style="flex: 1;" onclick="stepPlayer(1)">NEXT <i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <div class="btn-grid">
+        <button class="act-btn show" onclick="setLtVisibility(true)">
+          <i class="ti ti-player-play"></i> SHOW ON AIR
+        </button>
+        <button class="act-btn hide" onclick="setLtVisibility(false)">
+          <i class="ti ti-player-stop"></i> HIDE OFF AIR
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 1 / MODULE 3: STARTING LINEUP -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-users-group"></i> 3. Starting Lineup</span>
+        <span id="pill-lineup" class="status-pill off-air">OFF AIR</span>
+      </div>
+
+      <div class="tab-group">
+        <button id="tab-lineup-home" class="tab-btn active" onclick="selectLineupTeam('home')">HOME STARTING 6</button>
+        <button id="tab-lineup-away" class="tab-btn" onclick="selectLineupTeam('away')">AWAY STARTING 6</button>
+      </div>
+
+      <div class="preview-box" style="flex: 1; justify-content: center;">
+        <span class="preview-label">PREPARED LINEUP BOARD</span>
+        <div class="preview-main-text" id="prev-lineup-title">MIAMI DADE SHARKS</div>
+        <span class="preview-sub-text" id="prev-lineup-sub">6 ROTATION STARTERS READY</span>
+      </div>
+
+      <div class="btn-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <button class="act-btn prepare" onclick="prepareLineup()">
+          <i class="ti ti-clipboard-check"></i> PREPARE
+        </button>
+        <button class="act-btn show" onclick="setLineupVisibility(true)">
+          <i class="ti ti-eye"></i> SHOW
+        </button>
+        <button class="act-btn hide" onclick="setLineupVisibility(false)">
+          <i class="ti ti-eye-off"></i> HIDE
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 2 / MODULE 4: PLAYER STATS -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-chart-bar"></i> 4. Player Stats</span>
+        <span id="pill-pstats" class="status-pill off-air">OFF AIR</span>
+      </div>
+
+      <div class="tab-group">
+        <button id="tab-pstats-home" class="tab-btn active" onclick="selectPstatsTeam('home')">HOME</button>
+        <button id="tab-pstats-away" class="tab-btn" onclick="selectPstatsTeam('away')">AWAY</button>
+      </div>
+
+      <select id="select-pstats-player" class="player-select" onchange="onPstatsPlayerSelectChange()">
+        <!-- Options -->
+      </select>
+
+      <div class="preview-box">
+        <div class="preview-main-text">
+          <span id="prev-pstats-num" style="color: var(--gold); font-family: 'JetBrains Mono', monospace;">#7</span>
+          <span id="prev-pstats-name">MARIA SANTOS</span>
+          <span id="prev-pstats-pos" style="font-size: 0.65rem; background: rgba(227,196,106,0.2); padding: 1px 5px; border-radius: 3px; color: var(--gold);">OH</span>
+        </div>
+        <span id="prev-pstats-stats" class="preview-sub-text">14 KILLS • 3 ACES • 8 DIGS • .385 ATT%</span>
+      </div>
+
+      <div class="control-row">
+        <button class="act-btn" style="flex: 1;" onclick="stepPstatsPlayer(-1)"><i class="ti ti-chevron-left"></i> PREV</button>
+        <button class="act-btn prepare" style="flex: 1.5;" onclick="preparePstats()"><i class="ti ti-clipboard-check"></i> PREPARE</button>
+        <button class="act-btn" style="flex: 1;" onclick="stepPstatsPlayer(1)">NEXT <i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <div class="btn-grid">
+        <button class="act-btn show" onclick="setPstatsVisibility(true)">
+          <i class="ti ti-player-play"></i> SHOW ON AIR
+        </button>
+        <button class="act-btn hide" onclick="setPstatsVisibility(false)">
+          <i class="ti ti-player-stop"></i> HIDE OFF AIR
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 2 / MODULE 5: SET RESULT -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-trophy"></i> 5. Set Result</span>
+        <span id="pill-set-result" class="status-pill off-air">OFF AIR</span>
+      </div>
+
+      <div class="control-row">
+        <button class="act-btn" style="flex: 1;" onclick="stepSetResult(-1)"><i class="ti ti-chevron-left"></i> PREV</button>
+        <span id="set-result-selector-label" style="flex: 2; font-size: 0.72rem; font-family: 'JetBrains Mono', monospace; font-weight: 800; color: var(--gold); text-align: center; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1);">SET 1 RESULT</span>
+        <button class="act-btn" style="flex: 1;" onclick="stepSetResult(1)">NEXT <i class="ti ti-chevron-right"></i></button>
+      </div>
+
+      <div class="preview-box" style="flex: 1; justify-content: center;">
+        <span class="preview-label" id="prev-set-res-label">COMPLETED SET SCORE</span>
+        <div class="preview-main-text" id="prev-set-res-title">SET 1 FINAL</div>
+        <span class="preview-sub-text" id="prev-set-res-summary">MDC 25 - 23 DSC • MDC LEADS 1-0</span>
+      </div>
+
+      <div class="btn-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <button class="act-btn prepare" onclick="prepareSetResult()">
+          <i class="ti ti-clipboard-check"></i> PREPARE
+        </button>
+        <button class="act-btn show" onclick="setSetResultVisibility(true)">
+          <i class="ti ti-eye"></i> SHOW
+        </button>
+        <button class="act-btn hide" onclick="setSetResultVisibility(false)">
+          <i class="ti ti-eye-off"></i> HIDE
+        </button>
+      </div>
+    </div>
+
+    <!-- ROW 2 / MODULE 6: MATCH RESULT -->
+    <div class="module-card">
+      <div class="module-header">
+        <span class="module-title"><i class="ti ti-award"></i> 6. Match Result</span>
+        <span id="pill-match-result" class="status-pill off-air">OFF AIR</span>
+      </div>
+
+      <div style="display: flex; align-items: center; justify-content: space-between; padding: 2px 4px;">
+        <span style="font-size: 0.68rem; font-weight: 800; color: var(--txt-muted);">MATCH STATUS:</span>
+        <span id="pill-match-status-badge" style="font-size: 0.65rem; font-family: 'JetBrains Mono', monospace; font-weight: 900; padding: 2px 6px; border-radius: 3px; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3);">IN PROGRESS</span>
+      </div>
+
+      <div class="preview-box" style="flex: 1; justify-content: center;">
+        <span class="preview-label" id="prev-match-res-label">FINAL SCOREBOARD</span>
+        <div class="preview-main-text" id="prev-match-res-title">MATCH IN PROGRESS</div>
+        <span class="preview-sub-text" id="prev-match-res-summary">SETS: MDC 0 - 0 DSC</span>
+      </div>
+
+      <div class="btn-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+        <button class="act-btn prepare" onclick="prepareMatchResult()">
+          <i class="ti ti-clipboard-check"></i> PREPARE
+        </button>
+        <button class="act-btn show" id="btn-show-match-res" onclick="setMatchResultVisibility(true)">
+          <i class="ti ti-eye"></i> SHOW
+        </button>
+        <button class="act-btn hide" onclick="setMatchResultVisibility(false)">
+          <i class="ti ti-eye-off"></i> HIDE
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONFIDENCE MONITORS (TRUE PREVIEW / PROGRAM) -->
+  <div class="confidence-monitor-container">
+
+    <!-- PANEL 1: PREVIEW / READY TO AIR -->
+    <div class="confidence-card preview-panel">
+      <div class="confidence-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="tally-led off" id="tally-led-preview"></span>
+          <span class="confidence-title preview-title">
+            <i class="ti ti-device-tv"></i> PREVIEW / READY TO AIR
+          </span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="conf-preview-tag" class="status-pill off-air">NO GRAPHIC PREPARED</span>
+          <button class="btn-clear-preview" onclick="clearPreview()" title="Clear graphic staged in Preview">
+            <i class="ti ti-x"></i> CLEAR PREVIEW
+          </button>
+        </div>
+      </div>
+
+      <!-- 16:9 Scaled TV Confidence Screen -->
+      <div class="confidence-screen" id="conf-preview-screen">
+        <div class="screen-safe-guides"></div>
+        <div class="screen-res-watermark">PREVIEW • 1080p59.94</div>
+
+        <div class="confidence-screen-empty" id="conf-preview-empty">
+          <i class="ti ti-device-tv-off" style="font-size: 1.8rem; opacity: 0.35;"></i>
+          <span style="font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">NO GRAPHIC PREPARED</span>
+          <span style="font-size: 0.62rem; color: var(--txt-faint);">Press PREPARE on any module to stage graphic</span>
+        </div>
+
+        <div class="confidence-iframe-wrapper" id="conf-preview-iframe-wrapper">
+          <iframe class="confidence-iframe" id="conf-preview-iframe" src="volleyball-master-overlay.html?mode=preview"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 2: PROGRAM / ON AIR -->
+    <div class="confidence-card program-panel">
+      <div class="confidence-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="tally-led off" id="tally-led-program"></span>
+          <span class="confidence-title program-title">
+            <i class="ti ti-broadcast"></i> PROGRAM / ON AIR
+          </span>
+        </div>
+        <div id="conf-program-badges-group" style="display: flex; gap: 4px; flex-wrap: wrap;">
+          <span id="conf-program-tag" class="status-pill off-air">NO GRAPHICS ON AIR</span>
+        </div>
+      </div>
+
+      <!-- 16:9 Scaled TV Confidence Screen -->
+      <div class="confidence-screen" id="conf-program-screen">
+        <div class="screen-safe-guides"></div>
+        <div class="screen-res-watermark">PROGRAM • 1080p59.94</div>
+
+        <div class="confidence-screen-empty" id="conf-program-empty">
+          <i class="ti ti-player-stop" style="font-size: 1.8rem; opacity: 0.35;"></i>
+          <span style="font-size: 0.74rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">NO GRAPHICS ON AIR</span>
+          <span style="font-size: 0.62rem; color: var(--txt-faint);">All overlay layers currently off air</span>
+        </div>
+
+        <div class="confidence-iframe-wrapper" id="conf-program-iframe-wrapper">
+          <iframe class="confidence-iframe" id="conf-program-iframe" src="volleyball-master-overlay.html?mode=program"></iframe>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER STATUS & LOG -->
+  <div class="footer-log">
+    <span id="last-action-text">LAST ACTION: CONTROLLER READY</span>
+    <span id="revision-text" style="color: var(--gold);">REV: 1</span>
+  </div>
+
+  <!-- OFFLINE CORE & TEST DATA -->
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/rosterModel.js"></script>
+  <script src="../core/gamePackageModel.js"></script>
+  <script src="../prototypes/dev-roster-data.js"></script>
+
+  <script>
+    'use strict';
+
+    const GraphicsCore = window.PixelGraphicsState;
+    const RosterModel = window.PixelRosterModel;
+    const PkgModel = window.PixelGamePackageModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    const STORAGE_KEY = GraphicsCore.STORAGE_KEY; // 'pixelVolleyballGraphicsStateV1'
+    const CHANNEL_NAME = GraphicsCore.CHANNEL_NAME; // 'pixel-volleyball-graphics-state'
+
+    let state = GraphicsCore.createDefaultGraphicsState();
+    let stateChannel = null;
+    let rosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+    let matchState = null;
+
+    let selectedLtTeamKey = 'home';
+    let selectedPlayerIndex = 0;
+    let selectedLineupTeamKey = 'home';
+
+    let selectedPstatsTeamKey = 'home';
+    let selectedPstatsIndex = 0;
+    let selectedSetResultIndex = 1;
+
+    try {
+      stateChannel = new BroadcastChannel(CHANNEL_NAME);
+      stateChannel.onmessage = (event) => {
+        if (event.data && event.data.state) {
+          state = event.data.state;
+          updateUI();
+        }
+      };
+    } catch (e) {
+      console.warn('BroadcastChannel unavailable:', e);
+    }
+
+    // Game Package Channel Listener
+    try {
+      const pkgChannel = new BroadcastChannel(PkgModel.CHANNEL_NAME);
+      pkgChannel.onmessage = (event) => {
+        updateGamePackagePill();
+      };
+    } catch (e) {}
+
+    // Roster Channel Listener (Dynamic Live Refresh)
+    try {
+      const rosterChannel = new BroadcastChannel(RosterModel.CHANNEL_NAME);
+      rosterChannel.onmessage = (event) => {
+        if (event.data && event.data.roster) {
+          rosterState = event.data.roster;
+          populatePlayerSelect();
+          populatePstatsSelect();
+          updateRosterStatusPills();
+          document.getElementById('last-action-text').textContent = `[ROSTER UPDATED] Synchronized with Roster Editor (${new Date().toLocaleTimeString()})`;
+        }
+      };
+    } catch (e) {}
+
+    // Live Match Channel / Storage Listener
+    try {
+      const matchChannel = new BroadcastChannel('sports_graphics_live_channel');
+      matchChannel.onmessage = (event) => {
+        if (event.data && event.data.state) {
+          matchState = event.data.state;
+          updateMatchTelemetry(matchState);
+        }
+      };
+    } catch (e) {}
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'sports_graphics_match_state' && e.newValue) {
+        try {
+          matchState = JSON.parse(e.newValue);
+          updateMatchTelemetry(matchState);
+        } catch (err) {}
+      }
+      if (e.key === RosterModel.STORAGE_KEY && e.newValue) {
+        try {
+          rosterState = JSON.parse(e.newValue);
+          populatePlayerSelect();
+          populatePstatsSelect();
+          updateRosterStatusPills();
+        } catch (err) {}
+      }
+      if (e.key === PkgModel.ACTIVE_GAME_KEY || e.key === PkgModel.STORAGE_KEY) {
+        updateGamePackagePill();
+      }
+    });
+
+    function updateMatchTelemetry(mState) {
+      if (!mState) {
+        try {
+          const raw = localStorage.getItem('sports_graphics_match_state');
+          if (raw) mState = JSON.parse(raw);
+        } catch (e) {}
+      }
+      if (!mState) return;
+      matchState = mState;
+
+      if (mState.teamHome && mState.teamAway) {
+        const hName = mState.teamHome.name || 'HOME';
+        const aName = mState.teamAway.name || 'AWAY';
+        const hPts = mState.teamHome.currentPoints ?? 0;
+        const aPts = mState.teamAway.currentPoints ?? 0;
+        const hSets = mState.teamHome.setsWon ?? 0;
+        const aSets = mState.teamAway.setsWon ?? 0;
+        const setNum = mState.currentSet ?? 1;
+
+        const summaryEl = document.getElementById('sb-match-summary');
+        if (summaryEl) {
+          summaryEl.textContent = `SET ${setNum} (SETS ${hSets}-${aSets}) • ${hName} ${hPts} - ${aPts} ${aName}`;
+        }
+      }
+
+      // Update Set Result preview telemetry
+      updateSetResultPreview();
+
+      // Update Match Result preview telemetry
+      updateMatchResultPreview();
+    }
+
+    function updateSetResultPreview() {
+      const history = matchState?.setsHistory || [];
+      const setLabel = document.getElementById('set-result-selector-label');
+      const titleEl = document.getElementById('prev-set-res-title');
+      const sumEl = document.getElementById('prev-set-res-summary');
+
+      if (setLabel) setLabel.textContent = `SET ${selectedSetResultIndex} RESULT`;
+
+      const target = history.find(s => s.setNumber === selectedSetResultIndex);
+      if (target) {
+        const hName = matchState?.teamHome?.shortName || matchState?.teamHome?.name || 'HOME';
+        const aName = matchState?.teamAway?.shortName || matchState?.teamAway?.name || 'AWAY';
+        if (titleEl) titleEl.textContent = `SET ${target.setNumber} FINAL`;
+        if (sumEl) sumEl.textContent = `${hName} ${target.homePoints} - ${target.awayPoints} ${aName} (${target.winner === 'home' ? hName : aName} WON)`;
+      } else {
+        if (titleEl) titleEl.textContent = `SET ${selectedSetResultIndex} (IN PROGRESS / PENDING)`;
+        if (sumEl) sumEl.textContent = history.length ? `LAST COMPLETED: SET ${history[history.length - 1].setNumber}` : `NO COMPLETED SETS RECORDED`;
+      }
+    }
+
+    function updateMatchResultPreview() {
+      const statusBadge = document.getElementById('pill-match-status-badge');
+      const titleEl = document.getElementById('prev-match-res-title');
+      const sumEl = document.getElementById('prev-match-res-summary');
+      const isFinished = matchState?.matchStatus === 'FINISHED';
+
+      const hName = matchState?.teamHome?.shortName || matchState?.teamHome?.name || 'HOME';
+      const aName = matchState?.teamAway?.shortName || matchState?.teamAway?.name || 'AWAY';
+      const hSets = matchState?.teamHome?.setsWon ?? 0;
+      const aSets = matchState?.teamAway?.setsWon ?? 0;
+      const history = matchState?.setsHistory || [];
+
+      if (statusBadge) {
+        statusBadge.textContent = isFinished ? 'FINAL' : 'IN PROGRESS';
+        statusBadge.style.color = isFinished ? '#4ade80' : '#38bdf8';
+        statusBadge.style.background = isFinished ? 'rgba(22,163,74,0.2)' : 'rgba(56,189,248,0.15)';
+        statusBadge.style.borderColor = isFinished ? 'rgba(22,163,74,0.4)' : 'rgba(56,189,248,0.3)';
+      }
+
+      if (isFinished) {
+        const winner = hSets > aSets ? hName : aName;
+        if (titleEl) titleEl.textContent = `FINAL: ${winner} WINS (${hSets}-${aSets})`;
+        const scores = history.map(s => `${s.homePoints}-${s.awayPoints}`).join(', ');
+        if (sumEl) sumEl.textContent = scores ? `SCORES: ${scores}` : `MATCH FINISHED`;
+      } else {
+        if (titleEl) titleEl.textContent = `MATCH IN PROGRESS`;
+        if (sumEl) sumEl.textContent = `SETS: ${hName} ${hSets} - ${aSets} ${aName} (NOT YET FINAL)`;
+      }
+    }
+
+    function updateGamePackagePill() {
+      const pill = document.getElementById('game-package-pill');
+      if (PkgModel) {
+        const pkg = PkgModel.getActivePackage();
+        if (pkg && pkg.title) {
+          pill.textContent = `MATCH: ${pkg.title.toUpperCase()}`;
+        }
+      }
+    }
+
+    function broadcastState(actionName) {
+      state.stateRevision++;
+      state.lastGraphicAction = actionName;
+      state.lastActionTimestamp = Date.now();
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {}
+
+      if (stateChannel) {
+        stateChannel.postMessage({
+          type: 'GRAPHICS_STATE_UPDATE',
+          state: state,
+          action: actionName,
+          timestamp: state.lastActionTimestamp
+        });
+      }
+
+      // Cross-Process Production Bridge Sync (Phase G6.3)
+      try {
+        fetch('http://127.0.0.1:3000/graphics/state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: actionName,
+            graphics: state,
+            roster: rosterState,
+            activeGame: (typeof PkgModel !== 'undefined' && PkgModel.getActivePackage) ? PkgModel.getActivePackage() : null
+          })
+        }).catch(() => {});
+      } catch (e) {}
+
+      document.getElementById('last-action-text').textContent = `LAST ACTION: ${actionName} (${new Date().toLocaleTimeString()})`;
+      document.getElementById('revision-text').textContent = `REV: ${state.stateRevision}`;
+
+      updateUI();
+    }
+
+    function updateRosterStatusPills() {
+      const homePill = document.getElementById('roster-home-pill');
+      const awayPill = document.getElementById('roster-away-pill');
+
+      const homeCount = rosterState.home?.players?.length || 0;
+      const homeLineup = rosterState.home?.startingLineupIds?.length || 0;
+      const awayCount = rosterState.away?.players?.length || 0;
+      const awayLineup = rosterState.away?.startingLineupIds?.length || 0;
+
+      homePill.textContent = `HOME: ${homeCount}P (${homeLineup}/6)`;
+      awayPill.textContent = `AWAY: ${awayCount}P (${awayLineup}/6)`;
+    }
+
+    function updateUI() {
+      // 1. Scorebug Pill
+      const sbPill = document.getElementById('pill-scorebug');
+      if (state.visibility.scorebug) {
+        sbPill.textContent = 'ON AIR';
+        sbPill.className = 'status-pill on-air';
+      } else {
+        sbPill.textContent = 'OFF AIR';
+        sbPill.className = 'status-pill off-air';
+      }
+
+      // 2. Lower Third Pill
+      const ltPill = document.getElementById('pill-lt');
+      if (state.visibility.playerLowerThird) {
+        ltPill.textContent = 'ON AIR';
+        ltPill.className = 'status-pill on-air';
+      } else if (state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+        ltPill.textContent = 'PREPARED';
+        ltPill.className = 'status-pill prepared';
+      } else {
+        ltPill.textContent = 'OFF AIR';
+        ltPill.className = 'status-pill off-air';
+      }
+
+      // 3. Lineup Pill
+      const luPill = document.getElementById('pill-lineup');
+      if (state.visibility.startingLineup) {
+        luPill.textContent = 'ON AIR';
+        luPill.className = 'status-pill on-air';
+      } else if (state.preparedGraphic === 'STARTING_LINEUP') {
+        luPill.textContent = 'PREPARED';
+        luPill.className = 'status-pill prepared';
+      } else {
+        luPill.textContent = 'OFF AIR';
+        luPill.className = 'status-pill off-air';
+      }
+
+      // 4. Player Stats Pill
+      const psPill = document.getElementById('pill-pstats');
+      if (state.visibility.playerStats) {
+        psPill.textContent = 'ON AIR';
+        psPill.className = 'status-pill on-air';
+      } else if (state.preparedGraphic === 'PLAYER_STATS') {
+        psPill.textContent = 'PREPARED';
+        psPill.className = 'status-pill prepared';
+      } else {
+        psPill.textContent = 'OFF AIR';
+        psPill.className = 'status-pill off-air';
+      }
+
+      // 5. Set Result Pill
+      const srPill = document.getElementById('pill-set-result');
+      if (state.visibility.setResult) {
+        srPill.textContent = 'ON AIR';
+        srPill.className = 'status-pill on-air';
+      } else if (state.preparedGraphic === 'SET_RESULT') {
+        srPill.textContent = 'PREPARED';
+        srPill.className = 'status-pill prepared';
+      } else {
+        srPill.textContent = 'OFF AIR';
+        srPill.className = 'status-pill off-air';
+      }
+
+      // 6. Match Result Pill
+      const mrPill = document.getElementById('pill-match-result');
+      if (state.visibility.matchResult) {
+        mrPill.textContent = 'ON AIR';
+        mrPill.className = 'status-pill on-air';
+      } else if (state.preparedGraphic === 'MATCH_RESULT') {
+        mrPill.textContent = 'PREPARED';
+        mrPill.className = 'status-pill prepared';
+      } else {
+        mrPill.textContent = 'OFF AIR';
+        mrPill.className = 'status-pill off-air';
+      }
+
+      updateRosterStatusPills();
+      updateGamePackagePill();
+      updateMatchTelemetry(matchState);
+      updateConfidenceMonitors();
+    }
+
+    // ========================================================================
+    // CONFIDENCE MONITORS (TRUE PREVIEW & TRUE PROGRAM) (PHASE G7.2D)
+    // ========================================================================
+    function resizeConfidenceScreens() {
+      const screens = document.querySelectorAll('.confidence-screen');
+      screens.forEach(screen => {
+        const rect = screen.getBoundingClientRect();
+        const scale = rect.width / 1920;
+        const wrapper = screen.querySelector('.confidence-iframe-wrapper');
+        if (wrapper && scale > 0) {
+          wrapper.style.transform = `scale(${scale})`;
+        }
+      });
+    }
+    window.addEventListener('resize', resizeConfidenceScreens);
+
+    function updateConfidenceMonitors() {
+      renderPreviewConfidence();
+      renderProgramConfidence();
+      resizeConfidenceScreens();
+    }
+
+    function renderPreviewConfidence() {
+      const tagEl = document.getElementById('conf-preview-tag');
+      const emptyEl = document.getElementById('conf-preview-empty');
+      const tallyPrev = document.getElementById('tally-led-preview');
+      const prepGraphic = state.preparedGraphic;
+
+      if (!prepGraphic) {
+        if (tagEl) {
+          tagEl.textContent = 'NO GRAPHIC PREPARED';
+          tagEl.className = 'status-pill off-air';
+        }
+        if (emptyEl) emptyEl.style.display = 'flex';
+        if (tallyPrev) tallyPrev.className = 'tally-led off';
+        return;
+      }
+
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (tallyPrev) tallyPrev.className = 'tally-led amber';
+
+      if (tagEl) {
+        tagEl.className = 'status-pill prepared';
+        if (prepGraphic === 'PLAYER_LOWER_THIRD') {
+          const prep = state.prepared?.playerLowerThird || { team: 'home', playerIndex: 0 };
+          const team = rosterState[prep.team || selectedLtTeamKey || 'home'] || { players: [] };
+          const p = team.players[prep.playerIndex % (team.players.length || 1)];
+          tagEl.textContent = `LOWER THIRD: #${p?.jerseyNumber || '7'} ${p?.displayName || 'MARIA SANTOS'}`.toUpperCase();
+        } else if (prepGraphic === 'PLAYER_STATS') {
+          const prep = state.prepared?.playerStats || { team: 'home', playerIndex: 0 };
+          const team = rosterState[prep.team || selectedPstatsTeamKey || 'home'] || { players: [] };
+          const p = team.players[prep.playerIndex % (team.players.length || 1)];
+          tagEl.textContent = `PLAYER STATS: #${p?.jerseyNumber || '7'} ${p?.displayName || 'MARIA SANTOS'}`.toUpperCase();
+        } else if (prepGraphic === 'STARTING_LINEUP') {
+          const teamKey = state.prepared?.startingLineup?.team || selectedLineupTeamKey || 'home';
+          const team = rosterState[teamKey] || { name: 'TEAM' };
+          tagEl.textContent = `LINEUP: ${team.name}`.toUpperCase();
+        } else if (prepGraphic === 'SET_RESULT') {
+          const setNum = Number(state.prepared?.setResult?.setNumber) || selectedSetResultIndex || 1;
+          tagEl.textContent = `SET ${setNum} RESULT`;
+        } else if (prepGraphic === 'MATCH_RESULT') {
+          tagEl.textContent = 'MATCH RESULT';
+        } else if (prepGraphic === 'SCOREBUG') {
+          tagEl.textContent = 'SCOREBUG';
+        } else {
+          tagEl.textContent = prepGraphic;
+        }
+      }
+    }
+
+    function renderProgramConfidence() {
+      const badgesGroup = document.getElementById('conf-program-badges-group');
+      const emptyEl = document.getElementById('conf-program-empty');
+      const tallyProg = document.getElementById('tally-led-program');
+
+      const isSb = Boolean(state.visibility?.scorebug);
+      const isLt = Boolean(state.visibility?.playerLowerThird);
+      const isPs = Boolean(state.visibility?.playerStats);
+      const isLu = Boolean(state.visibility?.startingLineup);
+      const isSr = Boolean(state.visibility?.setResult);
+      const isMr = Boolean(state.visibility?.matchResult);
+
+      const hasAnyLive = isSb || isLt || isPs || isLu || isSr || isMr;
+
+      const badges = [];
+      if (isSb) badges.push('<span class="status-pill on-air">SCOREBUG</span>');
+      if (isLt) badges.push('<span class="status-pill on-air">LOWER THIRD</span>');
+      if (isPs) badges.push('<span class="status-pill on-air">PLAYER STATS</span>');
+      if (isLu) badges.push('<span class="status-pill on-air">LINEUP</span>');
+      if (isSr) badges.push('<span class="status-pill on-air">SET RESULT</span>');
+      if (isMr) badges.push('<span class="status-pill on-air">MATCH RESULT</span>');
+
+      if (badgesGroup) {
+        badgesGroup.innerHTML = badges.length ? badges.join('') : '<span class="status-pill off-air">NO GRAPHICS ON AIR</span>';
+      }
+
+      if (emptyEl) {
+        emptyEl.style.display = hasAnyLive ? 'none' : 'flex';
+      }
+
+      if (tallyProg) {
+        tallyProg.className = 'tally-led ' + (hasAnyLive ? 'red' : 'off');
+      }
+    }
+
+    function clearPreview() {
+      state.preparedGraphic = null;
+      broadcastState('CLEAR_PREVIEW');
+    }
+
+    // ========================================================================
+    // 1. SCOREBUG ACTIONS
+    // ========================================================================
+    function setScorebugVisibility(val) {
+      state.visibility.scorebug = val;
+      broadcastState(val ? 'SHOW_SCOREBUG' : 'HIDE_SCOREBUG');
+    }
+
+    // ========================================================================
+    // 2. PLAYER LOWER THIRD ACTIONS
+    // ========================================================================
+    function populatePlayerSelect() {
+      const select = document.getElementById('select-player');
+      const team = rosterState[selectedLtTeamKey] || { players: [] };
+      const players = team.players || [];
+
+      if (!players.length) {
+        select.innerHTML = `<option value="0">No players in team roster</option>`;
+        document.getElementById('prev-lt-name').textContent = 'NO PLAYER';
+        document.getElementById('prev-lt-num').textContent = '#0';
+        document.getElementById('prev-lt-pos').textContent = 'N/A';
+        document.getElementById('prev-lt-stats').textContent = 'EMPTY ROSTER';
+        return;
+      }
+
+      select.innerHTML = players.map((p, idx) => 
+        `<option value="${idx}">#${p.jerseyNumber} — ${p.displayName} (${p.position})${p.captain ? ' [C]' : ''}</option>`
+      ).join('');
+
+      if (selectedPlayerIndex >= players.length) selectedPlayerIndex = 0;
+      select.value = selectedPlayerIndex;
+      updatePreparedPlayerPreview();
+    }
+
+    function updatePreparedPlayerPreview() {
+      const team = rosterState[selectedLtTeamKey] || { players: [] };
+      const p = team.players[selectedPlayerIndex % (team.players.length || 1)];
+      if (!p) return;
+
+      document.getElementById('prev-lt-num').textContent = `#${p.jerseyNumber}`;
+      document.getElementById('prev-lt-name').textContent = p.displayName.toUpperCase();
+      document.getElementById('prev-lt-pos').textContent = p.position;
+
+      const statParts = [];
+      if (p.stats && p.stats.kills !== undefined) statParts.push(`${p.stats.kills} KILLS`);
+      if (p.stats && p.stats.assists !== undefined) statParts.push(`${p.stats.assists} AST`);
+      if (p.stats && p.stats.blocks !== undefined) statParts.push(`${p.stats.blocks} BLK`);
+      if (p.stats && p.stats.digs !== undefined) statParts.push(`${p.stats.digs} DIGS`);
+      if (p.stats && p.stats.aces !== undefined) statParts.push(`${p.stats.aces} ACES`);
+      document.getElementById('prev-lt-stats').textContent = statParts.join(' • ') || (p.starter ? 'STARTER' : 'ROSTER');
+    }
+
+    function selectLtTeam(teamKey) {
+      selectedLtTeamKey = teamKey;
+      selectedPlayerIndex = 0;
+      document.getElementById('tab-lt-home').className = 'tab-btn' + (teamKey === 'home' ? ' active' : '');
+      document.getElementById('tab-lt-away').className = 'tab-btn' + (teamKey === 'away' ? ' active' : '');
+      populatePlayerSelect();
+      if (state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+        preparePlayer(true);
+      }
+    }
+
+    function onPlayerSelectChange() {
+      selectedPlayerIndex = Number(document.getElementById('select-player').value) || 0;
+      updatePreparedPlayerPreview();
+      if (state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+        preparePlayer(true);
+      }
+    }
+
+    function stepPlayer(delta) {
+      const team = rosterState[selectedLtTeamKey] || { players: [] };
+      const count = team.players?.length || 1;
+      selectedPlayerIndex = (selectedPlayerIndex + delta + count) % count;
+      document.getElementById('select-player').value = selectedPlayerIndex;
+      updatePreparedPlayerPreview();
+      if (state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+        preparePlayer(true);
+      }
+    }
+
+    function preparePlayer(forcePrepare = false) {
+      if (!forcePrepare && state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+        state.preparedGraphic = null;
+        broadcastState('CLEAR_PREPARE_PLAYER');
+        return;
+      }
+      const team = rosterState[selectedLtTeamKey] || { players: [] };
+      const p = team.players[selectedPlayerIndex];
+      state.prepared.playerLowerThird = {
+        team: selectedLtTeamKey,
+        playerId: p?.id || 'p_0',
+        playerIndex: selectedPlayerIndex
+      };
+      state.preparedGraphic = 'PLAYER_LOWER_THIRD';
+      broadcastState(`PREPARE_PLAYER_${p?.jerseyNumber || '0'}`);
+    }
+
+    function setLtVisibility(val) {
+      state.visibility.playerLowerThird = val;
+      if (val) {
+        state.activeGraphic = 'PLAYER_LOWER_THIRD';
+        state.visibility.playerStats = false; // Lower-third family exclusivity
+        if (state.preparedGraphic === 'PLAYER_LOWER_THIRD') {
+          state.preparedGraphic = null; // Clear staged state on SHOW
+        }
+      }
+      broadcastState(val ? 'SHOW_LOWER_THIRD' : 'HIDE_LOWER_THIRD');
+    }
+
+    // ========================================================================
+    // 3. STARTING LINEUP ACTIONS
+    // ========================================================================
+    function selectLineupTeam(teamKey) {
+      selectedLineupTeamKey = teamKey;
+      document.getElementById('tab-lineup-home').className = 'tab-btn' + (teamKey === 'home' ? ' active' : '');
+      document.getElementById('tab-lineup-away').className = 'tab-btn' + (teamKey === 'away' ? ' active' : '');
+
+      const team = rosterState[teamKey] || { name: 'TEAM' };
+      document.getElementById('prev-lineup-title').textContent = team.name;
+      if (state.preparedGraphic === 'STARTING_LINEUP') {
+        prepareLineup(true);
+      }
+    }
+
+    function prepareLineup(forcePrepare = false) {
+      if (!forcePrepare && state.preparedGraphic === 'STARTING_LINEUP') {
+        state.preparedGraphic = null;
+        broadcastState('CLEAR_PREPARE_LINEUP');
+        return;
+      }
+      state.prepared.startingLineup = {
+        team: selectedLineupTeamKey
+      };
+      state.preparedGraphic = 'STARTING_LINEUP';
+      broadcastState(`PREPARE_LINEUP_${selectedLineupTeamKey.toUpperCase()}`);
+    }
+
+    function setLineupVisibility(val) {
+      state.visibility.startingLineup = val;
+      if (val) {
+        state.activeGraphic = 'STARTING_LINEUP';
+        state.visibility.playerLowerThird = false;
+        state.visibility.playerStats = false;
+        state.visibility.setResult = false;
+        state.visibility.matchResult = false; // Hero exclusivity
+        if (state.preparedGraphic === 'STARTING_LINEUP') {
+          state.preparedGraphic = null; // Clear staged state on SHOW
+        }
+      }
+      broadcastState(val ? 'SHOW_LINEUP' : 'HIDE_LINEUP');
+    }
+
+    // ========================================================================
+    // 4. PLAYER STATS ACTIONS
+    // ========================================================================
+    function populatePstatsSelect() {
+      const select = document.getElementById('select-pstats-player');
+      const team = rosterState[selectedPstatsTeamKey] || { players: [] };
+      const players = team.players || [];
+
+      if (!players.length) {
+        select.innerHTML = `<option value="0">No players in team roster</option>`;
+        document.getElementById('prev-pstats-name').textContent = 'NO PLAYER';
+        document.getElementById('prev-pstats-num').textContent = '#0';
+        document.getElementById('prev-pstats-pos').textContent = 'N/A';
+        document.getElementById('prev-pstats-stats').textContent = 'EMPTY ROSTER';
+        return;
+      }
+
+      select.innerHTML = players.map((p, idx) => 
+        `<option value="${idx}">#${p.jerseyNumber} — ${p.displayName} (${p.position})${p.captain ? ' [C]' : ''}</option>`
+      ).join('');
+
+      if (selectedPstatsIndex >= players.length) selectedPstatsIndex = 0;
+      select.value = selectedPstatsIndex;
+      updatePreparedPstatsPreview();
+    }
+
+    function updatePreparedPstatsPreview() {
+      const team = rosterState[selectedPstatsTeamKey] || { players: [] };
+      const p = team.players[selectedPstatsIndex % (team.players.length || 1)];
+      if (!p) return;
+
+      document.getElementById('prev-pstats-num').textContent = `#${p.jerseyNumber}`;
+      document.getElementById('prev-pstats-name').textContent = p.displayName.toUpperCase();
+      document.getElementById('prev-pstats-pos').textContent = p.position;
+
+      const statParts = [];
+      if (p.stats && p.stats.kills !== undefined) statParts.push(`${p.stats.kills} KILLS`);
+      if (p.stats && p.stats.aces !== undefined) statParts.push(`${p.stats.aces} ACES`);
+      if (p.stats && p.stats.digs !== undefined) statParts.push(`${p.stats.digs} DIGS`);
+      if (p.stats && p.stats.blocks !== undefined) statParts.push(`${p.stats.blocks} BLK`);
+      if (p.stats && p.stats.assists !== undefined) statParts.push(`${p.stats.assists} AST`);
+      if (p.stats && p.stats.attackPct !== undefined) statParts.push(`${p.stats.attackPct} ATT%`);
+      document.getElementById('prev-pstats-stats').textContent = statParts.join(' • ') || 'NO ADDITIONAL STATS RECORDED';
+    }
+
+    function selectPstatsTeam(teamKey) {
+      selectedPstatsTeamKey = teamKey;
+      selectedPstatsIndex = 0;
+      document.getElementById('tab-pstats-home').className = 'tab-btn' + (teamKey === 'home' ? ' active' : '');
+      document.getElementById('tab-pstats-away').className = 'tab-btn' + (teamKey === 'away' ? ' active' : '');
+      populatePstatsSelect();
+      if (state.preparedGraphic === 'PLAYER_STATS') {
+        preparePstats(true);
+      }
+    }
+
+    function onPstatsPlayerSelectChange() {
+      selectedPstatsIndex = Number(document.getElementById('select-pstats-player').value) || 0;
+      updatePreparedPstatsPreview();
+      if (state.preparedGraphic === 'PLAYER_STATS') {
+        preparePstats(true);
+      }
+    }
+
+    function stepPstatsPlayer(delta) {
+      const team = rosterState[selectedPstatsTeamKey] || { players: [] };
+      const count = team.players?.length || 1;
+      selectedPstatsIndex = (selectedPstatsIndex + delta + count) % count;
+      document.getElementById('select-pstats-player').value = selectedPstatsIndex;
+      updatePreparedPstatsPreview();
+      if (state.preparedGraphic === 'PLAYER_STATS') {
+        preparePstats(true);
+      }
+    }
+
+    function preparePstats(forcePrepare = false) {
+      if (!forcePrepare && state.preparedGraphic === 'PLAYER_STATS') {
+        state.preparedGraphic = null;
+        broadcastState('CLEAR_PREPARE_PSTATS');
+        return;
+      }
+      const team = rosterState[selectedPstatsTeamKey] || { players: [] };
+      const p = team.players[selectedPstatsIndex];
+      state.prepared.playerStats = {
+        team: selectedPstatsTeamKey,
+        playerId: p?.id || 'p_0',
+        playerIndex: selectedPstatsIndex
+      };
+      state.preparedGraphic = 'PLAYER_STATS';
+      broadcastState(`PREPARE_PSTATS_${p?.jerseyNumber || '0'}`);
+    }
+
+    function setPstatsVisibility(val) {
+      state.visibility.playerStats = val;
+      if (val) {
+        state.activeGraphic = 'PLAYER_STATS';
+        state.visibility.playerLowerThird = false; // Lower-third family exclusivity
+        if (state.preparedGraphic === 'PLAYER_STATS') {
+          state.preparedGraphic = null; // Clear staged state on SHOW
+        }
+      }
+      broadcastState(val ? 'SHOW_PLAYER_STATS' : 'HIDE_PLAYER_STATS');
+    }
+
+    // ========================================================================
+    // 5. SET RESULT ACTIONS
+    // ========================================================================
+    function stepSetResult(delta) {
+      const maxSets = matchState?.matchFormat === 'BEST_OF_3' ? 3 : 5;
+      selectedSetResultIndex = Math.max(1, Math.min(maxSets, selectedSetResultIndex + delta));
+      updateSetResultPreview();
+      if (state.preparedGraphic === 'SET_RESULT') {
+        prepareSetResult(true);
+      }
+    }
+
+    function prepareSetResult(forcePrepare = false) {
+      if (!forcePrepare && state.preparedGraphic === 'SET_RESULT') {
+        state.preparedGraphic = null;
+        broadcastState('CLEAR_PREPARE_SET_RESULT');
+        return;
+      }
+      state.prepared.setResult = {
+        setNumber: selectedSetResultIndex
+      };
+      state.preparedGraphic = 'SET_RESULT';
+      broadcastState(`PREPARE_SET_RESULT_${selectedSetResultIndex}`);
+    }
+
+    function setSetResultVisibility(val) {
+      state.visibility.setResult = val;
+      if (val) {
+        state.activeGraphic = 'SET_RESULT';
+        state.visibility.startingLineup = false;
+        state.visibility.matchResult = false; // Hero exclusivity
+        if (state.preparedGraphic === 'SET_RESULT') {
+          state.preparedGraphic = null; // Clear staged state on SHOW
+        }
+      }
+      broadcastState(val ? 'SHOW_SET_RESULT' : 'HIDE_SET_RESULT');
+    }
+
+    // ========================================================================
+    // 6. MATCH RESULT ACTIONS
+    // ========================================================================
+    function prepareMatchResult(forcePrepare = false) {
+      if (!forcePrepare && state.preparedGraphic === 'MATCH_RESULT') {
+        state.preparedGraphic = null;
+        broadcastState('CLEAR_PREPARE_MATCH_RESULT');
+        return;
+      }
+      state.prepared.matchResult = {};
+      state.preparedGraphic = 'MATCH_RESULT';
+      broadcastState('PREPARE_MATCH_RESULT');
+    }
+
+    function setMatchResultVisibility(val) {
+      state.visibility.matchResult = val;
+      if (val) {
+        state.activeGraphic = 'MATCH_RESULT';
+        state.visibility.startingLineup = false;
+        state.visibility.setResult = false; // Hero exclusivity
+        if (state.preparedGraphic === 'MATCH_RESULT') {
+          state.preparedGraphic = null; // Clear staged state on SHOW
+        }
+      }
+      broadcastState(val ? 'SHOW_MATCH_RESULT' : 'HIDE_MATCH_RESULT');
+    }
+
+    // ========================================================================
+    // GLOBAL HIDE ALL
+    // ========================================================================
+    function hideAllGraphics() {
+      state.visibility.scorebug = false;
+      state.visibility.playerLowerThird = false;
+      state.visibility.startingLineup = false;
+      state.visibility.playerStats = false;
+      state.visibility.setResult = false;
+      state.visibility.matchResult = false;
+      state.activeGraphic = null;
+      broadcastState('HIDE_ALL_GRAPHICS');
+    }
+
+    // Init
+    populatePlayerSelect();
+    populatePstatsSelect();
+
+    try {
+      const rawGfx = localStorage.getItem(STORAGE_KEY);
+      if (rawGfx) state = JSON.parse(rawGfx);
+    } catch (e) {}
+
+    updateUI();
+
+    // Initial Fetch from Bridge
+    try {
+      fetch('http://127.0.0.1:3000/graphics/state')
+        .then(r => r.json())
+        .then(data => {
+          if (data.match) updateMatchTelemetry(data.match);
+          if (data.roster) {
+            rosterState = data.roster;
+            populatePlayerSelect();
+            populatePstatsSelect();
+            updateRosterStatusPills();
+          }
+          if (data.graphics) {
+            state = data.graphics;
+            updateUI();
+          }
+        })
+        .catch(() => {});
+    } catch (e) {}
+
+    // SSE Stream
+    function connectBridgeSSE() {
+      try {
+        const es = new EventSource('http://127.0.0.1:3000/graphics/events');
+        es.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data && data.state) {
+              if (data.state.match) updateMatchTelemetry(data.state.match);
+              if (data.state.roster) {
+                rosterState = data.state.roster;
+                populatePlayerSelect();
+                populatePstatsSelect();
+                updateRosterStatusPills();
+              }
+              if (data.state.graphics) {
+                state = data.state.graphics;
+                updateUI();
+              }
+            }
+          } catch (err) {}
+        };
+        es.onerror = () => {
+          es.close();
+          setTimeout(connectBridgeSSE, 3000);
+        };
+      } catch (e) {
+        setTimeout(connectBridgeSSE, 3000);
+    function navigateToTab(tabName) {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'PIXEL_NAVIGATE_TAB', tab: tabName }, '*');
+      } else {
+        window.location.href = `/?tab=${tabName}`;
+      }
+    }
+
+    connectBridgeSSE();
+  </script>
+</body>
+</html>

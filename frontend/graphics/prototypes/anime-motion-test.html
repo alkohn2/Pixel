@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL Motion Foundation — Animation Test Harness</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --card-bg: rgba(20, 26, 38, 0.95);
+      --card-border: 1px solid rgba(255, 255, 255, 0.12);
+      --blue: #0032A0;
+      --gold: #e3c46a;
+      --accent: #38bdf8;
+      --txt: #ffffff;
+      --txt-muted: #94a3b8;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      background-color: var(--bg);
+      color: var(--txt);
+      padding: 30px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .test-card {
+      background: var(--card-bg);
+      border: var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .stage {
+      height: 120px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    .demo-box {
+      background: linear-gradient(135deg, var(--blue), #1e40af);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-weight: 800;
+      font-size: 1rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+    .stagger-group {
+      display: flex;
+      gap: 8px;
+    }
+    .stagger-pill {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+    .score-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+    .btn-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--txt);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    button:hover {
+      background: #334155;
+    }
+    button.primary {
+      background: var(--blue);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    button.primary:hover {
+      background: #002577;
+    }
+    .status-log {
+      background: #030712;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--txt-muted);
+      max-height: 120px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>PIXEL Motion Foundation — Anime.js Harness</h1>
+      <p style="font-size: 0.8rem; color: var(--txt-muted); margin-top: 4px;">
+        Offline Broadcast Motion Presets & Interruption Safety Testbed
+      </p>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <span id="reduced-status" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 4px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 700;">
+        Anime.js v4.5.0 (Offline)
+      </span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- TEST 1: SUBTLE PRESET (Scorebug) -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>1. Preset: SUBTLE</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Scorebug / Point Updates</span>
+      </div>
+      <div class="stage">
+        <div id="subtle-box" class="demo-box">SCOREBUG IN</div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="testSubtleIn()">Enter IN (450ms)</button>
+        <button onclick="testSubtleOut()">Exit OUT (300ms)</button>
+      </div>
+    </div>
+
+    <!-- TEST 2: STANDARD PRESET (Lower Thirds) -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>2. Preset: STANDARD</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Lower Thirds / Stats</span>
+      </div>
+      <div class="stage">
+        <div id="standard-box" class="demo-box" style="background: linear-gradient(135deg, #059669, #047857);">
+          #7 MARIA SANTOS (OH)
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="testStandardIn()">Enter IN (550ms)</button>
+        <button onclick="testStandardOut()">Exit OUT (350ms)</button>
+      </div>
+    </div>
+
+    <!-- TEST 3: HERO PRESET (Lineups / Intros) -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>3. Preset: HERO</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Lineup / Game Intro</span>
+      </div>
+      <div class="stage">
+        <div id="hero-box" class="demo-box" style="background: linear-gradient(135deg, #7c3aed, #5b21b6);">
+          MATCH RESULT — 3-1 FINAL
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="testHeroIn()">Enter IN (750ms)</button>
+        <button onclick="testHeroOut()">Exit OUT (450ms)</button>
+      </div>
+    </div>
+
+    <!-- TEST 4: STAGGERED LINEUP -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>4. Staggered Elements</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Rotation Lineup</span>
+      </div>
+      <div class="stage">
+        <div id="stagger-group" class="stagger-group">
+          <div class="stagger-pill">P1</div>
+          <div class="stagger-pill">P2</div>
+          <div class="stagger-pill">P3</div>
+          <div class="stagger-pill">P4</div>
+          <div class="stagger-pill">P5</div>
+          <div class="stagger-pill">P6</div>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="testStaggerIn()">Stagger IN</button>
+        <button onclick="testStaggerOut()">Stagger OUT</button>
+      </div>
+    </div>
+
+    <!-- TEST 5: VALUE UPDATE (Rapid Score Changes) -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>5. Rapid Point Updates</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Spring Flip</span>
+      </div>
+      <div class="stage">
+        <div id="score-val" class="score-display">24</div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="incrementScore()">+1 Point (Flip)</button>
+        <button onclick="rapidScoringTest()">Rapid Burst (+5 in 1s)</button>
+      </div>
+    </div>
+
+    <!-- TEST 6: INTERRUPTION & CANCELLATION SAFETY -->
+    <div class="test-card">
+      <div class="card-title">
+        <span>6. Interruption Safety</span>
+        <span style="font-size: 0.7rem; color: var(--txt-muted);">Anti-Stuck Protection</span>
+      </div>
+      <div class="stage">
+        <div id="interrupt-box" class="demo-box" style="background: linear-gradient(135deg, #b91c1c, #991b1b);">
+          RAPID TOGGLE
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="primary" onclick="rapidToggle()">Spam IN/OUT (100ms)</button>
+        <button onclick="forceReset()">Force Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-log" id="log-output">
+    [LOG] PIXEL Motion Test Harness initialized. Ready for animation testing.
+  </div>
+
+  <!-- OFFLINE ANIME.JS VENDOR BUNDLE & MOTION ENGINE -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/motion.js"></script>
+
+  <script>
+    const logEl = document.getElementById('log-output');
+    function log(msg) {
+      const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      logEl.innerHTML = line + '<br>' + logEl.innerHTML;
+    }
+
+    let score = 24;
+    const Motion = window.PixelMotion;
+
+    function testSubtleIn() {
+      log('Preset SUBTLE Enter IN triggered');
+      Motion.animateEnter(document.getElementById('subtle-box'), { preset: 'SUBTLE', direction: 'up' });
+    }
+    function testSubtleOut() {
+      log('Preset SUBTLE Exit OUT triggered');
+      Motion.animateExit(document.getElementById('subtle-box'), { preset: 'SUBTLE', direction: 'up' });
+    }
+
+    function testStandardIn() {
+      log('Preset STANDARD Enter IN triggered');
+      Motion.animateEnter(document.getElementById('standard-box'), { preset: 'STANDARD', direction: 'left' });
+    }
+    function testStandardOut() {
+      log('Preset STANDARD Exit OUT triggered');
+      Motion.animateExit(document.getElementById('standard-box'), { preset: 'STANDARD', direction: 'left' });
+    }
+
+    function testHeroIn() {
+      log('Preset HERO Enter IN triggered');
+      Motion.animateEnter(document.getElementById('hero-box'), { preset: 'HERO', direction: 'down' });
+    }
+    function testHeroOut() {
+      log('Preset HERO Exit OUT triggered');
+      Motion.animateExit(document.getElementById('hero-box'), { preset: 'HERO', direction: 'down' });
+    }
+
+    function testStaggerIn() {
+      log('Stagger Enter IN triggered');
+      const pills = document.querySelectorAll('#stagger-group .stagger-pill');
+      Motion.animateEnter(pills, { preset: 'SUBTLE', stagger: true, direction: 'up' });
+    }
+    function testStaggerOut() {
+      log('Stagger Exit OUT triggered');
+      const pills = document.querySelectorAll('#stagger-group .stagger-pill');
+      Motion.animateExit(pills, { preset: 'SUBTLE', direction: 'up' });
+    }
+
+    function incrementScore() {
+      score++;
+      log(`Point update: ${score}`);
+      Motion.animateValueUpdate(document.getElementById('score-val'), score, { highlightColor: '#f0d98a' });
+    }
+
+    function rapidScoringTest() {
+      log('Starting rapid scoring burst test (5 points over 1.2s)...');
+      let count = 0;
+      const interval = setInterval(() => {
+        score++;
+        count++;
+        Motion.animateValueUpdate(document.getElementById('score-val'), score);
+        if (count >= 5) clearInterval(interval);
+      }, 240);
+    }
+
+    function rapidToggle() {
+      log('Executing rapid IN/OUT spam test...');
+      const target = document.getElementById('interrupt-box');
+      Motion.animateEnter(target, { preset: 'STANDARD' });
+      setTimeout(() => Motion.animateExit(target, { preset: 'STANDARD' }), 80);
+      setTimeout(() => Motion.animateEnter(target, { preset: 'STANDARD' }), 160);
+      setTimeout(() => Motion.animateExit(target, { preset: 'STANDARD' }), 240);
+      setTimeout(() => Motion.animateEnter(target, { preset: 'STANDARD' }), 320);
+    }
+
+    function forceReset() {
+      const target = document.getElementById('interrupt-box');
+      Motion.cancelTargetAnimation(target);
+      target.style.opacity = '1';
+      target.style.transform = 'none';
+      log('Target reset to clean baseline.');
+    }
+  </script>
+</body>
+</html>

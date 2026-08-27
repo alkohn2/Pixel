@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL Volleyball Scorebug Prototype (Phase G2)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --panel-bg:       linear-gradient(160deg, rgba(14, 18, 28, 0.94) 0%, rgba(8, 10, 16, 0.97) 100%);
+      --panel-blur:     blur(16px) saturate(140%);
+      --panel-border:   1px solid rgba(255, 255, 255, 0.12);
+      --panel-shadow:   0 12px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      --radius:         12px;
+      --mdc-blue:       #0032A0;
+      --mdc-gray:       #5B6770;
+      --gold:           #e3c46a;
+      --gold-grad:      linear-gradient(90deg, transparent 0%, #b8973a 18%, #f0d98a 50%, #b8973a 82%, transparent 100%);
+      --txt:            #ffffff;
+      --txt-mut:        rgba(255, 255, 255, 0.6);
+      --txt-faint:      rgba(255, 255, 255, 0.35);
+      --line:           rgba(255, 255, 255, 0.08);
+      --live-red:       #e23b2e;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 28px;
+      gap: 12px;
+      user-select: none;
+    }
+
+    .panel {
+      position: relative;
+      background: var(--panel-bg);
+      -webkit-backdrop-filter: var(--panel-blur);
+      backdrop-filter: var(--panel-blur);
+      border: var(--panel-border);
+      border-radius: var(--radius);
+      box-shadow: var(--panel-shadow);
+      overflow: hidden;
+      will-change: transform, opacity;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gold-grad);
+      opacity: 0.9;
+    }
+
+    /* ── SCOREBUG CONTAINER ── */
+    #scorebug {
+      display: flex;
+      align-items: stretch;
+      min-width: 720px;
+      height: 76px;
+      opacity: 0;
+      transform: translateY(-24px);
+    }
+
+    .brand-header-badge {
+      background: var(--mdc-blue);
+      color: var(--txt);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .team-block {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+      padding: 0 16px;
+      min-width: 220px;
+    }
+
+    .team-color-accent {
+      width: 5px;
+      height: 38px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .team-name {
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--txt);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .team-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 3px;
+    }
+
+    .sets-won-badge {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--txt-mut);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .tmo-dots {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .tmo-chip {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.25s ease;
+    }
+    .tmo-chip.used {
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(227, 196, 106, 0.8);
+      border-color: #fff;
+    }
+
+    .serve-ball-icon {
+      font-size: 14px;
+      color: var(--gold);
+      opacity: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform, opacity;
+    }
+    .serve-ball-icon.active {
+      opacity: 1;
+    }
+
+    .pts-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--txt);
+      width: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      will-change: transform, color;
+    }
+
+    .center-divider {
+      width: 1px;
+      background: var(--line);
+      margin: 10px 0;
+      flex-shrink: 0;
+    }
+
+    .match-context-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      border-left: 1px solid var(--line);
+      flex-shrink: 0;
+      min-width: 100px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+
+    .set-badge-pill {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      background: rgba(227, 196, 106, 0.15);
+      border: 1px solid rgba(227, 196, 106, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── SETS HISTORY SUB-BAR ── */
+    #history-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 18px;
+      height: 32px;
+      opacity: 0;
+      transform: translateY(-10px);
+      min-width: 440px;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--txt-mut);
+      justify-content: center;
+    }
+
+    .history-items {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--txt);
+    }
+
+    /* ── NOTIFICATION RIBBON ── */
+    #notification {
+      position: absolute;
+      top: 118px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: translateY(-16px);
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .notif-bar {
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    }
+    .notif-bar.setpoint {
+      background: linear-gradient(135deg, #b8973a, #785a1a);
+      border: 1px solid #f0d98a;
+      color: #fff;
+    }
+    .notif-bar.matchpoint {
+      background: linear-gradient(135deg, #e23b2e, #991b1b);
+      border: 1px solid #ff8880;
+      color: #fff;
+    }
+    .notif-bar.timeout {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border: 1px solid #7dd3fc;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCOREBUG PANEL -->
+  <div id="scorebug" class="panel">
+    <div class="brand-header-badge">MDC-TV</div>
+
+    <!-- HOME TEAM -->
+    <div class="team-block">
+      <div id="accent-home" class="team-color-accent" style="background: #0032A0;"></div>
+      <div class="team-info">
+        <div id="name-home" class="team-name">HOME TEAM</div>
+        <div class="team-meta">
+          <span id="sets-home" class="sets-won-badge">SETS: 0</span>
+          <div class="tmo-dots">
+            <div id="tmo-h1" class="tmo-chip"></div>
+            <div id="tmo-h2" class="tmo-chip"></div>
+          </div>
+          <span id="serve-home" class="serve-ball-icon"><i class="ti ti-volleyball"></i></span>
+        </div>
+      </div>
+      <div id="pts-home" class="pts-box">0</div>
+    </div>
+
+    <div class="center-divider"></div>
+
+    <!-- AWAY TEAM -->
+    <div class="team-block">
+      <div id="pts-away" class="pts-box">0</div>
+      <div class="team-info" style="align-items: flex-end; text-align: right;">
+        <div id="name-away" class="team-name">AWAY TEAM</div>
+        <div class="team-meta">
+          <span id="serve-away" class="serve-ball-icon"><i class="ti ti-volleyball"></i></span>
+          <div class="tmo-dots">
+            <div id="tmo-a1" class="tmo-chip"></div>
+            <div id="tmo-a2" class="tmo-chip"></div>
+          </div>
+          <span id="sets-away" class="sets-won-badge">SETS: 0</span>
+        </div>
+      </div>
+      <div id="accent-away" class="team-color-accent" style="background: #b91c1c;"></div>
+    </div>
+
+    <!-- MATCH STATUS / SET BADGE -->
+    <div class="match-context-block">
+      <div id="badge-set" class="set-badge-pill">SET 1</div>
+    </div>
+  </div>
+
+  <!-- SETS HISTORY BAR -->
+  <div id="history-bar" class="panel">
+    <span id="lbl-history" style="color: var(--gold); letter-spacing: 0.5px;">SETS:</span>
+    <div id="history-items-container" class="history-items"></div>
+  </div>
+
+  <!-- NOTIFICATION RIBBON -->
+  <div id="notification">
+    <div id="notif-bar" class="notif-bar setpoint">
+      <span id="notif-icon"><i class="ti ti-trophy"></i></span>
+      <span id="notif-title">SET POINT</span>
+      <span id="notif-sub" style="font-weight: 600; opacity: 0.85;">HOME TEAM</span>
+    </div>
+  </div>
+
+  <!-- OFFLINE ANIME.JS BUNDLE & PIXEL GRAPHICS CORE -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/motion.js"></script>
+
+  <script>
+    'use strict';
+
+    const STORAGE_KEY = PixelMatchState.STORAGE_KEY; // 'mdcVolleyballMatchStateV1'
+    const CHANNEL_NAME = PixelMatchState.LIVE_CHANNEL_NAME; // 'mdc-volleyball-live-state'
+
+    const Motion = window.PixelMotion;
+    const MatchCore = window.PixelMatchState;
+
+    const I18N = {
+      en: { sets: "SETS", set: "SET", final: "FINAL", history: "SETS:", setPoint: "SET POINT", matchPoint: "MATCH POINT", timeout: "TIMEOUT" },
+      es: { sets: "SETS", set: "SET", final: "FINAL", history: "SETS:", setPoint: "PUNTO DE SET", matchPoint: "PUNTO DE PARTIDO", timeout: "TIEMPO MUERTO" }
+    };
+
+    const D = {
+      scorebug: document.getElementById('scorebug'),
+      nameHome: document.getElementById('name-home'),
+      nameAway: document.getElementById('name-away'),
+      accentHome: document.getElementById('accent-home'),
+      accentAway: document.getElementById('accent-away'),
+      setsHome: document.getElementById('sets-home'),
+      setsAway: document.getElementById('sets-away'),
+      ptsHome: document.getElementById('pts-home'),
+      ptsAway: document.getElementById('pts-away'),
+      serveHome: document.getElementById('serve-home'),
+      serveAway: document.getElementById('serve-away'),
+      tmoH1: document.getElementById('tmo-h1'),
+      tmoH2: document.getElementById('tmo-h2'),
+      tmoA1: document.getElementById('tmo-a1'),
+      tmoA2: document.getElementById('tmo-a2'),
+      badgeSet: document.getElementById('badge-set'),
+      lblHistory: document.getElementById('lbl-history'),
+      historyBar: document.getElementById('history-bar'),
+      historyContainer: document.getElementById('history-items-container'),
+      notif: document.getElementById('notification'),
+      notifBar: document.getElementById('notif-bar'),
+      notifIcon: document.getElementById('notif-icon'),
+      notifTitle: document.getElementById('notif-title'),
+      notifSub: document.getElementById('notif-sub')
+    };
+
+    let prevState = null;
+    let isVisible = false;
+    let notifQueue = [];
+    let notifActive = false;
+    let serveAnimationHome = null;
+    let serveAnimationAway = null;
+
+    function enqueueNotification(barClass, iconHtml, titleText, subText) {
+      notifQueue.push({ barClass, iconHtml, titleText, subText });
+      if (!notifActive) processNotificationQueue();
+    }
+
+    function processNotificationQueue() {
+      if (!notifQueue.length) {
+        notifActive = false;
+        return;
+      }
+
+      notifActive = true;
+      const { barClass, iconHtml, titleText, subText } = notifQueue.shift();
+
+      D.notifBar.className = `notif-bar ${barClass}`;
+      D.notifIcon.innerHTML = iconHtml;
+      D.notifTitle.textContent = titleText;
+      D.notifSub.textContent = subText;
+
+      // Animate Ribbon IN with STANDARD preset
+      Motion.animateEnter(D.notif, { preset: 'STANDARD', direction: 'down', distance: 20 });
+
+      setTimeout(() => {
+        // Animate Ribbon OUT with SUBTLE preset
+        Motion.animateExit(D.notif, {
+          preset: 'SUBTLE',
+          direction: 'up',
+          distance: 20,
+          onComplete: () => {
+            setTimeout(processNotificationQueue, 150);
+          }
+        });
+      }, 3500);
+    }
+
+    function checkSpecialTriggers(newState, oldState) {
+      if (!oldState) return;
+
+      const lang = newState.language || 'en';
+      const dict = I18N[lang] || I18N.en;
+
+      // 1. Timeouts Check
+      if (newState.teamHome.timeouts > oldState.teamHome.timeouts) {
+        enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', dict.timeout, newState.teamHome.name);
+      }
+      if (newState.teamAway.timeouts > oldState.teamAway.timeouts) {
+        enqueueNotification('timeout', '<i class="ti ti-clock-pause"></i>', dict.timeout, newState.teamAway.name);
+      }
+
+      // 2. Set / Match Point Check
+      const special = MatchCore.evaluateSpecialPoint(newState);
+      if (special) {
+        const titleText = special.type === 'MATCH_POINT' ? dict.matchPoint : dict.setPoint;
+        const ptsChanged = (special.team === 'home' && newState.teamHome.currentPoints !== oldState.teamHome.currentPoints) ||
+                           (special.team === 'away' && newState.teamAway.currentPoints !== oldState.teamAway.currentPoints);
+
+        if (ptsChanged) {
+          enqueueNotification(special.type.toLowerCase(), '<i class="ti ti-trophy"></i>', titleText, special.teamName);
+        }
+      }
+    }
+
+    function renderScorebug(rawState) {
+      if (!rawState) return;
+
+      const matchState = MatchCore.normalizeMatchState(rawState);
+      const lang = rawState.language || 'en';
+      const dict = I18N[lang] || I18N.en;
+      const targetVisible = rawState.overlayVisible !== false;
+
+      // 1. VISIBILITY TRANSITION (Anime.js IN / OUT)
+      if (targetVisible !== isVisible) {
+        isVisible = targetVisible;
+        if (isVisible) {
+          Motion.animateEnter(D.scorebug, { preset: 'SUBTLE', direction: 'down' });
+          if (matchState.setsHistory && matchState.setsHistory.length > 0) {
+            Motion.animateEnter(D.historyBar, { preset: 'SUBTLE', direction: 'down', delay: 100 });
+          }
+        } else {
+          Motion.animateExit(D.scorebug, { preset: 'SUBTLE', direction: 'up' });
+          Motion.animateExit(D.historyBar, { preset: 'SUBTLE', direction: 'up' });
+        }
+      }
+
+      // 2. SPECIAL TRIGGERS (Timeouts, Set/Match Points)
+      checkSpecialTriggers(matchState, prevState);
+
+      // 3. TEAM NAMES & COLORS
+      D.nameHome.textContent = matchState.teamHome.name;
+      D.nameAway.textContent = matchState.teamAway.name;
+      D.accentHome.style.background = matchState.teamHome.color;
+      D.accentAway.style.background = matchState.teamAway.color;
+
+      D.setsHome.textContent = `${dict.sets}: ${matchState.teamHome.setsWon}`;
+      D.setsAway.textContent = `${dict.sets}: ${matchState.teamAway.setsWon}`;
+
+      // 4. POINT UPDATES (Spring Flip Animation)
+      if (!prevState) {
+        D.ptsHome.textContent = matchState.teamHome.currentPoints;
+        D.ptsAway.textContent = matchState.teamAway.currentPoints;
+      } else {
+        if (matchState.teamHome.currentPoints !== prevState.teamHome.currentPoints) {
+          Motion.animateValueUpdate(D.ptsHome, matchState.teamHome.currentPoints);
+        }
+        if (matchState.teamAway.currentPoints !== prevState.teamAway.currentPoints) {
+          Motion.animateValueUpdate(D.ptsAway, matchState.teamAway.currentPoints);
+        }
+      }
+
+      // 5. SERVE PULSE RHYTHM
+      if (matchState.servingTeam === 'home') {
+        D.serveHome.classList.add('active');
+        D.serveAway.classList.remove('active');
+        if (!serveAnimationHome) serveAnimationHome = Motion.animateServePulse(D.serveHome);
+        if (serveAnimationAway) { Motion.cancelTargetAnimation(D.serveAway); serveAnimationAway = null; }
+      } else if (matchState.servingTeam === 'away') {
+        D.serveAway.classList.add('active');
+        D.serveHome.classList.remove('active');
+        if (!serveAnimationAway) serveAnimationAway = Motion.animateServePulse(D.serveAway);
+        if (serveAnimationHome) { Motion.cancelTargetAnimation(D.serveHome); serveAnimationHome = null; }
+      } else {
+        D.serveHome.classList.remove('active');
+        D.serveAway.classList.remove('active');
+        if (serveAnimationHome) { Motion.cancelTargetAnimation(D.serveHome); serveAnimationHome = null; }
+        if (serveAnimationAway) { Motion.cancelTargetAnimation(D.serveAway); serveAnimationAway = null; }
+      }
+
+      // 6. TIMEOUT DOTS
+      D.tmoH1.className = 'tmo-chip' + (matchState.teamHome.timeouts >= 1 ? ' used' : '');
+      D.tmoH2.className = 'tmo-chip' + (matchState.teamHome.timeouts >= 2 ? ' used' : '');
+      D.tmoA1.className = 'tmo-chip' + (matchState.teamAway.timeouts >= 1 ? ' used' : '');
+      D.tmoA2.className = 'tmo-chip' + (matchState.teamAway.timeouts >= 2 ? ' used' : '');
+
+      // 7. SET BADGE
+      D.badgeSet.textContent = matchState.matchStatus === 'FINISHED' ? dict.final : `${dict.set} ${matchState.currentSet}`;
+      D.lblHistory.textContent = dict.history;
+
+      // 8. SETS HISTORY
+      if (matchState.setsHistory && matchState.setsHistory.length > 0) {
+        D.historyContainer.innerHTML = matchState.setsHistory.map(s => 
+          `<div class="history-item">S${s.setNumber}: <span>${s.homePoints}-${s.awayPoints}</span></div>`
+        ).join('<span style="color:var(--txt-faint)">|</span>');
+
+        if (isVisible && D.historyBar.style.opacity === '0') {
+          Motion.animateEnter(D.historyBar, { preset: 'SUBTLE', direction: 'down' });
+        }
+      }
+
+      prevState = JSON.parse(JSON.stringify(matchState));
+    }
+
+    // INITIAL LOAD FROM LOCALSTORAGE
+    function loadInitial() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) renderScorebug(JSON.parse(raw));
+      } catch (e) { console.error(e); }
+    }
+
+    // REAL-TIME BROADCAST CHANNEL LISTENER
+    try {
+      const channel = new BroadcastChannel(CHANNEL_NAME);
+      channel.onmessage = (event) => {
+        if (event.data && event.data.type === 'STATE_UPDATE' && event.data.state) {
+          renderScorebug(event.data.state);
+        }
+      };
+    } catch (e) { console.warn(e); }
+
+    // WINDOW STORAGE FALLBACK
+    window.addEventListener('storage', (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try { renderScorebug(JSON.parse(e.newValue)); } catch (err) { console.error(err); }
+      }
+    });
+
+    loadInitial();
+  </script>
+</body>
+</html>

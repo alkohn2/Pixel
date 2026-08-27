@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Roster, Lineup & Branding Editor (Phase G5.6)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --panel-bg: rgba(18, 24, 38, 0.95);
+      --card-bg: rgba(26, 34, 52, 0.8);
+      --card-border: 1px solid rgba(255, 255, 255, 0.12);
+      --mdc-blue: #0032A0;
+      --mdc-blue-hover: #002577;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --txt-white: #ffffff;
+      --txt-muted: #94a3b8;
+      --txt-faint: #64748b;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--txt-white);
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── HEADER BAR ── */
+    .header-bar {
+      background: var(--panel-bg);
+      border: var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .brand-group { display: flex; align-items: center; gap: 14px; }
+    .brand-group h1 {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .badge-chip {
+      background: var(--mdc-blue);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    button.hdr-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    button.hdr-btn:hover { background: #334155; }
+    button.hdr-btn.primary {
+      background: linear-gradient(135deg, var(--success), #15803d);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    button.hdr-btn.gold {
+      background: linear-gradient(135deg, #b45309, #78350f);
+      border-color: var(--gold);
+      color: var(--gold-bright);
+    }
+    button.hdr-btn.package-btn {
+      background: linear-gradient(135deg, #0032A0, #001956);
+      border: 1.5px solid var(--gold);
+      color: #ffffff;
+      font-weight: 900;
+      box-shadow: 0 2px 12px rgba(0, 50, 160, 0.4);
+    }
+    button.hdr-btn.package-btn:hover {
+      background: linear-gradient(135deg, #0047FF, #002577);
+      border-color: var(--gold-bright);
+      transform: translateY(-1px);
+    }
+
+    /* ── MODAL STYLES (PHASE D1) ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 4, 8, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-card {
+      background: #090d16;
+      border: 1.5px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+      animation: modalPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      0% { opacity: 0; transform: scale(0.96) translateY(8px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      padding: 16px 20px;
+      background: rgba(18, 24, 38, 0.95);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-close-btn {
+      background: transparent;
+      border: none;
+      color: var(--txt-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+    }
+    .modal-close-btn:hover { color: #ffffff; }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-footer {
+      padding: 14px 20px;
+      background: rgba(18, 24, 38, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    .review-card {
+      background: rgba(26, 34, 52, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .review-label {
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .review-val {
+      font-size: 0.9rem;
+      font-weight: 900;
+      color: #ffffff;
+    }
+
+    .audit-alert {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .audit-alert.error {
+      background: rgba(220, 38, 38, 0.15);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      color: #fca5a5;
+    }
+    .audit-alert.warning {
+      background: rgba(234, 179, 8, 0.12);
+      border: 1px solid rgba(234, 179, 8, 0.35);
+      color: #fef08a;
+    }
+    .audit-alert.info {
+      background: rgba(0, 50, 160, 0.15);
+      border: 1px solid rgba(0, 50, 160, 0.35);
+      color: #93c5fd;
+    }
+
+    .slot-choice-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .slot-choice-btn {
+      flex: 1;
+      background: #1e293b;
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .slot-choice-btn.selected {
+      background: rgba(0, 50, 160, 0.4);
+      border-color: var(--gold);
+      color: var(--gold-bright);
+      box-shadow: 0 0 12px rgba(227, 196, 106, 0.3);
+    }
+
+    /* ── TEAM SELECTION TABS ── */
+    .tab-bar {
+      display: flex;
+      gap: 12px;
+    }
+    .team-tab-btn {
+      flex: 1;
+      background: var(--panel-bg);
+      border: var(--card-border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--txt-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+    .team-tab-btn.active {
+      background: var(--card-bg);
+      border-color: var(--gold);
+      color: #ffffff;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ── MAIN WORKSPACE GRID ── */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    .panel-card {
+      background: var(--panel-bg);
+      border: var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    }
+    .panel-title {
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+    }
+
+    /* Form Fields */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .form-input:focus { outline: none; border-color: var(--gold); }
+
+    .brand-preview-wrapper {
+      background: rgba(8, 12, 20, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .brand-preview-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-preview-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 6px;
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+      padding: 2px;
+    }
+    .brand-preview-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .brand-swatches-strip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .preview-swatch-chip {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.8);
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background-color: #0032A0;
+    }
+    .mock-header-strip {
+      height: 28px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #0032A0 0%, #001956 100%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .mock-header-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 900;
+      background: #e3c46a;
+      color: #001956;
+      padding: 1px 5px;
+      border-radius: 2px;
+      line-height: 1.2;
+    }
+    .mock-header-name {
+      font-size: 11px;
+      font-weight: 900;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Brand Visual Color Controls */
+    .brand-color-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .color-control-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+    .color-role-label {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      width: 75px;
+      letter-spacing: 0.5px;
+    }
+    .color-picker-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+    .color-swatch-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      flex-shrink: 0;
+      background-color: #0032A0;
+    }
+    .color-picker-input-overlay {
+      position: absolute;
+      inset: -10px;
+      width: 200%;
+      height: 200%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .color-hex-field {
+      display: flex;
+      align-items: center;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .hex-prefix {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--gold);
+      background: rgba(227, 196, 106, 0.15);
+      padding: 6px 8px;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .color-hex-input {
+      background: transparent;
+      border: none;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 6px 8px;
+      width: 100%;
+      text-transform: uppercase;
+    }
+    .color-hex-input:focus { outline: none; }
+
+    .color-contrast-banner {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .mdc-protected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(0, 50, 160, 0.25);
+      border: 1px solid rgba(0, 50, 160, 0.5);
+      color: #93c5fd;
+      font-size: 0.68rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    /* ── STARTING 6 LINEUP SLOTS ── */
+    .lineup-slots-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+    .lineup-slot-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      position: relative;
+    }
+    .slot-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      font-weight: 900;
+      color: var(--gold);
+      background: rgba(227, 196, 106, 0.15);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .slot-select {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 6px 4px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    /* ── ROSTER TABLE ── */
+    .table-container {
+      max-height: 460px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+    }
+    table.roster-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    table.roster-table th {
+      background: #0f172a;
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 5;
+    }
+    table.roster-table td {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-weight: 700;
+      vertical-align: middle;
+    }
+    table.roster-table tr:hover { background: rgba(255, 255, 255, 0.03); }
+
+    .player-row-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #1e293b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    .player-row-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .btn-action-small {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .btn-action-small:hover { background: #334155; }
+    .btn-action-small.danger { background: #991b1b; border-color: #dc2626; }
+
+    /* ── NOTIFICATION TOAST ── */
+    .toast-log {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- STANDALONE / DEVELOPMENT MODE BANNER (Rendered only when opened directly outside PIXEL Hub) -->
+  <div id="standalone-banner" style="display: none; background: linear-gradient(90deg, #1e1b4b 0%, #0f172a 100%); border: 1px solid #4338ca; border-radius: var(--radius); padding: 12px 20px; align-items: center; justify-content: space-between; gap: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); display: flex; align-items: center; justify-content: center;">
+        <i class="ti ti-info-circle" style="font-size: 1.25rem; color: #818cf8;"></i>
+      </div>
+      <div>
+        <div style="font-size: 0.85rem; font-weight: 800; color: #e0e7ff; letter-spacing: 0.5px;">PIXEL ROSTER EDITOR — STANDALONE / DEVELOPMENT MODE</div>
+        <div style="font-size: 0.74rem; color: #94a3b8; margin-top: 2px;">Official production workflow is unified inside the PIXEL Volleyball Hub.</div>
+      </div>
+    </div>
+    <button onclick="openInsidePixel()" style="display: flex; align-items: center; gap: 6px; padding: 7px 16px; background: #4f46e5; border: 1px solid #6366f1; border-radius: 6px; color: #ffffff; font-weight: 800; font-size: 0.8rem; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;">
+      <i class="ti ti-layout-dashboard"></i> OPEN INSIDE PIXEL
+    </button>
+  </div>
+
+  <!-- HEADER BAR -->
+  <div class="header-bar">
+    <div class="brand-group">
+      <h1>PIXEL Roster, Lineup & Branding Editor</h1>
+      <span class="badge-chip">VOLLEYBALL v1.0</span>
+      <span id="save-status" style="font-size: 0.75rem; color: #4ade80; font-family: monospace; font-weight: 700;">● ALL CHANGES SAVED</span>
+    </div>
+    <div class="header-actions">
+      <!-- Official Form Actions (Phase D1.2) -->
+      <button class="hdr-btn primary" onclick="downloadTeamPdf()" title="Download official fillable PDF form for coaches and SIDs">
+        <i class="ti ti-file-text" style="color: #60a5fa;"></i> DOWNLOAD TEAM FORM (PDF)
+      </button>
+
+      <button class="hdr-btn" onclick="downloadTeamTemplate()" title="Download Excel version of team submission form" style="font-size: 0.75rem;">
+        <i class="ti ti-file-spreadsheet" style="color: #4ade80;"></i> Excel Version
+      </button>
+
+      <button class="hdr-btn package-btn" onclick="triggerPackageFileInput()" title="Import PDF, XLSX, or ZIP team package">
+        <i class="ti ti-package-import" style="color: var(--gold);"></i> IMPORT TEAM PACKAGE
+      </button>
+      <input type="file" id="import-package-file" accept=".pdf,.xlsx,.xls,.zip" style="display:none" onchange="handlePackageFileSelect(event)">
+
+      <!-- Technical / Advanced JSON Actions -->
+      <div style="display: flex; gap: 4px; border-left: 1px solid rgba(255,255,255,0.12); padding-left: 8px;">
+        <button class="hdr-btn" style="padding: 6px 10px; font-size: 0.72rem; color: var(--txt-muted);" onclick="exportJSON()" title="Export raw JSON">
+          <i class="ti ti-download"></i> JSON
+        </button>
+        <button class="hdr-btn" style="padding: 6px 10px; font-size: 0.72rem; color: var(--txt-muted);" onclick="document.getElementById('import-file').click()" title="Import raw JSON">
+          <i class="ti ti-upload"></i> JSON
+        </button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importJSON(event)">
+        <button class="hdr-btn gold" style="padding: 6px 10px; font-size: 0.72rem;" onclick="loadDemoRoster()" title="Reset to standard MDC vs DSC demo rosters">
+          <i class="ti ti-database-import"></i> Demo
+        </button>
+      </div>
+
+      <button class="hdr-btn primary" onclick="saveAllRosterData()"><i class="ti ti-device-floppy"></i> SAVE ROSTER</button>
+    </div>
+  </div>
+
+  <!-- TEAM SELECTOR TABS -->
+  <div class="tab-bar">
+    <button id="tab-home" class="team-tab-btn active" onclick="switchActiveTab('home')">
+      <i class="ti ti-shield"></i> <span id="lbl-tab-home">HOME TEAM (MDC SHARKS)</span>
+    </button>
+    <button id="tab-away" class="team-tab-btn" onclick="switchActiveTab('away')">
+      <i class="ti ti-shield"></i> <span id="lbl-tab-away">AWAY TEAM (DSC FALCONS)</span>
+    </button>
+  </div>
+
+  <!-- WORKSPACE GRID -->
+  <div class="workspace-grid">
+
+    <!-- LEFT COLUMN: TEAM BRANDING & ADD PLAYER -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      
+      <!-- TEAM BRANDING PROFILE -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-palette"></i> Team Branding</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="mdc-protected-badge" class="mdc-protected-chip" style="display: none;">
+              <i class="ti ti-shield-check" style="color: #60a5fa;"></i> MDC PROTECTED
+            </span>
+            <span id="profile-team-key" style="font-size: 0.7rem; color: var(--gold); font-weight: 800;">HOME</span>
+          </div>
+        </div>
+
+        <!-- Live Visual Brand Preview (Phase G7.5) -->
+        <div class="brand-preview-wrapper" id="brand-preview-box">
+          <div style="font-size: 0.7rem; font-weight: 800; color: var(--gold); letter-spacing: 0.5px;">TEAM BRAND PREVIEW</div>
+          
+          <div class="brand-preview-card">
+            <div class="brand-preview-logo" id="prev-logo-box">
+              <img id="prev-logo-img" src="assets/teams/home-team/logo.svg" alt="Logo" onerror="this.style.display='none'">
+            </div>
+            <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+              <span id="prev-team-name" style="font-size: 0.95rem; font-weight: 900; color: #fff; text-transform: uppercase;">HOME TEAM</span>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 2px;">
+                <span id="prev-team-short" style="font-size: 0.75rem; font-weight: 800; color: var(--gold); font-family: monospace;">HOM</span>
+                <span style="opacity: 0.3;">|</span>
+                <span id="prev-team-coach" style="font-size: 0.75rem; color: var(--txt-muted);">COACH</span>
+              </div>
+              <!-- Swatches Strip -->
+              <div class="brand-swatches-strip">
+                <div class="preview-swatch-chip" id="chip-swatch-pri" title="Primary"><span class="chip-dot" id="dot-swatch-pri"></span> PRI</div>
+                <div class="preview-swatch-chip" id="chip-swatch-sec" title="Secondary"><span class="chip-dot" id="dot-swatch-sec"></span> SEC</div>
+                <div class="preview-swatch-chip" id="chip-swatch-acc" title="Accent"><span class="chip-dot" id="dot-swatch-acc"></span> ACC</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mock Broadcast Header Strip -->
+          <div class="mock-header-strip" id="mock-header-strip">
+            <div id="mock-header-logo-box" style="width: 22px; height: 18px; display: flex; align-items: center; justify-content: center;">
+              <img id="mock-header-logo-img" src="" style="max-height: 16px; max-width: 20px; object-fit: contain;" onerror="this.style.display='none'">
+            </div>
+            <span class="mock-header-tag" id="mock-header-tag">STARTING 6</span>
+            <span class="mock-header-name" id="mock-header-name">MIAMI DADE SHARKS</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Full Team Name</label>
+          <input id="input-team-name" class="form-input" placeholder="e.g. MIAMI DADE SHARKS" oninput="updateBrandPreview(); markUnsaved();">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Short Name</label>
+            <input id="input-team-short" class="form-input" placeholder="e.g. MDC" oninput="updateBrandPreview(); markUnsaved();">
+          </div>
+          <div class="form-group" style="width: 100px;">
+            <label class="form-label">Abbreviation</label>
+            <input id="input-team-abbr" class="form-input" placeholder="MDC" oninput="markUnsaved();">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Head Coach</label>
+          <input id="input-team-coach" class="form-input" placeholder="e.g. Kiko Benoit" oninput="updateBrandPreview(); markUnsaved();">
+        </div>
+
+        <!-- Visual Color Pickers (Primary / Secondary / Accent) (Phase G7.5) -->
+        <div class="form-group">
+          <label class="form-label">Brand Colors (Visual Picker & HEX)</label>
+          <div class="brand-color-controls">
+            
+            <!-- Primary Color -->
+            <div class="color-control-item">
+              <span class="color-role-label">PRIMARY</span>
+              <div class="color-picker-group">
+                <div class="color-swatch-box" id="swatch-color-pri">
+                  <input type="color" id="picker-color-pri" class="color-picker-input-overlay" oninput="syncColorInput('pri', this.value)">
+                </div>
+                <div class="color-hex-field">
+                  <span class="hex-prefix">HEX</span>
+                  <input id="input-color-pri" class="color-hex-input" placeholder="#0032A0" oninput="syncColorPicker('pri', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Secondary Color -->
+            <div class="color-control-item">
+              <span class="color-role-label">SECONDARY</span>
+              <div class="color-picker-group">
+                <div class="color-swatch-box" id="swatch-color-sec">
+                  <input type="color" id="picker-color-sec" class="color-picker-input-overlay" oninput="syncColorInput('sec', this.value)">
+                </div>
+                <div class="color-hex-field">
+                  <span class="hex-prefix">HEX</span>
+                  <input id="input-color-sec" class="color-hex-input" placeholder="#001F66" oninput="syncColorPicker('sec', this.value)">
+                </div>
+              </div>
+            </div>
+
+            <!-- Accent Color -->
+            <div class="color-control-item">
+              <span class="color-role-label">ACCENT</span>
+              <div class="color-picker-group">
+                <div class="color-swatch-box" id="swatch-color-acc">
+                  <input type="color" id="picker-color-acc" class="color-picker-input-overlay" oninput="syncColorInput('acc', this.value)">
+                </div>
+                <div class="color-hex-field">
+                  <span class="hex-prefix">HEX</span>
+                  <input id="input-color-acc" class="color-hex-input" placeholder="#E3C46A" oninput="syncColorPicker('acc', this.value)">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Color Contrast Warning Banner -->
+          <div id="color-contrast-warning" class="color-contrast-banner" style="display: none;">
+            <i class="ti ti-alert-triangle" style="font-size: 1rem; color: #f59e0b; flex-shrink: 0;"></i>
+            <span style="font-size: 0.72rem; font-weight: 800; color: #fef08a;">LOW CONTRAST — REVIEW COLOR (White text may have low on-air legibility)</span>
+          </div>
+        </div>
+
+        <!-- Logo Path / Upload -->
+        <div class="form-group">
+          <label class="form-label">Team Logo Path / URL</label>
+          <div style="display: flex; gap: 8px;">
+            <input id="input-team-logo" class="form-input" style="flex:1;" placeholder="assets/teams/home-team/logo.svg" oninput="updateBrandPreview(); markUnsaved();">
+            <button class="hdr-btn" style="padding: 6px 10px;" onclick="document.getElementById('upload-logo-file').click()" title="Upload logo file"><i class="ti ti-photo"></i></button>
+            <input type="file" id="upload-logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ADD / EDIT PLAYER FORM -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-user-plus"></i> Player Identity & Info</span>
+        </div>
+
+        <input type="hidden" id="form-player-id">
+
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="width: 80px;">
+            <label class="form-label">Jersey #</label>
+            <input type="number" id="form-jersey" class="form-input" placeholder="7" min="0" max="99">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label class="form-label">Position</label>
+            <select id="form-pos" class="form-input">
+              <option value="OH">OH (Outside Hitter)</option>
+              <option value="MB">MB (Middle Blocker)</option>
+              <option value="S">S (Setter)</option>
+              <option value="OPP">OPP (Opposite Hitter)</option>
+              <option value="L">L (Libero)</option>
+              <option value="DS">DS (Defensive Specialist)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Player Display Name</label>
+          <input id="form-name" class="form-input" placeholder="e.g. Maria Santos">
+        </div>
+
+        <!-- Player Portrait Photo Reference -->
+        <div class="form-group">
+          <label class="form-label">Portrait Photo Path / URL</label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <div id="form-photo-preview" style="width: 38px; height: 38px; border-radius: 50%; background: #0f172a; border: 1px solid rgba(255,255,255,0.2); overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="ti ti-user" style="color: var(--txt-muted);"></i>
+            </div>
+            <input id="form-photo" class="form-input" style="flex:1;" placeholder="assets/players/h7/portrait.svg" oninput="updatePhotoPreview(this.value)">
+            <button class="hdr-btn" style="padding: 6px 10px;" onclick="document.getElementById('upload-photo-file').click()"><i class="ti ti-upload"></i></button>
+            <input type="file" id="upload-photo-file" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 14px; align-items: center; margin-top: 4px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">
+            <input type="checkbox" id="form-captain"> Captain (★)
+          </label>
+        </div>
+
+        <button class="hdr-btn primary" style="width: 100%; justify-content: center;" onclick="submitPlayerForm()">
+          <i class="ti ti-plus"></i> <span id="btn-player-submit-text">Add to Roster</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: STARTING 6 LINEUP & ROSTER LIST -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- STARTING 6 SELECTION -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-star"></i> Starting 6 Lineup Rotation</span>
+          <span id="lineup-count-badge" style="font-size: 0.75rem; color: var(--gold); font-family: monospace;">0/6 STARTERS</span>
+        </div>
+
+        <div class="lineup-slots-grid" id="lineup-slots-container"></div>
+      </div>
+
+      <!-- ROSTER TABLE -->
+      <div class="panel-card" style="flex: 1;">
+        <div class="panel-title">
+          <span><i class="ti ti-users"></i> Team Roster (<span id="roster-player-count">0</span> Players)</span>
+        </div>
+
+        <div class="table-container">
+          <table class="roster-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">#</th>
+                <th>Player Identity</th>
+                <th style="width: 80px;">Position</th>
+                <th style="width: 80px;">Captain</th>
+                <th style="width: 120px; text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="roster-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER STATUS & LOG -->
+  <div class="toast-log">
+    <span id="log-text">Ready. Storage: pixelVolleyballRosterV1 | Assets: frontend/graphics/assets/</span>
+    <button class="btn-action-small" onclick="resetUnsavedChanges()"><i class="ti ti-rotate"></i> Reset Unsaved</button>
+  </div>
+
+  <!-- TEAM PACKAGE REVIEW MODAL (PHASE D1) -->
+  <div id="modal-package-review" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">
+          <i class="ti ti-package" style="color: var(--gold-bright);"></i>
+          <span>Team Package Review</span>
+        </div>
+        <button class="modal-close-btn" onclick="closePackageModal()"><i class="ti ti-x"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- File & Type Pill -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.3); padding: 8px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06);">
+          <span style="font-size: 0.75rem; font-family: monospace; color: #93c5fd;" id="modal-filename">TEAM_PACKAGE.zip</span>
+          <span id="modal-format-badge" class="badge-chip" style="background: var(--gold); color: #000;">ZIP PACKAGE</span>
+        </div>
+
+        <!-- Team Summary Grid -->
+        <div class="review-grid">
+          <div class="review-card">
+            <span class="review-label">Team Identity</span>
+            <div id="modal-team-name" class="review-val" style="color: var(--gold-bright);">Daytona State Falcons</div>
+            <div style="font-size: 0.75rem; color: var(--txt-muted);" id="modal-team-abbr-coach">DSC • Coach: Jane Smith</div>
+          </div>
+          <div class="review-card">
+            <span class="review-label">Team Identity</span>
+            <div id="modal-team-name" class="review-val">Team Name</div>
+            <div style="font-size: 0.75rem; color: var(--txt-muted);" id="modal-team-abbr-coach">--- • Coach: ---</div>
+          </div>
+          <div class="review-card">
+            <span class="review-label">Roster</span>
+            <div id="modal-roster-count" class="review-val">18 Players</div>
+            <div style="font-size: 0.75rem; color: var(--txt-muted);" id="modal-roster-sub">1 Captain Flagged</div>
+          </div>
+          <div class="review-card">
+            <span class="review-label">Starting 6</span>
+            <div id="modal-starting6-status" class="review-val">✓ READY — 6 starters</div>
+            <div style="font-size: 0.75rem; color: var(--txt-muted);" id="modal-starting6-sub">Automatic from STARTER flags</div>
+          </div>
+          <div class="review-card">
+            <span class="review-label">Media & Broadcast Info</span>
+            <div id="modal-media-status" class="review-val" style="color: #4ade80;">Logo: Missing • Photos: Optional</div>
+            <div style="font-size: 0.75rem; color: var(--txt-muted);" id="modal-broadcast-info">Stats: 0 players • Notes: None</div>
+          </div>
+
+          <!-- Production Readiness Checklist (Phase D1.2A) -->
+          <div class="review-card" style="grid-column: span 2; background: rgba(15, 23, 42, 0.85); border: 1.5px solid rgba(255,255,255,0.12);">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px; margin-bottom: 6px;">
+              <span class="review-label" style="color: var(--gold-bright); font-size: 0.75rem;"><i class="ti ti-checklist"></i> Production Readiness</span>
+              <span id="modal-readiness-badge" class="badge-chip" style="background: #15803d; font-size: 0.7rem;">BROADCAST READY</span>
+            </div>
+            <div id="modal-readiness-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.8rem; font-weight: 700;"></div>
+          </div>
+        </div>
+
+        <!-- Blocking Errors (if any) -->
+        <div id="modal-errors-box" class="audit-alert error" style="display: none;">
+          <div style="font-weight: 900; display: flex; align-items: center; gap: 6px;">
+            <i class="ti ti-alert-octagon"></i> <span>Blocking Errors (Cannot Import):</span>
+          </div>
+          <ul id="modal-errors-list" style="margin: 0; padding-left: 20px; font-size: 0.75rem;"></ul>
+        </div>
+
+        <!-- Warnings / Normalizations -->
+        <div id="modal-warnings-box" class="audit-alert warning" style="display: none;">
+          <div style="font-weight: 900; display: flex; align-items: center; gap: 6px;">
+            <i class="ti ti-alert-triangle"></i> <span>Import Warnings & Normalizations:</span>
+          </div>
+          <ul id="modal-warnings-list" style="margin: 0; padding-left: 20px; font-size: 0.75rem;"></ul>
+        </div>
+
+        <!-- Target Destination Selector -->
+        <div>
+          <span class="review-label" style="display: block; margin-bottom: 6px;">Import Destination</span>
+          <div class="slot-choice-bar">
+            <button id="btn-choice-away" type="button" class="slot-choice-btn selected" onclick="selectImportSlot('away')">
+              <i class="ti ti-plane-departure"></i> IMPORT AS AWAY TEAM
+            </button>
+            <button id="btn-choice-home" type="button" class="slot-choice-btn" onclick="selectImportSlot('home')">
+              <i class="ti ti-home"></i> IMPORT AS HOME TEAM
+            </button>
+          </div>
+        </div>
+
+        <!-- Protected MDC Home Protection Warning Box -->
+        <div id="modal-mdc-protection" class="audit-alert error" style="display: none; background: rgba(220, 38, 38, 0.2); border-color: #ef4444;">
+          <div style="font-weight: 900; font-size: 0.85rem; color: #fecaca; display: flex; align-items: center; gap: 6px;">
+            <i class="ti ti-shield-alert" style="font-size: 1.1rem; color: #f87171;"></i>
+            <span>PROTECTED MIAMI DADE COLLEGE HOME TEAM</span>
+          </div>
+          <p style="margin: 4px 0 8px 0; font-size: 0.78rem; color: #fee2e2;">
+            HOME is currently configured as the protected <strong>Miami Dade College Sharks</strong>. Importing this package as HOME will replace Miami Dade College branding, roster, and starting lineup.
+          </p>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.78rem; font-weight: 800; color: #ffffff;">
+            <input type="checkbox" id="chk-mdc-confirm" onchange="handleMdcCheckboxChange()">
+            <span>I understand and explicitly confirm replacing HOME team branding and roster.</span>
+          </label>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="hdr-btn" onclick="closePackageModal()">Cancel</button>
+        <button id="btn-modal-confirm" class="hdr-btn primary" onclick="confirmAndApplyPackage()">
+          <i class="ti ti-check"></i> CONFIRM & IMPORT TEAM
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VENDOR LIBRARIES (OFFLINE BUNDLE) -->
+  <script src="../core/vendor/pdf-lib.min.js?v=1.2.1"></script>
+  <script src="../core/vendor/xlsx.full.min.js?v=1.2.1"></script>
+  <script src="../core/vendor/jszip.min.js?v=1.2.1"></script>
+
+  <!-- OFFLINE PIXEL CORE MODULES -->
+  <script src="../core/matchState.js?v=1.2.1"></script>
+  <script src="../core/graphicsState.js?v=1.2.1"></script>
+  <script src="../core/rosterModel.js?v=1.2.1"></script>
+  <script src="../core/teamPackageImporter.js?v=1.2.2"></script>
+  <script src="../prototypes/dev-roster-data.js?v=1.2.1"></script>
+
+  <script>
+    'use strict';
+
+    const RosterModel = window.PixelRosterModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    let activeTeamKey = 'home';
+    let currentRosterState = null;
+    let hasUnsavedChanges = false;
+
+    function initEditor() {
+      checkStandaloneMode();
+      currentRosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+      renderAll();
+    }
+
+    function checkStandaloneMode() {
+      const isEmbedded = window.self !== window.top;
+      const banner = document.getElementById('standalone-banner');
+      if (!isEmbedded && banner) {
+        banner.style.display = 'flex';
+      }
+    }
+
+    function openInsidePixel() {
+      window.location.href = '/?tab=roster';
+    }
+
+    function markUnsaved() {
+      hasUnsavedChanges = true;
+      const st = document.getElementById('save-status');
+      st.textContent = '● UNSAVED CHANGES';
+      st.style.color = '#facc15';
+    }
+
+    function markSaved() {
+      hasUnsavedChanges = false;
+      const st = document.getElementById('save-status');
+      st.textContent = '● ALL CHANGES SAVED';
+      st.style.color = '#4ade80';
+    }
+
+    function switchActiveTab(teamKey) {
+      activeTeamKey = teamKey;
+      document.getElementById('tab-home').className = 'team-tab-btn' + (teamKey === 'home' ? ' active' : '');
+      document.getElementById('tab-away').className = 'team-tab-btn' + (teamKey === 'away' ? ' active' : '');
+      renderAll();
+    }
+
+    function getRelativeLuminance(hex) {
+      let c = (hex || '').replace('#', '').trim();
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length !== 6) return 0.5;
+      const r = parseInt(c.substr(0, 2), 16) / 255;
+      const g = parseInt(c.substr(2, 2), 16) / 255;
+      const b = parseInt(c.substr(4, 2), 16) / 255;
+      const toLinear = (v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+      return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+    }
+
+    function checkColorContrast(priHex) {
+      const banner = document.getElementById('color-contrast-warning');
+      if (!banner) return;
+      if (!priHex || !priHex.startsWith('#') || (priHex.length !== 4 && priHex.length !== 7)) {
+        banner.style.display = 'none';
+        return;
+      }
+      const L1 = 1.0; // White text luminance
+      const L2 = getRelativeLuminance(priHex);
+      const ratio = (L1 + 0.05) / (L2 + 0.05);
+      // Contrast ratio threshold for on-air white graphics text is 3.0
+      if (ratio < 3.0) {
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none';
+      }
+    }
+
+    function updateBrandPreview() {
+      const name = document.getElementById('input-team-name').value.trim() || 'TEAM NAME';
+      const short = document.getElementById('input-team-short').value.trim() || 'TM';
+      const coach = document.getElementById('input-team-coach').value.trim() || 'COACH';
+      const logo = document.getElementById('input-team-logo').value.trim();
+
+      const pri = document.getElementById('input-color-pri').value.trim() || '#0032A0';
+      const sec = document.getElementById('input-color-sec').value.trim() || '#001F66';
+      const acc = document.getElementById('input-color-acc').value.trim() || '#E3C46A';
+
+      document.getElementById('prev-team-name').textContent = name;
+      document.getElementById('prev-team-short').textContent = short;
+      document.getElementById('prev-team-coach').textContent = coach;
+
+      const img = document.getElementById('prev-logo-img');
+      const mockImg = document.getElementById('mock-header-logo-img');
+      const mockLogoBox = document.getElementById('mock-header-logo-box');
+      if (logo) {
+        img.src = logo;
+        img.style.display = 'block';
+        if (mockImg) { mockImg.src = logo; mockImg.style.display = 'block'; }
+        if (mockLogoBox) mockLogoBox.style.display = 'flex';
+      } else {
+        img.style.display = 'none';
+        if (mockImg) { mockImg.style.display = 'none'; }
+        if (mockLogoBox) mockLogoBox.style.display = 'none';
+      }
+
+      // Update Swatches & Pickers
+      const swatchPri = document.getElementById('swatch-color-pri');
+      if (swatchPri) swatchPri.style.backgroundColor = pri;
+      const swatchSec = document.getElementById('swatch-color-sec');
+      if (swatchSec) swatchSec.style.backgroundColor = sec;
+      const swatchAcc = document.getElementById('swatch-color-acc');
+      if (swatchAcc) swatchAcc.style.backgroundColor = acc;
+
+      const dotPri = document.getElementById('dot-swatch-pri');
+      if (dotPri) dotPri.style.backgroundColor = pri;
+      const dotSec = document.getElementById('dot-swatch-sec');
+      if (dotSec) dotSec.style.backgroundColor = sec;
+      const dotAcc = document.getElementById('dot-swatch-acc');
+      if (dotAcc) dotAcc.style.backgroundColor = acc;
+
+      // Mock On-Air Header Strip
+      const mockStrip = document.getElementById('mock-header-strip');
+      if (mockStrip) {
+        mockStrip.style.background = `linear-gradient(135deg, ${pri} 0%, ${sec} 100%)`;
+        mockStrip.style.borderBottom = `2px solid ${acc}`;
+      }
+      const mockTag = document.getElementById('mock-header-tag');
+      if (mockTag) {
+        mockTag.style.background = acc;
+      }
+      const mockName = document.getElementById('mock-header-name');
+      if (mockName) mockName.textContent = name;
+
+      checkColorContrast(pri);
+    }
+
+    function updatePhotoPreview(photoUrl) {
+      const box = document.getElementById('form-photo-preview');
+      if (photoUrl && photoUrl.trim()) {
+        box.innerHTML = `<img src="${photoUrl.trim()}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='';this.parentElement.innerHTML='<i class=\\'ti ti-user\\' style=\\'color:var(--txt-muted);\\'></i>'">`;
+      } else {
+        box.innerHTML = `<i class="ti ti-user" style="color: var(--txt-muted);"></i>`;
+      }
+    }
+
+    function handleLogoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      // In local browser, read as data URI or set relative path
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        document.getElementById('input-team-logo').value = event.target.result;
+        updateBrandPreview();
+        markUnsaved();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handlePhotoUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        document.getElementById('form-photo').value = event.target.result;
+        updatePhotoPreview(event.target.result);
+        markUnsaved();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderAll() {
+      const team = currentRosterState[activeTeamKey];
+      const isMdcHome = (activeTeamKey === 'home' && (team.shortName === 'MDC' || team.name?.toLowerCase().includes('miami dade')));
+
+      // 1. Tab labels
+      document.getElementById('lbl-tab-home').textContent = `HOME (${currentRosterState.home.shortName || 'HOME'})`;
+      document.getElementById('lbl-tab-away').textContent = `AWAY (${currentRosterState.away.shortName || 'AWAY'})`;
+
+      // 2. Profile Inputs
+      document.getElementById('profile-team-key').textContent = activeTeamKey.toUpperCase();
+      const mdcBadge = document.getElementById('mdc-protected-badge');
+      if (mdcBadge) {
+        mdcBadge.style.display = isMdcHome ? 'inline-flex' : 'none';
+      }
+
+      document.getElementById('input-team-name').value = team.name || '';
+      document.getElementById('input-team-short').value = team.shortName || '';
+      document.getElementById('input-team-abbr').value = team.abbreviation || '';
+      document.getElementById('input-team-coach').value = team.coach || '';
+      document.getElementById('input-team-logo').value = team.logo || '';
+
+      const pri = team.colorPrimary || (activeTeamKey === 'home' ? '#0032A0' : '#B91C1C');
+      const sec = team.colorSecondary || (activeTeamKey === 'home' ? '#001F66' : '#7F1D1D');
+      const acc = team.accentColor || '#E3C46A';
+
+      document.getElementById('input-color-pri').value = pri;
+      document.getElementById('picker-color-pri').value = pri;
+      document.getElementById('input-color-sec').value = sec;
+      document.getElementById('picker-color-sec').value = sec;
+      document.getElementById('input-color-acc').value = acc;
+      document.getElementById('picker-color-acc').value = acc;
+
+      updateBrandPreview();
+
+      // 3. Lineup Slots
+      renderLineupSlots(team);
+
+      // 4. Roster Table
+      renderRosterTable(team);
+    }
+
+    function renderLineupSlots(team) {
+      const container = document.getElementById('lineup-slots-container');
+      const lineupIds = team.startingLineupIds || [];
+      const players = team.players || [];
+
+      document.getElementById('lineup-count-badge').textContent = `${lineupIds.length}/6 STARTERS`;
+
+      container.innerHTML = [0, 1, 2, 3, 4, 5].map(slotIdx => {
+        const selectedId = lineupIds[slotIdx] || '';
+        return `
+          <div class="lineup-slot-card">
+            <span class="slot-badge">SLOT ${slotIdx + 1}</span>
+            <select class="slot-select" onchange="onLineupSlotChange(${slotIdx}, this.value)">
+              <option value="">-- None --</option>
+              ${players.map(p => `
+                <option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>
+                  #${p.jerseyNumber} ${p.displayName} (${p.position})
+                </option>
+              `).join('')}
+            </select>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function onLineupSlotChange(slotIdx, playerId) {
+      const team = currentRosterState[activeTeamKey];
+      if (!team.startingLineupIds) team.startingLineupIds = [];
+
+      if (playerId) {
+        team.startingLineupIds[slotIdx] = playerId;
+      } else {
+        team.startingLineupIds.splice(slotIdx, 1);
+      }
+      team.startingLineupIds = team.startingLineupIds.filter(Boolean);
+      markUnsaved();
+      renderLineupSlots(team);
+    }
+
+    function renderRosterTable(team) {
+      const tbody = document.getElementById('roster-tbody');
+      const players = team.players || [];
+      document.getElementById('roster-player-count').textContent = players.length;
+
+      if (!players.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--txt-faint); padding:20px;">No players in roster. Add one on the left.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = players.map((p, idx) => `
+        <tr>
+          <td style="font-family:'JetBrains Mono', monospace; font-weight:900; color:var(--gold);">#${p.jerseyNumber}</td>
+          <td>
+            <div class="player-row-avatar">
+              ${p.photo ? `<img src="${p.photo}" onerror="this.parentElement.innerHTML='<i class=\\'ti ti-user\\' style=\\'color:var(--txt-muted);font-size:12px;\\'></i>'">` : `<i class="ti ti-user" style="color:var(--txt-muted);font-size:12px;"></i>`}
+            </div>
+            ${p.displayName}
+          </td>
+          <td><span style="background:rgba(227,196,106,0.15); color:var(--gold); padding:2px 6px; border-radius:3px; font-size:0.75rem; font-family:'JetBrains Mono',monospace;">${p.position}</span></td>
+          <td>${p.captain ? '<span style="color:var(--gold)">★ CAPTAIN</span>' : '<span style="color:var(--txt-faint)">-</span>'}</td>
+          <td style="text-align:right;">
+            <button class="btn-action-small" onclick="editPlayer(${idx})"><i class="ti ti-edit"></i> Edit</button>
+            <button class="btn-action-small danger" onclick="deletePlayer(${idx})"><i class="ti ti-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function submitPlayerForm() {
+      const jersey = Number(document.getElementById('form-jersey').value);
+      const name = document.getElementById('form-name').value.trim();
+      const pos = document.getElementById('form-pos').value;
+      const captain = document.getElementById('form-captain').checked;
+      const photo = document.getElementById('form-photo').value.trim() || null;
+      const editId = document.getElementById('form-player-id').value;
+
+      if (isNaN(jersey) || jersey < 0) {
+        alert('Please provide a valid jersey number');
+        return;
+      }
+      if (!name) {
+        alert('Please provide player display name');
+        return;
+      }
+
+      const team = currentRosterState[activeTeamKey];
+
+      const duplicate = team.players.find(p => p.jerseyNumber === jersey && p.id !== editId);
+      if (duplicate) {
+        alert(`Jersey #${jersey} is already assigned to ${duplicate.displayName}`);
+        return;
+      }
+
+      if (editId) {
+        const player = team.players.find(p => p.id === editId);
+        if (player) {
+          player.jerseyNumber = jersey;
+          player.displayName = name;
+          player.position = pos;
+          player.captain = captain;
+          player.photo = photo;
+          player.teamId = team.id;
+        }
+      } else {
+        const newPlayer = RosterModel.createPlayer({
+          teamId: team.id,
+          jerseyNumber: jersey,
+          displayName: name,
+          position: pos,
+          captain: captain,
+          photo: photo
+        });
+        team.players.push(newPlayer);
+      }
+
+      // Reset Form
+      document.getElementById('form-player-id').value = '';
+      document.getElementById('form-jersey').value = '';
+      document.getElementById('form-name').value = '';
+      document.getElementById('form-photo').value = '';
+      updatePhotoPreview('');
+      document.getElementById('form-captain').checked = false;
+      document.getElementById('btn-player-submit-text').textContent = 'Add to Roster';
+
+      markUnsaved();
+      renderAll();
+    }
+
+    function editPlayer(idx) {
+      const team = currentRosterState[activeTeamKey];
+      const p = team.players[idx];
+      if (!p) return;
+
+      document.getElementById('form-player-id').value = p.id;
+      document.getElementById('form-jersey').value = p.jerseyNumber;
+      document.getElementById('form-name').value = p.displayName;
+      document.getElementById('form-pos').value = p.position;
+      document.getElementById('form-photo').value = p.photo || '';
+      updatePhotoPreview(p.photo || '');
+      document.getElementById('form-captain').checked = Boolean(p.captain);
+      document.getElementById('btn-player-submit-text').textContent = 'Update Player';
+    }
+
+    function deletePlayer(idx) {
+      const team = currentRosterState[activeTeamKey];
+      const p = team.players[idx];
+      if (!p) return;
+
+      if (confirm(`Remove #${p.jerseyNumber} ${p.displayName} from roster?`)) {
+        team.players.splice(idx, 1);
+        team.startingLineupIds = (team.startingLineupIds || []).filter(id => id !== p.id);
+        markUnsaved();
+        renderAll();
+      }
+    }
+
+    function syncColorInput(type, val) {
+      if (type === 'pri') {
+        document.getElementById('input-color-pri').value = val.toUpperCase();
+        document.getElementById('picker-color-pri').value = val;
+      }
+      if (type === 'sec') {
+        document.getElementById('input-color-sec').value = val.toUpperCase();
+        document.getElementById('picker-color-sec').value = val;
+      }
+      if (type === 'acc') {
+        document.getElementById('input-color-acc').value = val.toUpperCase();
+        document.getElementById('picker-color-acc').value = val;
+      }
+      updateBrandPreview();
+      markUnsaved();
+    }
+
+    function syncColorPicker(type, val) {
+      val = (val || '').trim();
+      if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+      if (val.length === 7 || val.length === 4) {
+        if (type === 'pri') document.getElementById('picker-color-pri').value = val;
+        if (type === 'sec') document.getElementById('picker-color-sec').value = val;
+        if (type === 'acc') document.getElementById('picker-color-acc').value = val;
+      }
+      updateBrandPreview();
+      markUnsaved();
+    }
+
+    function syncInputsToState() {
+      const team = currentRosterState[activeTeamKey];
+      team.name = document.getElementById('input-team-name').value.trim() || 'TEAM NAME';
+      team.shortName = document.getElementById('input-team-short').value.trim() || 'TEAM';
+      team.abbreviation = document.getElementById('input-team-abbr').value.trim() || team.shortName;
+      team.coach = document.getElementById('input-team-coach').value.trim();
+      team.colorPrimary = document.getElementById('input-color-pri').value.trim() || '#0032A0';
+      team.colorSecondary = document.getElementById('input-color-sec').value.trim() || '#001f66';
+      team.accentColor = document.getElementById('input-color-acc').value.trim() || '#e3c46a';
+      team.logo = document.getElementById('input-team-logo').value.trim() || null;
+      if (team.branding) {
+        team.branding.logo = team.logo;
+      }
+    }
+
+    function saveAllRosterData() {
+      syncInputsToState();
+
+      const homeVal = RosterModel.validateTeamRoster(currentRosterState.home);
+      const awayVal = RosterModel.validateTeamRoster(currentRosterState.away);
+
+      if (!homeVal.isValid || !awayVal.isValid) {
+        alert('Validation errors:\n' + [...homeVal.errors, ...awayVal.errors].join('\n'));
+        return;
+      }
+
+      currentRosterState = RosterModel.saveRoster(currentRosterState);
+      markSaved();
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Roster & Branding saved successfully!`;
+    }
+
+    function resetUnsavedChanges() {
+      if (confirm('Discard all unsaved changes and reload saved roster?')) {
+        initEditor();
+        markSaved();
+      }
+    }
+
+    function loadDemoRoster() {
+      if (confirm('Load standard Miami Dade Sharks & Daytona State Falcons seed rosters with logos & portraits?')) {
+        currentRosterState = RosterModel.normalizeRosterState({
+          version: '1.0',
+          home: RosterModel.createTeam(DevRoster.DEV_ROSTERS.home),
+          away: RosterModel.createTeam(DevRoster.DEV_ROSTERS.away),
+          stateRevision: 1,
+          timestamp: Date.now()
+        });
+        markUnsaved();
+        renderAll();
+      }
+    }
+
+    function exportJSON() {
+      syncInputsToState();
+      const json = RosterModel.exportRosterJSON(currentRosterState);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `volleyball-roster-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const res = RosterModel.importRosterJSON(event.target.result);
+        if (res.success) {
+          currentRosterState = res.roster;
+          markUnsaved();
+          renderAll();
+          alert('Roster JSON imported successfully! Click SAVE to persist.');
+        } else {
+          alert('Failed to import JSON: ' + res.error);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       PHASE D1 — TEAM PACKAGE IMPORTER & TEMPLATE GENERATOR
+       ══════════════════════════════════════════════════════════════════════ */
+    let pendingImportPackage = null;
+    let selectedImportSlot = 'away';
+
+    async function downloadTeamPdf() {
+      try {
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Generating official fillable PDF form...`;
+        const buffer = await PixelTeamPackageImporter.generateTeamPdfTemplate();
+        const blob = new Blob([buffer], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'MDC-TV_PIXEL_Volleyball_Team_Form.pdf';
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Downloaded official fillable PDF form: MDC-TV_PIXEL_Volleyball_Team_Form.pdf`;
+      } catch (err) {
+        alert('Error generating PDF form: ' + err.message);
+      }
+    }
+
+    function downloadTeamTemplate() {
+      try {
+        const buffer = PixelTeamPackageImporter.generateTeamTemplate();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'PIXEL_Volleyball_Team_Submission.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Downloaded official team submission template: PIXEL_Volleyball_Team_Submission.xlsx`;
+      } catch (err) {
+        alert('Error generating template: ' + err.message);
+      }
+    }
+
+    function triggerPackageFileInput() {
+      document.getElementById('import-package-file').click();
+    }
+
+    async function handlePackageFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Parsing team package: ${file.name}...`;
+
+      try {
+        const parsed = await PixelTeamPackageImporter.parsePackage(file, file.name);
+        pendingImportPackage = parsed;
+        selectedImportSlot = activeTeamKey === 'home' ? 'home' : 'away';
+        renderPackageReviewModal(parsed, file.name);
+      } catch (err) {
+        alert('Failed to parse team package: ' + err.message);
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Error: ${err.message}`;
+      } finally {
+        e.target.value = '';
+      }
+    }
+
+    function renderPackageReviewModal(parsed, filename) {
+      document.getElementById('modal-filename').textContent = filename;
+      const formatBadge = document.getElementById('modal-format-badge');
+      const isPdf = parsed.formatType === 'PIXEL Fillable PDF' || filename.toLowerCase().endsWith('.pdf');
+      formatBadge.textContent = isPdf ? 'PIXEL FILLABLE PDF' : (parsed.isZip ? 'ZIP PACKAGE' : 'EXCEL WORKBOOK');
+      formatBadge.style.background = isPdf ? '#2563eb' : (parsed.isZip ? 'var(--gold)' : '#059669');
+      formatBadge.style.color = (isPdf || !parsed.isZip) ? '#fff' : '#000';
+
+      if (parsed.team) {
+        document.getElementById('modal-team-name').textContent = parsed.team.name || 'Unnamed Team';
+        document.getElementById('modal-team-abbr-coach').textContent = `${parsed.team.abbreviation || '---'} • Coach: ${parsed.team.coach || 'Not Specified'}`;
+      }
+
+      const playerCount = (parsed.players || []).length;
+      const captainCount = (parsed.players || []).filter(p => p.captain).length;
+      document.getElementById('modal-roster-count').textContent = `${playerCount} Players`;
+      document.getElementById('modal-roster-sub').textContent = `${captainCount} Captain${captainCount === 1 ? '' : 's'} Flagged`;
+
+      // Starting 6 Review
+      const summary = parsed.summary || {};
+      const pr = summary.productionReadiness || {};
+      const startersCount = (parsed.startingLineupJerseys && parsed.startingLineupJerseys.length) || (parsed.players || []).filter(p => p.starter).length;
+      const st6Elem = document.getElementById('modal-starting6-status');
+      const st6Sub = document.getElementById('modal-starting6-sub');
+
+      if (startersCount === 6) {
+        st6Elem.textContent = '✓ READY — 6 starters';
+        st6Elem.style.color = '#4ade80';
+        st6Sub.textContent = 'Automatic from STARTER flags';
+      } else {
+        st6Elem.textContent = `⚠ NEEDS REVIEW — ${startersCount} / 6 selected`;
+        st6Elem.style.color = '#fbbf24';
+        st6Sub.textContent = 'Can be adjusted in editor after import';
+      }
+
+      // Media & Broadcast Info
+      const logoText = summary.logoFound ? 'Logo: Found' : 'Logo: Missing (default used)';
+      const photoText = summary.photosFoundCount > 0 ? `Photos: ${summary.photosFoundCount}/${playerCount}` : 'Photos: Optional';
+      document.getElementById('modal-media-status').textContent = `${logoText} • ${photoText}`;
+      document.getElementById('modal-media-status').style.color = summary.logoFound ? '#4ade80' : '#94a3b8';
+
+      const statsCount = summary.statsCount || (parsed.players || []).filter(p => p.stats && Object.keys(p.stats).length > 0).length;
+      const hasNotes = Boolean(summary.broadcastNotes || summary.broadcastCoaches || (parsed.team && (parsed.team.broadcastNotes || parsed.team.broadcastCoaches)));
+      document.getElementById('modal-broadcast-info').textContent = `Stats supplied: ${statsCount} player${statsCount === 1 ? '' : 's'} • Additional notes: ${hasNotes ? 'Yes' : 'None'}`;
+
+      // Production Readiness Items (Phase D1.2A)
+      const readinessList = document.getElementById('modal-readiness-list');
+      const readinessBadge = document.getElementById('modal-readiness-badge');
+
+      const items = [];
+      if (pr.rosterUsable) {
+        items.push(`<div style="color: #4ade80;"><i class="ti ti-check"></i> Roster usable (${playerCount} players)</div>`);
+      } else {
+        items.push(`<div style="color: #f87171;"><i class="ti ti-alert-octagon"></i> Roster incomplete (${playerCount}/6 min)</div>`);
+      }
+
+      if (pr.starting6Ready) {
+        items.push(`<div style="color: #4ade80;"><i class="ti ti-check"></i> Starting 6 ready (6/6)</div>`);
+      } else {
+        items.push(`<div style="color: #fbbf24;"><i class="ti ti-alert-triangle"></i> Starting 6 needs review (${startersCount}/6)</div>`);
+      }
+
+      if (summary.photosFoundCount === playerCount && playerCount > 0) {
+        items.push(`<div style="color: #4ade80;"><i class="ti ti-check"></i> All player photos loaded (${summary.photosFoundCount}/${playerCount})</div>`);
+      } else if (summary.photosFoundCount > 0) {
+        items.push(`<div style="color: #facc15;"><i class="ti ti-alert-triangle"></i> ${pr.photosMissingCount || (playerCount - summary.photosFoundCount)} player photos missing</div>`);
+      } else {
+        items.push(`<div style="color: #94a3b8;"><i class="ti ti-info-circle"></i> Player photos optional</div>`);
+      }
+
+      if (pr.colorsConfigured) {
+        items.push(`<div style="color: #4ade80;"><i class="ti ti-check"></i> Team colors configured</div>`);
+      } else {
+        items.push(`<div style="color: #94a3b8;"><i class="ti ti-info-circle"></i> Team colors default (production setup)</div>`);
+      }
+
+      readinessList.innerHTML = items.join('');
+
+      const isFullReady = pr.rosterUsable && pr.starting6Ready && summary.logoFound && summary.photosFoundCount === playerCount;
+      readinessBadge.textContent = isFullReady ? 'BROADCAST READY' : (pr.rosterUsable ? 'PRODUCTION USABLE' : 'ACTION REQUIRED');
+      readinessBadge.style.background = isFullReady ? '#15803d' : (pr.rosterUsable ? '#b45309' : '#dc2626');
+
+      // Errors list
+      const errorsBox = document.getElementById('modal-errors-box');
+      const errorsList = document.getElementById('modal-errors-list');
+      if (parsed.errors && parsed.errors.length > 0) {
+        errorsBox.style.display = 'flex';
+        errorsList.innerHTML = parsed.errors.map(err => `<li>${escapeHtml(err)}</li>`).join('');
+      } else {
+        errorsBox.style.display = 'none';
+        errorsList.innerHTML = '';
+      }
+
+      // Warnings list
+      const warnBox = document.getElementById('modal-warnings-box');
+      const warnList = document.getElementById('modal-warnings-list');
+      if (parsed.warnings && parsed.warnings.length > 0) {
+        warnBox.style.display = 'flex';
+        warnList.innerHTML = parsed.warnings.map(w => `<li>${escapeHtml(w)}</li>`).join('');
+      } else {
+        warnBox.style.display = 'none';
+        warnList.innerHTML = '';
+      }
+
+      selectImportSlot(selectedImportSlot);
+      document.getElementById('modal-package-review').style.display = 'flex';
+    }
+
+    function selectImportSlot(slot) {
+      selectedImportSlot = slot;
+      document.getElementById('btn-choice-home').classList.toggle('selected', slot === 'home');
+      document.getElementById('btn-choice-away').classList.toggle('selected', slot === 'away');
+
+      const isMdc = PixelTeamPackageImporter.isMdcHomeProtected(currentRosterState);
+      const mdcBox = document.getElementById('modal-mdc-protection');
+      const mdcChk = document.getElementById('chk-mdc-confirm');
+
+      if (slot === 'home' && isMdc) {
+        mdcBox.style.display = 'flex';
+        mdcChk.checked = false;
+      } else {
+        mdcBox.style.display = 'none';
+        mdcChk.checked = true;
+      }
+
+      updateModalConfirmState();
+    }
+
+    function handleMdcCheckboxChange() {
+      updateModalConfirmState();
+    }
+
+    function updateModalConfirmState() {
+      const btn = document.getElementById('btn-modal-confirm');
+      const isMdc = PixelTeamPackageImporter.isMdcHomeProtected(currentRosterState);
+      const mdcConfirmed = (selectedImportSlot !== 'home' || !isMdc || document.getElementById('chk-mdc-confirm').checked);
+      const isValid = pendingImportPackage && pendingImportPackage.isValid;
+
+      btn.disabled = !(isValid && mdcConfirmed);
+      btn.style.opacity = (isValid && mdcConfirmed) ? '1' : '0.4';
+      btn.style.cursor = (isValid && mdcConfirmed) ? 'pointer' : 'not-allowed';
+    }
+
+    function closePackageModal() {
+      document.getElementById('modal-package-review').style.display = 'none';
+      pendingImportPackage = null;
+    }
+
+    function confirmAndApplyPackage() {
+      if (!pendingImportPackage || !pendingImportPackage.isValid) return;
+
+      try {
+        const importedPkg = pendingImportPackage;
+        const importedTeamName = importedPkg.team?.name || 'Imported Team';
+        const importedSlot = selectedImportSlot || 'away';
+
+        const baseState = currentRosterState || (RosterModel.loadRoster ? RosterModel.loadRoster() : null) || RosterModel.createDefaultRosterState();
+
+        currentRosterState = PixelTeamPackageImporter.convertToRosterModel(
+          importedPkg,
+          importedSlot,
+          baseState
+        );
+
+        currentRosterState = RosterModel.saveRoster(currentRosterState);
+        markSaved();
+
+        activeTeamKey = importedSlot;
+        renderAll();
+
+        closePackageModal();
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Imported and saved package for ${importedSlot.toUpperCase()} team: ${importedTeamName}!`;
+      } catch (err) {
+        console.error('Error applying team package:', err);
+        alert('Error applying team package: ' + err.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    initEditor();
+  </script>
+</body>
+</html>

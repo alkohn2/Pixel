@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "version": "1.0",
+  "graphicsTransport": {
+    "type": "syphon",
+    "sourceName": "PIXEL Graphics",
+    "serverHost": "127.0.0.1",
+    "serverPort": 8081,
+    "overlayUrl": "http://127.0.0.1:8081/graphics/volleyball/volleyball-master-overlay.html",
+    "width": 1920,
+    "height": 1080,
+    "fps": 59.94,
+    "alpha": true,
+    "autoReconnect": true,
+    "resolumeTarget": {
+      "layerIndex": 5,
+      "layerName": "Overlays",
+      "clipSlot": 5
+    }
+  },
+  "fallbackTransport": {
+    "type": "ndi",
+    "sourceName": "PIXEL Graphics NDI",
+    "bandwidth": "highest",
+    "alpha": true
+  }
+}

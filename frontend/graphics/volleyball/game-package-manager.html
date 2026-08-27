@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Game Package Manager (Phase G5.7)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --panel-bg: rgba(18, 24, 38, 0.95);
+      --card-bg: rgba(26, 34, 52, 0.8);
+      --card-border: 1px solid rgba(255, 255, 255, 0.12);
+      --mdc-blue: #0032A0;
+      --mdc-blue-hover: #002577;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --txt-white: #ffffff;
+      --txt-muted: #94a3b8;
+      --txt-faint: #64748b;
+      --radius: 8px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--txt-white);
+      padding: 24px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── HEADER BAR ── */
+    .header-bar {
+      background: var(--panel-bg);
+      border: var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .brand-group { display: flex; align-items: center; gap: 14px; }
+    .brand-group h1 {
+      font-size: 1.15rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #ffffff;
+    }
+    .badge-chip {
+      background: var(--mdc-blue);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+
+    button.hdr-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 800;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    button.hdr-btn:hover { background: #334155; }
+    button.hdr-btn.primary {
+      background: linear-gradient(135deg, var(--success), #15803d);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+    button.hdr-btn.gold {
+      background: linear-gradient(135deg, #b45309, #78350f);
+      border-color: var(--gold);
+      color: var(--gold-bright);
+    }
+    button.hdr-btn.active-btn {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      border-color: #38bdf8;
+      color: #ffffff;
+    }
+
+    /* ── MAIN WORKSPACE GRID ── */
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+    }
+
+    .panel-card {
+      background: var(--panel-bg);
+      border: var(--card-border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    }
+    .panel-title {
+      font-size: 0.9rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 10px;
+    }
+
+    /* Package Selector List */
+    .package-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+    .package-item-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .package-item-card:hover { border-color: rgba(255, 255, 255, 0.25); background: rgba(30, 41, 59, 0.9); }
+    .package-item-card.selected {
+      border-color: var(--gold);
+      background: rgba(30, 41, 59, 1);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+    }
+    .pkg-active-tag {
+      font-size: 0.65rem;
+      font-weight: 900;
+      background: #0284c7;
+      color: #ffffff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    /* Form Fields */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-label {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+    .form-input:focus { outline: none; border-color: var(--gold); }
+
+    /* Team Assignment Dual Grid */
+    .teams-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .team-preview-box {
+      background: rgba(10, 14, 22, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .team-preview-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .team-preview-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* Readiness Checklist */
+    .readiness-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .readiness-chip {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .readiness-chip.pass { border-color: rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.05); }
+    .readiness-chip.warn { border-color: rgba(234, 179, 8, 0.4); background: rgba(234, 179, 8, 0.05); }
+
+    .btn-action-small {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+    .btn-action-small:hover { background: #334155; }
+    .btn-action-small.danger { background: #991b1b; border-color: #dc2626; }
+
+    /* ── NOTIFICATION TOAST ── */
+    .toast-log {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius);
+      padding: 12px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--txt-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER BAR -->
+  <div class="header-bar">
+    <div class="brand-group">
+      <h1>PIXEL Game Package Manager</h1>
+      <span class="badge-chip">VOLLEYBALL v1.0</span>
+      <span id="active-game-pill" style="font-size: 0.75rem; background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); padding: 2px 8px; border-radius: 4px; font-weight: 800;">
+        ACTIVE: MIAMI DADE VS DAYTONA STATE
+      </span>
+    </div>
+    <div class="header-actions">
+      <button class="hdr-btn" onclick="createNewPackage()"><i class="ti ti-plus"></i> New Match</button>
+      <button class="hdr-btn" onclick="duplicateCurrentPackage()"><i class="ti ti-copy"></i> Duplicate</button>
+      <button class="hdr-btn" onclick="exportPackage()"><i class="ti ti-download"></i> Export JSON</button>
+      <button class="hdr-btn" onclick="document.getElementById('import-file').click()"><i class="ti ti-upload"></i> Import JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importPackage(event)">
+      <button class="hdr-btn active-btn" onclick="activateCurrentPackage()"><i class="ti ti-device-tv"></i> SET AS GAME DAY</button>
+      <button class="hdr-btn primary" onclick="saveCurrentPackage()"><i class="ti ti-device-floppy"></i> SAVE PACKAGE</button>
+    </div>
+  </div>
+
+  <!-- WORKSPACE GRID -->
+  <div class="workspace-grid">
+
+    <!-- LEFT COLUMN: SAVED PACKAGES LIST -->
+    <div class="panel-card">
+      <div class="panel-title">
+        <span><i class="ti ti-folders"></i> Saved Matches (<span id="pkg-count">0</span>)</span>
+      </div>
+
+      <div class="package-list" id="package-list-container">
+        <!-- Rendered items -->
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: PACKAGE EDITOR WORKSPACE -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- 1. EVENT & VENUE DETAILS -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-calendar-event"></i> Match & Event Metadata</span>
+          <span id="current-pkg-id" style="font-size: 0.7rem; color: var(--gold); font-family: monospace;">game_demo_01</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Game Title / Broadcast Matchup</label>
+            <input id="input-title" class="form-input" placeholder="e.g. Miami Dade vs Daytona State" oninput="markUnsaved()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Match Date</label>
+            <input type="date" id="input-date" class="form-input" onchange="markUnsaved()">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label class="form-label">Competition / League</label>
+            <input id="input-competition" class="form-input" placeholder="e.g. NJCAA Women's Volleyball" oninput="markUnsaved()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Event Stage / Round</label>
+            <input id="input-event-name" class="form-input" placeholder="e.g. Conference Championship" oninput="markUnsaved()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Venue / Court</label>
+            <input id="input-venue" class="form-input" placeholder="e.g. Kendall Campus Gymnasium" oninput="markUnsaved()">
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. TEAM ASSIGNMENT & ROSTER CONNECTIONS -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-users"></i> Team & Roster Assignment</span>
+          <button class="btn-action-small" onclick="navigateToRosterEditor()" title="Open Roster & Lineup Editor in PIXEL Hub"><i class="ti ti-users"></i> Open Roster Editor</button>
+        </div>
+
+        <div class="teams-grid">
+          <!-- HOME TEAM ASSIGNMENT -->
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label class="form-label" style="color: #60a5fa;">HOME TEAM</label>
+            <div class="team-preview-box">
+              <div class="team-preview-logo">
+                <img id="home-prev-logo" src="assets/teams/home-team/logo.svg" alt="" onerror="this.style.display='none'">
+              </div>
+              <div style="display: flex; flex-direction: column; flex: 1;">
+                <span id="home-prev-name" style="font-weight: 900; font-size: 0.9rem;">MIAMI DADE SHARKS</span>
+                <span id="home-prev-coach" style="font-size: 0.75rem; color: var(--txt-muted);">COACH: KIKO BENOIT</span>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <span id="home-roster-badge" style="font-size: 0.65rem; background: rgba(56,189,248,0.2); color: #38bdf8; padding: 1px 5px; border-radius: 3px; font-weight: 800;">7 PLAYERS</span>
+                  <span id="home-lineup-badge" style="font-size: 0.65rem; background: rgba(34,197,94,0.2); color: #4ade80; padding: 1px 5px; border-radius: 3px; font-weight: 800;">LINEUP: 6/6</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AWAY TEAM ASSIGNMENT -->
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label class="form-label" style="color: #f87171;">AWAY TEAM</label>
+            <div class="team-preview-box">
+              <div class="team-preview-logo">
+                <img id="away-prev-logo" src="assets/teams/away-team/logo.svg" alt="" onerror="this.style.display='none'">
+              </div>
+              <div style="display: flex; flex-direction: column; flex: 1;">
+                <span id="away-prev-name" style="font-weight: 900; font-size: 0.9rem;">DAYTONA STATE FALCONS</span>
+                <span id="away-prev-coach" style="font-size: 0.75rem; color: var(--txt-muted);">COACH: LAURA FALCON</span>
+                <div style="display: flex; gap: 8px; margin-top: 4px;">
+                  <span id="away-roster-badge" style="font-size: 0.65rem; background: rgba(56,189,248,0.2); color: #38bdf8; padding: 1px 5px; border-radius: 3px; font-weight: 800;">6 PLAYERS</span>
+                  <span id="away-lineup-badge" style="font-size: 0.65rem; background: rgba(34,197,94,0.2); color: #4ade80; padding: 1px 5px; border-radius: 3px; font-weight: 800;">LINEUP: 6/6</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. GRAPHICS CONFIGURATION & READINESS CHECKLIST -->
+      <div class="panel-card">
+        <div class="panel-title">
+          <span><i class="ti ti-checklist"></i> Game Package Readiness</span>
+          <span id="package-status-pill" style="font-size: 0.7rem; background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); padding: 2px 6px; border-radius: 4px; font-weight: 800;">GAME READY</span>
+        </div>
+
+        <div class="readiness-grid">
+          <div class="readiness-chip pass" id="chk-branding">
+            <span style="font-size: 0.7rem; font-weight: 800; color: var(--txt-muted);">1. TEAM BRANDING</span>
+            <span id="chk-branding-text" style="font-size: 0.8rem; font-weight: 900; color: #4ade80;">✓ Logos & Colors</span>
+          </div>
+          <div class="readiness-chip pass" id="chk-roster">
+            <span style="font-size: 0.7rem; font-weight: 800; color: var(--txt-muted);">2. TEAM ROSTERS</span>
+            <span id="chk-roster-text" style="font-size: 0.8rem; font-weight: 900; color: #4ade80;">✓ Full Rosters Linked</span>
+          </div>
+          <div class="readiness-chip pass" id="chk-lineup">
+            <span style="font-size: 0.7rem; font-weight: 800; color: var(--txt-muted);">3. STARTING ROTATION</span>
+            <span id="chk-lineup-text" style="font-size: 0.8rem; font-weight: 900; color: #4ade80;">✓ 6/6 Starters Ready</span>
+          </div>
+          <div class="readiness-chip pass" id="chk-graphics">
+            <span style="font-size: 0.7rem; font-weight: 800; color: var(--txt-muted);">4. PRODUCTION STATUS</span>
+            <span id="chk-graphics-text" style="font-size: 0.8rem; font-weight: 900; color: #4ade80;">✓ Ready for On-Air</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px;">
+          <div class="form-group">
+            <label class="form-label">Graphics Theme</label>
+            <select id="input-theme" class="form-input" onchange="markUnsaved()">
+              <option value="default">Default Broadcast (Dark Glass + Gold Trim)</option>
+              <option value="high-contrast">High Contrast Tournament</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Broadcast Sponsor / Bug Tag</label>
+            <input id="input-sponsor" class="form-input" placeholder="MDC-TV LIVE" oninput="markUnsaved()">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FOOTER STATUS & LOG -->
+  <div class="toast-log">
+    <span id="log-text">Ready. Storage: pixelVolleyballGamePackagesV1 | Channel: pixel-volleyball-game-package-state</span>
+    <button class="btn-action-small danger" onclick="deleteCurrentPackage()"><i class="ti ti-trash"></i> Delete Match</button>
+  </div>
+
+  <!-- OFFLINE SCRIPTS -->
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/rosterModel.js"></script>
+  <script src="../core/gamePackageModel.js"></script>
+  <script src="../prototypes/dev-roster-data.js"></script>
+
+  <script>
+    'use strict';
+
+    const PkgModel = window.PixelGamePackageModel;
+    const RosterModel = window.PixelRosterModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    let savedPackages = [];
+    let currentPackage = null;
+    let rosterState = null;
+    let hasUnsavedChanges = false;
+
+    function init() {
+      rosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+      savedPackages = PkgModel.getSavedPackages();
+
+      if (!savedPackages.length) {
+        const defaultPkg = PkgModel.getActivePackage();
+        savedPackages = [defaultPkg];
+        PkgModel.saveAllPackages(savedPackages);
+      }
+
+      const activeId = PkgModel.getActiveGameId();
+      currentPackage = savedPackages.find(p => p.gameId === activeId) || savedPackages[0];
+
+      renderAll();
+    }
+
+    function markUnsaved() {
+      hasUnsavedChanges = true;
+    }
+
+    function renderAll() {
+      // 1. Render Package List
+      renderPackageList();
+
+      // 2. Render Package Form
+      renderPackageForm();
+
+      // 3. Render Teams Preview
+      renderTeamsPreview();
+
+      // 4. Update Header Active Pill
+      const activePkg = PkgModel.getActivePackage();
+      document.getElementById('active-game-pill').textContent = `ACTIVE: ${activePkg.title.toUpperCase()}`;
+    }
+
+    function renderPackageList() {
+      const container = document.getElementById('package-list-container');
+      const activeId = PkgModel.getActiveGameId();
+      document.getElementById('pkg-count').textContent = savedPackages.length;
+
+      container.innerHTML = savedPackages.map(pkg => {
+        const isSelected = currentPackage && currentPackage.gameId === pkg.gameId;
+        const isActive = activeId === pkg.gameId;
+
+        return `
+          <div class="package-item-card ${isSelected ? 'selected' : ''}" onclick="selectPackage('${pkg.gameId}')">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span style="font-size: 0.85rem; font-weight: 800; color: #fff;">${pkg.title}</span>
+              ${isActive ? '<span class="pkg-active-tag">ACTIVE GAME</span>' : ''}
+            </div>
+            <span style="font-size: 0.75rem; color: var(--txt-muted);">${pkg.event.competition || 'Volleyball'} • ${pkg.event.date || 'TBD'}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderPackageForm() {
+      if (!currentPackage) return;
+
+      document.getElementById('current-pkg-id').textContent = currentPackage.gameId;
+      document.getElementById('input-title').value = currentPackage.title || '';
+      document.getElementById('input-date').value = currentPackage.event.date || '';
+      document.getElementById('input-competition').value = currentPackage.event.competition || '';
+      document.getElementById('input-event-name').value = currentPackage.event.name || '';
+      document.getElementById('input-venue').value = currentPackage.event.venue || '';
+      document.getElementById('input-theme').value = currentPackage.graphics.theme || 'default';
+      document.getElementById('input-sponsor').value = currentPackage.graphics.sponsor || 'MDC-TV LIVE';
+    }
+
+    function renderTeamsPreview() {
+      const home = rosterState.home || {};
+      const away = rosterState.away || {};
+
+      // Home
+      document.getElementById('home-prev-name').textContent = home.name || 'HOME TEAM';
+      document.getElementById('home-prev-coach').textContent = `COACH: ${home.coach || 'N/A'}`;
+      document.getElementById('home-roster-badge').textContent = `${home.players?.length || 0} PLAYERS`;
+      const homeLineupCount = home.startingLineupIds?.length || 0;
+      document.getElementById('home-lineup-badge').textContent = `LINEUP: ${homeLineupCount}/6`;
+      if (home.logo) {
+        document.getElementById('home-prev-logo').src = home.logo;
+        document.getElementById('home-prev-logo').style.display = 'block';
+      }
+
+      // Away
+      document.getElementById('away-prev-name').textContent = away.name || 'AWAY TEAM';
+      document.getElementById('away-prev-coach').textContent = `COACH: ${away.coach || 'N/A'}`;
+      document.getElementById('away-roster-badge').textContent = `${away.players?.length || 0} PLAYERS`;
+      const awayLineupCount = away.startingLineupIds?.length || 0;
+      document.getElementById('away-lineup-badge').textContent = `LINEUP: ${awayLineupCount}/6`;
+      if (away.logo) {
+        document.getElementById('away-prev-logo').src = away.logo;
+        document.getElementById('away-prev-logo').style.display = 'block';
+      }
+
+      // Readiness logic
+      const isBrandingPass = Boolean(home.name && away.name);
+      const isRosterPass = (home.players?.length >= 6 && away.players?.length >= 6);
+      const isLineupPass = (homeLineupCount === 6 && awayLineupCount === 6);
+
+      updateReadinessChip('chk-branding', isBrandingPass, '✓ Branding Linked', '⚠ Incomplete Names');
+      updateReadinessChip('chk-roster', isRosterPass, `✓ ${home.players?.length || 0} vs ${away.players?.length || 0} Players`, '⚠ < 6 Players');
+      updateReadinessChip('chk-lineup', isLineupPass, `✓ 6/6 Starters Ready`, `⚠ Lineup Incomplete`);
+
+      const allPass = isBrandingPass && isRosterPass && isLineupPass;
+      const statusPill = document.getElementById('package-status-pill');
+      if (allPass) {
+        statusPill.textContent = 'GAME READY';
+        statusPill.style.background = 'rgba(34,197,94,0.15)';
+        statusPill.style.color = '#4ade80';
+        statusPill.style.borderColor = 'rgba(34,197,94,0.3)';
+      } else {
+        statusPill.textContent = 'INCOMPLETE';
+        statusPill.style.background = 'rgba(234,179,8,0.15)';
+        statusPill.style.color = '#facc15';
+        statusPill.style.borderColor = 'rgba(234,179,8,0.3)';
+      }
+    }
+
+    function updateReadinessChip(elementId, pass, passText, failText) {
+      const chip = document.getElementById(elementId);
+      const span = chip.querySelector('span:last-child');
+      if (pass) {
+        chip.className = 'readiness-chip pass';
+        span.textContent = passText;
+        span.style.color = '#4ade80';
+      } else {
+        chip.className = 'readiness-chip warn';
+        span.textContent = failText;
+        span.style.color = '#facc15';
+      }
+    }
+
+    function selectPackage(gameId) {
+      syncInputsToPackage();
+      currentPackage = savedPackages.find(p => p.gameId === gameId);
+      renderAll();
+    }
+
+    function createNewPackage() {
+      syncInputsToPackage();
+      const newPkg = PkgModel.createGamePackage({
+        title: 'New Volleyball Match',
+        event: {
+          name: 'Regular Season Match',
+          venue: 'Gymnasium',
+          date: new Date().toISOString().split('T')[0],
+          competition: 'Volleyball League'
+        }
+      });
+      savedPackages.push(newPkg);
+      currentPackage = newPkg;
+      PkgModel.saveAllPackages(savedPackages);
+      renderAll();
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Created new match package.`;
+    }
+
+    function duplicateCurrentPackage() {
+      if (!currentPackage) return;
+      syncInputsToPackage();
+      const clone = PkgModel.createGamePackage({
+        ...currentPackage,
+        gameId: `game_${Date.now()}_copy`,
+        title: `${currentPackage.title} (Copy)`
+      });
+      savedPackages.push(clone);
+      currentPackage = clone;
+      PkgModel.saveAllPackages(savedPackages);
+      renderAll();
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Duplicated package: ${clone.title}`;
+    }
+
+    function deleteCurrentPackage() {
+      if (!currentPackage) return;
+      if (savedPackages.length <= 1) {
+        alert('Cannot delete the only remaining package.');
+        return;
+      }
+      if (confirm(`Are you sure you want to delete match: "${currentPackage.title}"?`)) {
+        PkgModel.deletePackage(currentPackage.gameId);
+        savedPackages = PkgModel.getSavedPackages();
+        currentPackage = savedPackages[0];
+        renderAll();
+        document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Match package deleted.`;
+      }
+    }
+
+    function syncInputsToPackage() {
+      if (!currentPackage) return;
+      currentPackage.title = document.getElementById('input-title').value.trim() || 'Match Title';
+      currentPackage.event.date = document.getElementById('input-date').value;
+      currentPackage.event.competition = document.getElementById('input-competition').value.trim();
+      currentPackage.event.name = document.getElementById('input-event-name').value.trim();
+      currentPackage.event.venue = document.getElementById('input-venue').value.trim();
+      currentPackage.graphics.theme = document.getElementById('input-theme').value;
+      currentPackage.graphics.sponsor = document.getElementById('input-sponsor').value.trim();
+      currentPackage.updatedAt = new Date().toISOString();
+    }
+
+    function saveCurrentPackage() {
+      syncInputsToPackage();
+      PkgModel.savePackage(currentPackage);
+      savedPackages = PkgModel.getSavedPackages();
+      hasUnsavedChanges = false;
+      renderAll();
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Package "${currentPackage.title}" saved successfully!`;
+    }
+
+    function activateCurrentPackage() {
+      syncInputsToPackage();
+      saveCurrentPackage();
+      PkgModel.setActiveGameId(currentPackage.gameId);
+      renderAll();
+      document.getElementById('log-text').textContent = `[${new Date().toLocaleTimeString()}] Activated "${currentPackage.title}" as active Game Day package for graphics!`;
+    }
+
+    function exportPackage() {
+      syncInputsToPackage();
+      const json = PkgModel.exportPackageJSON(currentPackage);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `game-package-${currentPackage.gameId}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importPackage(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const res = PkgModel.importPackageJSON(event.target.result);
+        if (res.success) {
+          PkgModel.savePackage(res.package);
+          savedPackages = PkgModel.getSavedPackages();
+          currentPackage = res.package;
+          renderAll();
+          alert(`Game package "${res.package.title}" imported successfully!`);
+        } else {
+          alert('Failed to import game package: ' + res.error);
+        }
+      };
+      reader.readAsText(file);
+    function navigateToRosterEditor() {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'PIXEL_NAVIGATE_TAB', tab: 'roster' }, '*');
+      } else {
+        window.location.href = '/?tab=roster';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

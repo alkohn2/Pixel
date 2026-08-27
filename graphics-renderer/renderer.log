@@ -1,9 +1,0 @@
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] NDI Sender created successfully: 'PIXEL Graphics'
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] ==================================================
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] Online & Broadcasting
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] Official Transport: NDI
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] Source Name: PIXEL Graphics
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] Resolution: 1920x1080 @ 59.94fps (Alpha: YES)
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] URL: http://127.0.0.1:8081/graphics/volleyball/volleyball-master-overlay.html
-2026-08-24 14:39:14.456 pixel-graphics-renderer[23234:22241942] ==================================================
-2026-08-24 14:39:15.642 pixel-graphics-renderer[23234:22241942] [PIXEL Graphics Renderer] Web overlay loaded and running.

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Player Lower Third (Phase G3)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --canvas-w: 1920px;
+      --canvas-h: 1080px;
+      --mdc-blue: #0032A0;
+      --mdc-blue-dark: #001f66;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --gold-grad: linear-gradient(90deg, #b8973a 0%, #fced9a 50%, #b8973a 100%);
+      --bg-surface: linear-gradient(180deg, rgba(22, 28, 42, 0.98) 0%, rgba(10, 14, 22, 0.98) 100%);
+      --card-border: 1px solid rgba(255, 255, 255, 0.14);
+      --card-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.4);
+      --txt-white: #ffffff;
+      --txt-muted: rgba(255, 255, 255, 0.7);
+      --divider: rgba(255, 255, 255, 0.1);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      width: var(--canvas-w);
+      height: var(--canvas-h);
+      overflow: hidden;
+      position: relative;
+      user-select: none;
+    }
+
+    /* ── BROADCAST LOWER THIRD POSITION (BOTTOM-LEFT SAFE AREA) ── */
+    #lower-third-wrapper {
+      position: absolute;
+      left: 96px;
+      bottom: 96px;
+      display: flex;
+      flex-direction: column;
+      perspective: 1000px;
+    }
+
+    /* ── TOP ACCENT BRAND LINE ── */
+    #lt-accent-line {
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gold-grad);
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: left center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: 0 0 10px rgba(227, 196, 106, 0.5);
+      will-change: transform, opacity;
+    }
+
+    /* ── MAIN LOWER THIRD SHELL ── */
+    #lt-shell {
+      position: relative;
+      display: flex;
+      align-items: stretch;
+      height: 84px;
+      background: var(--bg-surface);
+      border: var(--card-border);
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-40px);
+      min-width: 580px;
+      will-change: transform, opacity;
+    }
+
+    /* ── JERSEY NUMBER CELL ── */
+    .jersey-cell {
+      width: 84px;
+      background: linear-gradient(135deg, var(--mdc-blue) 0%, var(--mdc-blue-dark) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--divider);
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .jersey-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 38px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .captain-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      font-size: 9px;
+      font-weight: 900;
+      color: var(--gold);
+      display: none;
+    }
+    .captain-badge.active {
+      display: block;
+    }
+
+    /* ── PLAYER INFO BODY ── */
+    .player-body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 24px;
+      flex: 1;
+    }
+
+    .player-name-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .player-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--txt-white);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .position-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--gold);
+      background: rgba(227, 196, 106, 0.15);
+      border: 1px solid rgba(227, 196, 106, 0.3);
+      padding: 3px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .player-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .team-label {
+      color: #93c5fd;
+      font-weight: 800;
+    }
+
+    .stats-summary {
+      color: var(--gold-bright);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* ── RIGHT BRAND TAG ── */
+    .lt-brand-tag {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 1px solid var(--divider);
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    /* ── DEV TEST CONTROLS ── */
+    #dev-test-panel {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 999;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #dev-test-panel.minimized {
+      transform: translateY(60px);
+      opacity: 0.2;
+    }
+
+    .dev-badge {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+
+    .dev-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .dev-btn:hover { background: #334155; }
+    .dev-btn.primary { background: var(--mdc-blue); border-color: rgba(255, 255, 255, 0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- LOWER THIRD ROOT -->
+  <div id="lower-third-wrapper">
+    <div id="lt-accent-line"></div>
+    <div id="lt-shell">
+      <div class="lt-photo-cell" id="lt-photo-cell" style="display: none; width: 68px; height: 100%; border-right: 1px solid var(--divider); overflow: hidden; background: #0b1120;">
+        <img id="lt-photo" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="document.getElementById('lt-photo-cell').style.display='none'">
+      </div>
+      <div class="jersey-cell" id="lt-jersey-cell">
+        <span class="captain-badge" id="lt-captain-star">★</span>
+        <span class="jersey-number" id="lt-number">7</span>
+      </div>
+      <div class="player-body">
+        <div class="player-name-row">
+          <span class="player-name" id="lt-name">MARIA SANTOS</span>
+          <span class="position-pill" id="lt-position">OH</span>
+        </div>
+        <div class="player-sub-row">
+          <span class="team-label" id="lt-team">MIAMI DADE SHARKS</span>
+          <span style="opacity: 0.4;">•</span>
+          <span class="stats-summary" id="lt-stats">14 KILLS  3 ACES  8 DIGS</span>
+        </div>
+      </div>
+      <div class="lt-brand-tag" id="lt-brand-tag">
+        <img id="lt-team-logo" src="" alt="" style="height: 24px; max-width: 32px; object-fit: contain; margin-right: 8px; display: none;" onerror="this.style.display='none'">
+        <span>MDC-TV</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEV TEST CONTROLS (Isolated Simulation) -->
+  <div id="dev-test-panel">
+    <span class="dev-badge">LOWER THIRD DEV</span>
+    <button class="dev-btn primary" onclick="toggleLowerThird()">Toggle In/Out</button>
+    <button class="dev-btn" onclick="prevPlayer()">◀ Prev</button>
+    <button class="dev-btn" onclick="nextPlayer()">Next ▶</button>
+    <button class="dev-btn" onclick="switchTeam()">Home / Away</button>
+    <button class="dev-btn" style="opacity: 0.6;" onclick="document.getElementById('dev-test-panel').classList.toggle('minimized')">_</button>
+  </div>
+
+  <!-- OFFLINE SCRIPTS -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/rosterModel.js"></script>
+  <script src="../core/motion.js"></script>
+  <script src="../prototypes/dev-roster-data.js"></script>
+
+  <script>
+    'use strict';
+
+    const { animate, createTimeline, remove } = window.anime;
+    const Motion = window.PixelMotion;
+    const RosterModel = window.PixelRosterModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    const DOM = {
+      wrapper: document.getElementById('lower-third-wrapper'),
+      accentLine: document.getElementById('lt-accent-line'),
+      shell: document.getElementById('lt-shell'),
+      photoCell: document.getElementById('lt-photo-cell'),
+      photo: document.getElementById('lt-photo'),
+      jerseyCell: document.getElementById('lt-jersey-cell'),
+      number: document.getElementById('lt-number'),
+      captainStar: document.getElementById('lt-captain-star'),
+      name: document.getElementById('lt-name'),
+      position: document.getElementById('lt-position'),
+      team: document.getElementById('lt-team'),
+      stats: document.getElementById('lt-stats'),
+      teamLogo: document.getElementById('lt-team-logo')
+    };
+
+    let isVisible = false;
+    let isTransitioning = false;
+    let activeTimeline = null;
+    let currentTeamKey = 'home';
+    let currentPlayerIndex = 0;
+    let rosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+
+    // Load Player Data into DOM
+    function loadPlayerData(teamKey, playerIndex) {
+      const team = rosterState[teamKey] || { players: [] };
+      const players = team.players || [];
+      if (!players.length) return;
+
+      const p = players[playerIndex % players.length];
+
+      DOM.number.textContent = p.jerseyNumber;
+      DOM.name.textContent = p.displayName.toUpperCase();
+      DOM.position.textContent = p.position;
+      DOM.team.textContent = team.name;
+      DOM.captainStar.className = 'captain-badge' + (p.captain ? ' active' : '');
+
+      DOM.jerseyCell.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#0032A0'} 0%, ${team.colorSecondary || '#001f66'} 100%)`;
+
+      // Photo Portrait Binding
+      if (p.photo && p.photo.trim()) {
+        DOM.photo.src = p.photo.trim();
+        DOM.photoCell.style.display = 'block';
+      } else {
+        DOM.photoCell.style.display = 'none';
+        DOM.photo.src = '';
+      }
+
+      // Team Logo Binding
+      if (team.logo && team.logo.trim()) {
+        DOM.teamLogo.src = team.logo.trim();
+        DOM.teamLogo.style.display = 'inline-block';
+      } else {
+        DOM.teamLogo.style.display = 'none';
+        DOM.teamLogo.src = '';
+      }
+
+      // Build stats string
+      const statParts = [];
+      if (p.stats && p.stats.kills !== undefined) statParts.push(`${p.stats.kills} KILLS`);
+      if (p.stats && p.stats.assists !== undefined) statParts.push(`${p.stats.assists} AST`);
+      if (p.stats && p.stats.blocks !== undefined) statParts.push(`${p.stats.blocks} BLK`);
+      if (p.stats && p.stats.digs !== undefined) statParts.push(`${p.stats.digs} DIGS`);
+      if (p.stats && p.stats.aces !== undefined) statParts.push(`${p.stats.aces} ACES`);
+      DOM.stats.textContent = statParts.join(' • ') || (p.starter ? 'STARTER' : 'ROSTER');
+    }
+
+    // ========================================================================
+    // SIGNATURE LOWER THIRD IN ANIMATION (~550ms STANDARD Preset)
+    // ========================================================================
+    function playInAnimation(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      DOM.accentLine.style.transform = 'scaleX(0)';
+      DOM.accentLine.style.opacity = '1';
+
+      DOM.shell.style.opacity = '0';
+      DOM.shell.style.transform = 'translateX(-40px) scale(0.96)';
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isVisible = true;
+          isTransitioning = false;
+          activeTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // 1. Accent line sweeps across
+      tl.add(DOM.accentLine, {
+        scaleX: [0, 1],
+        duration: 300,
+        ease: 'outQuart'
+      }, 0);
+
+      // 2. Shell reveals with horizontal slide
+      tl.add(DOM.shell, {
+        opacity: [0, 1],
+        translateX: [-40, 0],
+        scale: [0.96, 1],
+        duration: 480,
+        ease: 'outCubic'
+      }, 80);
+
+      // 3. Jersey number punch
+      tl.add(DOM.number, {
+        scale: [0.7, 1],
+        opacity: [0, 1],
+        duration: 320,
+        ease: 'outBack'
+      }, 200);
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // SIGNATURE LOWER THIRD OUT ANIMATION (~350ms)
+    // ========================================================================
+    function playOutAnimation(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isVisible = false;
+          isTransitioning = false;
+          activeTimeline = null;
+          DOM.shell.style.opacity = '0';
+          DOM.accentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // 1. Content and Shell retract
+      tl.add(DOM.shell, {
+        opacity: [1, 0],
+        translateX: [0, -30],
+        scale: [1, 0.96],
+        duration: 280,
+        ease: 'inCubic'
+      }, 0);
+
+      // 2. Accent line closes
+      tl.add(DOM.accentLine, {
+        scaleX: [1, 0],
+        opacity: [1, 0],
+        duration: 220,
+        ease: 'inQuad'
+      }, 100);
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // SEAMLESS PLAYER CHANGE WHILE VISIBLE
+    // ========================================================================
+    function updatePlayerContent() {
+      if (!isVisible) {
+        loadPlayerData(currentTeamKey, currentPlayerIndex);
+        return;
+      }
+
+      // Quick cross-slide transition
+      animate(DOM.shell, {
+        opacity: [1, 0.3, 1],
+        translateY: [0, -4, 0],
+        duration: 260,
+        ease: 'outBack',
+        onBegin: () => {
+          loadPlayerData(currentTeamKey, currentPlayerIndex);
+        }
+      });
+    }
+
+    // ========================================================================
+    // DEV CONTROLS
+    // ========================================================================
+    function toggleLowerThird() {
+      if (isVisible) playOutAnimation();
+      else playInAnimation();
+    }
+
+    function nextPlayer() {
+      const team = DevRoster.getTeamRoster(currentTeamKey);
+      currentPlayerIndex = (currentPlayerIndex + 1) % team.players.length;
+      updatePlayerContent();
+    }
+
+    function prevPlayer() {
+      const team = DevRoster.getTeamRoster(currentTeamKey);
+      currentPlayerIndex = (currentPlayerIndex - 1 + team.players.length) % team.players.length;
+      updatePlayerContent();
+    }
+
+    function switchTeam() {
+      currentTeamKey = (currentTeamKey === 'home') ? 'away' : 'home';
+      currentPlayerIndex = 0;
+      updatePlayerContent();
+    }
+
+    // Initialize with first home player
+    loadPlayerData('home', 0);
+
+    // ========================================================================
+    // ROSTER CHANNEL BINDING (Phase G5.5)
+    // ========================================================================
+    try {
+      const rosterChannel = new BroadcastChannel(RosterModel.CHANNEL_NAME);
+      rosterChannel.onmessage = (event) => {
+        if (event.data && event.data.roster) {
+          rosterState = event.data.roster;
+          // Only refresh data in background without changing on-air visibility
+          if (!isVisible) {
+            loadPlayerData(currentTeamKey, currentPlayerIndex);
+          }
+        }
+      };
+    } catch (e) {}
+
+    // ========================================================================
+    // GRAPHICS STATE CHANNEL BINDING (Phase G4)
+    // ========================================================================
+    try {
+      const gfxChannel = new BroadcastChannel(PixelGraphicsState.CHANNEL_NAME);
+      gfxChannel.onmessage = (event) => {
+        if (!event.data || !event.data.state) return;
+        const gState = event.data.state;
+
+        // 1. Prepared Player Data
+        if (gState.prepared && gState.prepared.playerLowerThird) {
+          const prep = gState.prepared.playerLowerThird;
+          const newTeam = prep.team || 'home';
+          const newIdx = Number(prep.playerIndex) || 0;
+
+          if (newTeam !== currentTeamKey || newIdx !== currentPlayerIndex) {
+            currentTeamKey = newTeam;
+            currentPlayerIndex = newIdx;
+            updatePlayerContent();
+          }
+        }
+
+        // 2. Visibility
+        if (gState.visibility && gState.visibility.playerLowerThird !== undefined) {
+          const targetVis = Boolean(gState.visibility.playerLowerThird);
+          if (targetVis !== isVisible && !isTransitioning) {
+            if (targetVis) playInAnimation();
+            else playOutAnimation();
+          }
+        }
+      };
+    } catch (e) {
+      console.warn('Graphics channel init fallback', e);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PIXEL — Starting Lineup (Phase G3)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800;900&family=JetBrains+Mono:wght@700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.34.0/dist/tabler-icons.min.css">
+  <style>
+    :root {
+      --canvas-w: 1920px;
+      --canvas-h: 1080px;
+      --mdc-blue: #0032A0;
+      --mdc-blue-dark: #001f66;
+      --gold: #e3c46a;
+      --gold-bright: #fced9a;
+      --gold-grad: linear-gradient(90deg, #b8973a 0%, #fced9a 50%, #b8973a 100%);
+      --bg-surface: linear-gradient(180deg, rgba(22, 28, 42, 0.98) 0%, rgba(9, 13, 20, 0.98) 100%);
+      --card-border: 1px solid rgba(255, 255, 255, 0.14);
+      --card-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 4px 12px rgba(0, 0, 0, 0.5);
+      --txt-white: #ffffff;
+      --txt-muted: rgba(255, 255, 255, 0.65);
+      --divider: rgba(255, 255, 255, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      width: var(--canvas-w);
+      height: var(--canvas-h);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 96px;
+      user-select: none;
+    }
+
+    /* ── LINEUP BOARD CONTAINER ── */
+    #lineup-wrapper {
+      position: relative;
+      width: 1280px;
+      display: flex;
+      flex-direction: column;
+      perspective: 1000px;
+    }
+
+    /* ── TOP GOLD SWEEP LINE ── */
+    #lineup-accent-line {
+      position: absolute;
+      top: -2px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gold-grad);
+      border-radius: 2px;
+      z-index: 20;
+      transform-origin: center;
+      transform: scaleX(0);
+      opacity: 0;
+      box-shadow: 0 0 14px rgba(227, 196, 106, 0.6);
+      will-change: transform, opacity;
+    }
+
+    /* ── MAIN BOARD SHELL ── */
+    #lineup-shell {
+      position: relative;
+      background: var(--bg-surface);
+      border: var(--card-border);
+      border-radius: 10px;
+      box-shadow: var(--card-shadow);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px) scale(0.96);
+      will-change: transform, opacity;
+    }
+
+    /* ── HEADER BANNER ── */
+    .lineup-header {
+      height: 64px;
+      background: linear-gradient(135deg, rgba(0, 50, 160, 0.85) 0%, rgba(0, 25, 90, 0.95) 100%);
+      border-bottom: 1px solid var(--divider);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+    }
+
+    .header-team-title {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .team-badge-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: var(--gold);
+      background: rgba(227, 196, 106, 0.15);
+      border: 1px solid rgba(227, 196, 106, 0.3);
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .team-name-text {
+      font-size: 22px;
+      font-weight: 900;
+      color: #ffffff;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--txt-muted);
+      letter-spacing: 0.5px;
+    }
+
+    .coach-label {
+      color: var(--gold-bright);
+    }
+
+    /* ── 6-PLAYER ROTATION GRID ── */
+    .lineup-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      padding: 20px;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .player-card {
+      background: rgba(20, 26, 38, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(24px);
+      will-change: transform, opacity;
+    }
+
+    .player-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--mdc-blue);
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+    }
+
+    .card-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 36px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1;
+      margin-top: 4px;
+    }
+
+    .card-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--txt-white);
+      text-transform: uppercase;
+      margin-top: 10px;
+      line-height: 1.2;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-pos-badge {
+      margin-top: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold);
+      background: rgba(227, 196, 106, 0.15);
+      border: 1px solid rgba(227, 196, 106, 0.25);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .card-captain-star {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      color: var(--gold);
+      display: none;
+    }
+    .card-captain-star.active { display: block; }
+
+    /* ── DEV TEST PANEL ── */
+    #dev-test-panel {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      z-index: 999;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+
+    #dev-test-panel.minimized {
+      transform: translateY(-60px);
+      opacity: 0.2;
+    }
+
+    .dev-badge {
+      font-size: 10px;
+      font-weight: 900;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+    }
+
+    .dev-btn {
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .dev-btn:hover { background: #334155; }
+    .dev-btn.primary { background: var(--mdc-blue); border-color: rgba(255, 255, 255, 0.3); }
+  </style>
+</head>
+<body>
+
+  <!-- STARTING LINEUP ROOT -->
+  <div id="lineup-wrapper">
+    <div id="lineup-accent-line"></div>
+    <div id="lineup-shell">
+      
+      <!-- HEADER -->
+      <div class="lineup-header" id="lineup-header">
+        <div class="header-team-title">
+          <img id="lineup-team-logo" src="" alt="" style="height: 32px; max-width: 44px; object-fit: contain; margin-right: 8px; display: none;" onerror="this.style.display='none'">
+          <span class="team-badge-pill" id="lineup-team-tag">STARTING 6</span>
+          <span class="team-name-text" id="lineup-team-name">MIAMI DADE SHARKS</span>
+        </div>
+        <div class="header-meta">
+          <span>HEAD COACH: <strong class="coach-label" id="lineup-coach">KIKO BENOIT</strong></span>
+          <span style="opacity: 0.3;">|</span>
+          <span style="color: var(--gold); font-family: 'JetBrains Mono', monospace;">MDC-TV LIVE</span>
+        </div>
+      </div>
+
+      <!-- 6-PLAYER ROTATION CARDS -->
+      <div class="lineup-grid" id="lineup-grid">
+        <!-- 6 Generated Cards -->
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DEV TEST CONTROLS (Isolated Simulation) -->
+  <div id="dev-test-panel">
+    <span class="dev-badge">LINEUP DEV</span>
+    <button class="dev-btn primary" onclick="toggleLineup()">Toggle In/Out</button>
+    <button class="dev-btn" onclick="setTeam('home')">Home Team</button>
+    <button class="dev-btn" onclick="setTeam('away')">Away Team</button>
+    <button class="dev-btn" style="opacity: 0.6;" onclick="document.getElementById('dev-test-panel').classList.toggle('minimized')">_</button>
+  </div>
+
+  <!-- OFFLINE SCRIPTS -->
+  <script src="../core/vendor/anime.min.js"></script>
+  <script src="../core/matchState.js"></script>
+  <script src="../core/graphicsState.js"></script>
+  <script src="../core/rosterModel.js"></script>
+  <script src="../core/motion.js"></script>
+  <script src="../prototypes/dev-roster-data.js"></script>
+
+  <script>
+    'use strict';
+
+    const { animate, createTimeline, stagger, remove } = window.anime;
+    const Motion = window.PixelMotion;
+    const RosterModel = window.PixelRosterModel;
+    const DevRoster = window.PixelDevRosterData;
+
+    const DOM = {
+      wrapper: document.getElementById('lineup-wrapper'),
+      accentLine: document.getElementById('lineup-accent-line'),
+      shell: document.getElementById('lineup-shell'),
+      header: document.getElementById('lineup-header'),
+      teamName: document.getElementById('lineup-team-name'),
+      teamLogo: document.getElementById('lineup-team-logo'),
+      teamTag: document.getElementById('lineup-team-tag'),
+      coach: document.getElementById('lineup-coach'),
+      grid: document.getElementById('lineup-grid')
+    };
+
+    let isVisible = false;
+    let isTransitioning = false;
+    let activeTimeline = null;
+    let currentTeamKey = 'home';
+    let rosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+
+    // Populate 6 Player Cards into Grid
+    function renderLineupCards(teamKey) {
+      const team = rosterState[teamKey] || { name: 'TEAM', startingLineupIds: [], players: [] };
+      const lineupIds = team.startingLineupIds || [];
+      let lineup = lineupIds.map(id => team.players.find(p => p.id === id)).filter(Boolean);
+      if (!lineup.length && team.players && team.players.length) {
+        lineup = team.players.slice(0, 6);
+      }
+
+      DOM.teamName.textContent = team.name;
+      DOM.coach.textContent = team.coach || 'HEAD COACH';
+      DOM.header.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#0032A0'} 0%, ${team.colorSecondary || '#001f66'} 100%)`;
+
+      // Team Logo
+      if (team.logo && team.logo.trim()) {
+        DOM.teamLogo.src = team.logo.trim();
+        DOM.teamLogo.style.display = 'inline-block';
+      } else {
+        DOM.teamLogo.style.display = 'none';
+        DOM.teamLogo.src = '';
+      }
+
+      DOM.grid.innerHTML = lineup.slice(0, 6).map((p, idx) => `
+        <div class="player-card" id="card-${idx}">
+          <span class="card-captain-star ${p.captain ? 'active' : ''}">★</span>
+          ${p.photo ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px auto; border: 2px solid ${team.accentColor || '#e3c46a'};"><img src="${p.photo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+          <div class="card-number">${p.jerseyNumber}</div>
+          <div class="card-name">${p.displayName}</div>
+          <div class="card-pos-badge">${p.position}</div>
+        </div>
+      `).join('');
+    }
+
+    // ========================================================================
+    // HERO PRESET IN ANIMATION (~750ms)
+    // ========================================================================
+    function playHeroIn(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      DOM.accentLine.style.transform = 'scaleX(0)';
+      DOM.accentLine.style.opacity = '1';
+
+      DOM.shell.style.opacity = '0';
+      DOM.shell.style.transform = 'translateY(40px) scale(0.96)';
+
+      const cards = document.querySelectorAll('.player-card');
+      cards.forEach(c => {
+        c.style.opacity = '0';
+        c.style.transform = 'translateY(24px)';
+      });
+
+      const tl = createTimeline({
+        defaults: { ease: 'outCubic' },
+        onComplete: () => {
+          isVisible = true;
+          isTransitioning = false;
+          activeTimeline = null;
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // 1. Gold accent line expands from center
+      tl.add(DOM.accentLine, {
+        scaleX: [0, 1],
+        duration: 350,
+        ease: 'outQuart'
+      }, 0);
+
+      // 2. Main Board frame ascends
+      tl.add(DOM.shell, {
+        opacity: [0, 1],
+        translateY: [40, 0],
+        scale: [0.96, 1],
+        duration: 520,
+        ease: 'outCubic'
+      }, 100);
+
+      // 3. Staggered Player Cards
+      tl.add(cards, {
+        opacity: [0, 1],
+        translateY: [24, 0],
+        duration: 400,
+        ease: 'outBack',
+        delay: stagger(45)
+      }, 240);
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // HERO PRESET OUT ANIMATION (~450ms)
+    // ========================================================================
+    function playHeroOut(onComplete) {
+      if (activeTimeline) activeTimeline.cancel();
+      isTransitioning = true;
+
+      const cards = document.querySelectorAll('.player-card');
+
+      const tl = createTimeline({
+        defaults: { ease: 'inCubic' },
+        onComplete: () => {
+          isVisible = false;
+          isTransitioning = false;
+          activeTimeline = null;
+          DOM.shell.style.opacity = '0';
+          DOM.accentLine.style.opacity = '0';
+          if (typeof onComplete === 'function') onComplete();
+        }
+      });
+
+      // 1. Cards reverse stagger exit
+      tl.add(cards, {
+        opacity: [1, 0],
+        translateY: [0, 16],
+        duration: 220,
+        ease: 'inQuad',
+        delay: stagger(25, { from: 'last' })
+      }, 0);
+
+      // 2. Board frame collapses
+      tl.add(DOM.shell, {
+        opacity: [1, 0],
+        translateY: [0, 30],
+        scale: [1, 0.96],
+        duration: 300,
+        ease: 'inCubic'
+      }, 100);
+
+      // 3. Line sweeps shut
+      tl.add(DOM.accentLine, {
+        scaleX: [1, 0],
+        opacity: [1, 0],
+        duration: 240,
+        ease: 'inQuad'
+      }, 180);
+
+      activeTimeline = tl;
+    }
+
+    // ========================================================================
+    // DEV TEST CONTROLS
+    // ========================================================================
+    function toggleLineup() {
+      if (isVisible) playHeroOut();
+      else playHeroIn();
+    }
+
+    function setTeam(teamKey) {
+      currentTeamKey = teamKey;
+      if (!isVisible) {
+        renderLineupCards(currentTeamKey);
+        return;
+      }
+
+      // Smooth board refresh transition
+      animate(DOM.shell, {
+        opacity: [1, 0.2, 1],
+        scale: [1, 0.98, 1],
+        duration: 320,
+        ease: 'outBack',
+        onBegin: () => {
+          renderLineupCards(currentTeamKey);
+        }
+      });
+    }
+
+    // Initialize Home Lineup
+    renderLineupCards('home');
+
+    // ========================================================================
+    // ROSTER CHANNEL BINDING (Phase G5.5)
+    // ========================================================================
+    try {
+      const rosterChannel = new BroadcastChannel(RosterModel.CHANNEL_NAME);
+      rosterChannel.onmessage = (event) => {
+        if (event.data && event.data.roster) {
+          rosterState = event.data.roster;
+          if (!isVisible) {
+            renderLineupCards(currentTeamKey);
+          }
+        }
+      };
+    } catch (e) {}
+
+    // ========================================================================
+    // GRAPHICS STATE CHANNEL BINDING (Phase G4)
+    // ========================================================================
+    try {
+      const gfxChannel = new BroadcastChannel(PixelGraphicsState.CHANNEL_NAME);
+      gfxChannel.onmessage = (event) => {
+        if (!event.data || !event.data.state) return;
+        const gState = event.data.state;
+
+        // 1. Prepared Lineup Data
+        if (gState.prepared && gState.prepared.startingLineup) {
+          const prep = gState.prepared.startingLineup;
+          const newTeam = prep.team || 'home';
+          if (newTeam !== currentTeamKey) {
+            setTeam(newTeam);
+          }
+        }
+
+        // 2. Visibility
+        if (gState.visibility && gState.visibility.startingLineup !== undefined) {
+          const targetVis = Boolean(gState.visibility.startingLineup);
+          if (targetVis !== isVisible && !isTransitioning) {
+            if (targetVis) playHeroIn();
+            else playHeroOut();
+          }
+        }
+      };
+    } catch (e) {
+      console.warn('Graphics channel init fallback', e);
+    }
+  </script>
+</body>
+</html>
