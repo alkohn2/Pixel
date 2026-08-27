@@ -163,7 +163,8 @@
     }
 
     if (self.ndiSender) {
-        NSLog(@"[PIXEL Graphics Renderer] NDI Sender created successfully: '%@'", sourceName);
+        NSLog(@"[PIXEL Graphics Renderer] NDI Sender created successfully: '%@' (pointer: %p)", sourceName, self.ndiSender);
+        NSLog(@"[PIXEL Graphics Renderer] NDI Groups: Public (NULL)");
     } else {
         NSLog(@"[PIXEL Graphics Renderer] ERROR: Failed to create NDI sender!");
     }
@@ -322,6 +323,20 @@ static void saveDiagnosticPNG(CGImageRef cgImage, NSString *path) {
     videoFrame.timestamp = 0;
 
     NDIlib_send_send_video_v2(self.ndiSender, &videoFrame);
+
+    static BOOL s_firstFrameLogged = NO;
+    if (!s_firstFrameLogged) {
+        s_firstFrameLogged = YES;
+        NSLog(@"[PIXEL Graphics Renderer] First NDI video frame transmitted successfully (1920x1080 BGRA)");
+    }
+
+    static int s_frameCounter = 0;
+    if (++s_frameCounter % 300 == 0) {
+        int conns = NDIlib_send_get_no_connections(self.ndiSender, 0);
+        if (conns > 0) {
+            NSLog(@"[PIXEL Graphics Renderer] Active NDI receiver connections: %d", conns);
+        }
+    }
 }
 
 // ── SYPHON PUBLISH ──

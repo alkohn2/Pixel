@@ -58,6 +58,7 @@ NDIlib_send_instance_t NDIlib_send_create(const NDIlib_send_create_t* p_create_s
 void NDIlib_send_destroy(NDIlib_send_instance_t p_instance);
 void NDIlib_send_send_video_v2(NDIlib_send_instance_t p_instance, const NDIlib_video_frame_v2_t* p_video_data);
 void NDIlib_send_send_video_async_v2(NDIlib_send_instance_t p_instance, const NDIlib_video_frame_v2_t* p_video_data);
+int NDIlib_send_get_no_connections(NDIlib_send_instance_t p_instance, uint32_t timeout_ms);
 
 #ifdef __cplusplus
 }
