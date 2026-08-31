@@ -17,8 +17,12 @@ import {
   Layers,
   Monitor,
   Video,
-  Film
+  Film,
+  Zap,
+  Lock,
+  Unlock
 } from 'lucide-react';
+import { setPixelRemoteState } from '../../services/bridgeClient';
 
 interface PixelLiveOperationsDashboardProps {
   store: SwitcherStore;
@@ -590,27 +594,71 @@ export const PixelLiveOperationsDashboard: React.FC<PixelLiveOperationsDashboard
             <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#60a5fa', fontFamily: '"JetBrains Mono", monospace', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               OBS STUDIO
             </span>
-            {lastBridgeData?.manualControl?.enabled && (
-              <span style={{
-                fontSize: '10px',
-                fontWeight: 'bold',
-                fontFamily: 'monospace',
-                padding: '2px 8px',
-                borderRadius: '4px',
-                backgroundColor: lastBridgeData.manualControl.transitionLocked ? 'rgba(56, 189, 248, 0.2)' : 'rgba(245, 158, 11, 0.15)',
-                color: lastBridgeData.manualControl.transitionLocked ? '#38bdf8' : '#fbbf24',
-                border: lastBridgeData.manualControl.transitionLocked ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(245, 158, 11, 0.3)'
-              }}>
-                {lastBridgeData.manualControl.transitionLocked ? 'TRANSITION IN PROGRESS' : `MANUAL CONTROL: ON (ATEM MACRO ${lastBridgeData.manualControl.obsTransitionMacroIndex + 1} → OBS)`}
-              </span>
+            {/* Phase R3.1: PIXEL REMOTE Smart ARM / Manual Lock Button */}
+            {lastBridgeData?.manualControl && (
+              <button
+                onClick={() => setPixelRemoteState(lastBridgeData.manualControl?.enabled ? 'LOCK' : 'ARM')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '11px',
+                  fontWeight: '800',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  padding: '3px 10px',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  border: lastBridgeData.manualControl.enabled
+                    ? '1px solid #10b981'
+                    : lastBridgeData.manualControl.lockReason === 'OPERATOR'
+                    ? '1px solid #f59e0b'
+                    : '1px solid #ef4444',
+                  backgroundColor: lastBridgeData.manualControl.enabled
+                    ? 'rgba(16, 185, 129, 0.18)'
+                    : lastBridgeData.manualControl.lockReason === 'OPERATOR'
+                    ? 'rgba(245, 158, 11, 0.15)'
+                    : 'rgba(239, 68, 68, 0.15)',
+                  color: lastBridgeData.manualControl.enabled
+                    ? '#34d399'
+                    : lastBridgeData.manualControl.lockReason === 'OPERATOR'
+                    ? '#fbbf24'
+                    : '#f87171',
+                  boxShadow: lastBridgeData.manualControl.enabled
+                    ? '0 0 10px rgba(16, 185, 129, 0.25)'
+                    : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+                title={lastBridgeData.manualControl.enabled ? 'Click to manually LOCK PIXEL REMOTE' : 'Click to manually ARM PIXEL REMOTE'}
+              >
+                {lastBridgeData.manualControl.enabled ? (
+                  <Zap style={{ width: '12px', height: '12px', color: '#34d399' }} />
+                ) : (
+                  <Lock style={{ width: '12px', height: '12px', color: lastBridgeData.manualControl.lockReason === 'OPERATOR' ? '#fbbf24' : '#f87171' }} />
+                )}
+                <span>
+                  {lastBridgeData.manualControl.enabled
+                    ? 'PIXEL REMOTE: ARMED'
+                    : `PIXEL REMOTE: LOCKED — ${
+                        lastBridgeData.manualControl.lockReason === 'OPERATOR'
+                          ? 'OPERATOR'
+                          : lastBridgeData.manualControl.lockReason === 'OBS_DISCONNECTED'
+                          ? 'OBS DISCONNECTED'
+                          : lastBridgeData.manualControl.lockReason === 'STUDIO_MODE_OFF'
+                          ? 'STUDIO MODE OFF'
+                          : lastBridgeData.manualControl.lockReason === 'ATEM_DISCONNECTED'
+                          ? 'ATEM DISCONNECTED'
+                          : lastBridgeData.manualControl.lockReason || 'SAFETY'
+                      }`}
+                </span>
+                {lastBridgeData.manualControl.enabled && (
+                  <span style={{ fontSize: '9px', opacity: 0.8, color: '#a7f3d0' }}>
+                    (MACRO {lastBridgeData.manualControl.obsTransitionMacroIndex + 1} → OBS)
+                  </span>
+                )}
+              </button>
             )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {!lastBridgeData?.manualControl?.enabled && (
-              <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'rgba(100, 116, 139, 0.15)', color: '#94a3b8', border: '1px solid rgba(100, 116, 139, 0.3)', fontFamily: 'monospace' }}>
-                MANUAL CONTROL: OFF
-              </span>
-            )}
             <span style={{ fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px', backgroundColor: obsInfo?.connected ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: obsInfo?.connected ? '#34d399' : '#f87171', border: obsInfo?.connected ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(239, 68, 68, 0.3)', fontFamily: 'monospace' }}>
               WS CONNECTED
             </span>

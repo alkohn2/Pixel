@@ -68,7 +68,9 @@ const bridgeState = {
     confidence: 'INFERRED'
   },
   manualControl: {
-    enabled: Boolean(setup.manualControl?.enabled),
+    enabled: false,
+    operatorManualLock: false,
+    lockReason: 'INITIALIZING',
     mode: 'MANUAL_CONTROL',
     obsTransitionMacroIndex: setup.manualControl?.obsTransitionMacroIndex ?? 0,
     transitionLocked: false,
@@ -194,6 +196,7 @@ async function initOBSState() {
     }
 
     bridgeState.updatedAt = new Date().toISOString()
+    evaluateManualControlSafety()
   } catch (err) {
     console.error('Error fetching OBS initial state:', err.message)
   }
@@ -215,6 +218,7 @@ async function connectOBS() {
     obsConnecting = false
     bridgeState.obsConnected = false
     bridgeState.obs.connected = false
+    evaluateManualControlSafety()
   }
 }
 
@@ -237,6 +241,7 @@ obs.on('ConnectionClosed', () => {
     bridgeState.obs.streaming = false
     addEvent('OBS_DISCONNECTED', 'OBS WebSocket disconnected')
     console.log('OBS DISCONNECTED ❌')
+    evaluateManualControlSafety()
   }
 })
 
@@ -286,6 +291,7 @@ obs.on('StudioModeStateChanged', async (data) => {
   }
   bridgeState.updatedAt = new Date().toISOString()
   addEvent('OBS_STUDIO_MODE_CHANGED', `OBS Studio Mode: ${enabled ? 'ENABLED' : 'DISABLED'}`)
+  evaluateManualControlSafety()
 })
 
 obs.on('RecordStateChanged', (data) => {
@@ -306,7 +312,7 @@ obs.on('StreamStateChanged', (data) => {
   }
 })
 
-// Phase 8.1: OBS Transition Tracking & Lock State
+// Phase 8.1 & Phase R3.1: OBS Transition Tracking, Safety Gates & Smart-Default ARM
 obs.on('SceneTransitionStarted', (data) => {
   bridgeState.manualControl.transitionLocked = true
   bridgeState.updatedAt = new Date().toISOString()
@@ -323,11 +329,60 @@ obs.on('SceneTransitionEnded', (data) => {
 
 let transitionLockTimeout = null
 
-async function triggerObsStudioTransition(source = 'ATEM_MACRO') {
+/**
+ * Phase R3.1: Smart Default Safety Evaluator for PIXEL REMOTE
+ * Evaluates health prerequisites and respects operator manual lock override.
+ */
+function evaluateManualControlSafety() {
   const mc = bridgeState.manualControl
+  if (!mc) return
+
+  // 1. Operator manual lock takes precedence during this session
+  if (mc.operatorManualLock) {
+    mc.enabled = false
+    mc.lockReason = 'OPERATOR'
+    return
+  }
+
+  // 2. Critical health conditions (fail-closed)
+  if (!bridgeState.atemConnected) {
+    mc.enabled = false
+    mc.lockReason = 'ATEM_DISCONNECTED'
+    return
+  }
+
+  if (!bridgeState.obsConnected) {
+    mc.enabled = false
+    mc.lockReason = 'OBS_DISCONNECTED'
+    return
+  }
+
+  if (!bridgeState.obs?.studioMode) {
+    mc.enabled = false
+    mc.lockReason = 'STUDIO_MODE_OFF'
+    return
+  }
+
+  // 3. All prerequisites healthy and no manual lock -> SMART DEFAULT: ARMED
+  const wasEnabled = mc.enabled
+  mc.enabled = true
+  mc.lockReason = null
+
+  if (!wasEnabled) {
+    addEvent('MANUAL_CONTROL_ARMED', 'PIXEL REMOTE automatically ARMED (all health conditions passed)')
+    console.log('⚡ PIXEL REMOTE: ARMED (Smart Default)')
+  }
+}
+
+async function triggerObsStudioTransition(source = 'ATEM_MACRO') {
+  evaluateManualControlSafety()
+  const mc = bridgeState.manualControl
+
   if (!mc.enabled) {
-    addEvent('OBS_TRANSITION_BLOCKED', 'OBS Transition blocked: MANUAL_CONTROL is disabled', { reason: 'DISABLED' })
-    return { success: false, reason: 'DISABLED' }
+    const reasonMsg = mc.lockReason === 'OPERATOR' ? 'LOCKED by operator' : `LOCKED (${mc.lockReason || 'SAFETY_GATE'})`
+    addEvent('OBS_TRANSITION_BLOCKED', `OBS Transition blocked: PIXEL REMOTE is ${reasonMsg}`, { reason: mc.lockReason || 'DISABLED' })
+    console.log(`⚠️ OBS Transition blocked: PIXEL REMOTE is ${reasonMsg}`)
+    return { success: false, reason: mc.lockReason || 'DISABLED' }
   }
 
   if (!bridgeState.obsConnected) {
@@ -381,7 +436,8 @@ setInterval(() => {
   if (!bridgeState.obsConnected && !obsConnecting) {
     connectOBS()
   }
-}, 5000)
+  evaluateManualControlSafety()
+}, 3000)
 
 connectOBS()
 
@@ -1119,6 +1175,70 @@ const server = http.createServer((request, response) => {
     return
   }
 
+  // Phase R3.1: PIXEL REMOTE (Manual Control) Toggle / Arm / Lock Endpoint
+  if (request.method === 'POST' && (request.url === '/control/pixel-remote' || request.url === '/control/manual')) {
+    let body = ''
+    request.on('data', chunk => { body += chunk })
+    request.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}')
+        const mc = bridgeState.manualControl
+
+        if (payload.action === 'ARM' || payload.enabled === true) {
+          mc.operatorManualLock = false
+          evaluateManualControlSafety()
+          if (!mc.enabled) {
+            addEvent('MANUAL_CONTROL_ARM_BLOCKED', `Cannot ARM PIXEL REMOTE: ${mc.lockReason}`, { reason: mc.lockReason })
+          } else {
+            addEvent('MANUAL_CONTROL_ARMED', 'PIXEL REMOTE explicitly ARMED by operator')
+          }
+        } else if (payload.action === 'LOCK' || payload.enabled === false) {
+          mc.operatorManualLock = true
+          mc.enabled = false
+          mc.lockReason = 'OPERATOR'
+          addEvent('MANUAL_CONTROL_LOCKED', 'PIXEL REMOTE manually LOCKED by operator')
+        } else if (payload.action === 'TOGGLE' || payload.action === undefined) {
+          if (mc.enabled) {
+            mc.operatorManualLock = true
+            mc.enabled = false
+            mc.lockReason = 'OPERATOR'
+            addEvent('MANUAL_CONTROL_LOCKED', 'PIXEL REMOTE manually LOCKED by operator')
+          } else {
+            mc.operatorManualLock = false
+            evaluateManualControlSafety()
+            if (!mc.enabled) {
+              addEvent('MANUAL_CONTROL_ARM_BLOCKED', `Cannot ARM PIXEL REMOTE: ${mc.lockReason}`, { reason: mc.lockReason })
+            } else {
+              addEvent('MANUAL_CONTROL_ARMED', 'PIXEL REMOTE explicitly ARMED by operator')
+            }
+          }
+        }
+
+        bridgeState.updatedAt = new Date().toISOString()
+        response.writeHead(200)
+        response.end(JSON.stringify({
+          success: true,
+          manualControl: bridgeState.manualControl,
+          updatedAt: bridgeState.updatedAt
+        }, null, 2))
+      } catch (err) {
+        response.writeHead(400)
+        response.end(JSON.stringify({ error: err?.message }))
+      }
+    })
+    return
+  }
+
+  // Phase R3.1: PIXEL REMOTE Query Endpoint
+  if (request.method === 'GET' && (request.url === '/control/pixel-remote' || request.url === '/control/manual')) {
+    evaluateManualControlSafety()
+    response.writeHead(200)
+    response.end(JSON.stringify({
+      manualControl: bridgeState.manualControl
+    }, null, 2))
+    return
+  }
+
   // Phase 8.1: Controlled Manual Trigger endpoint (for testing or UI manual triggers)
   if (request.method === 'POST' && request.url === '/control/obs-transition') {
     triggerObsStudioTransition('API_TRIGGER').then((res) => {
@@ -1145,6 +1265,8 @@ const server = http.createServer((request, response) => {
       '/graphics/events',
       '/graphics/pipeline',
       '/graphics/repair',
+      '/control/pixel-remote',
+      '/control/manual',
       '/control/obs-transition'
     ]
   }, null, 2))
@@ -1202,6 +1324,7 @@ atem.on('connected', () => {
 
   console.log('ATEM CONNECTED ✅')
   updateAtemState(atem.state)
+  evaluateManualControlSafety()
 })
 
 atem.on('disconnected', () => {
@@ -1209,6 +1332,7 @@ atem.on('disconnected', () => {
   atemMacroStateInitialized = false
   lastAtemMacroRunning = false
   bridgeState.updatedAt = new Date().toISOString()
+  evaluateManualControlSafety()
 
   addEvent(
     'ATEM_DISCONNECTED',

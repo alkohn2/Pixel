@@ -21,8 +21,10 @@ import {
   PanelLeftClose,
   PanelRightClose,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
+import { setPixelRemoteState } from '../../services/bridgeClient';
 
 export type VolleyballSubTab = 'live_production' | 'roster' | 'game_package' | 'output';
 export type LiveSplitMode = 'split' | 'expand_match' | 'expand_graphics';
@@ -315,6 +317,52 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
             <Activity style={{ width: '11px', height: '11px', color: '#38bdf8' }} />
             <span>NDI: PIXEL Graphics</span>
           </div>
+
+          {/* Phase R3.1: PIXEL REMOTE Status & Quick Override */}
+          {bridgeState?.manualControl && (
+            <button
+              onClick={() => setPixelRemoteState(bridgeState.manualControl?.enabled ? 'LOCK' : 'ARM')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                backgroundColor: bridgeState.manualControl.enabled
+                  ? 'rgba(16, 185, 129, 0.2)'
+                  : bridgeState.manualControl.lockReason === 'OPERATOR'
+                  ? 'rgba(245, 158, 11, 0.2)'
+                  : 'rgba(239, 68, 68, 0.2)',
+                border: bridgeState.manualControl.enabled
+                  ? '1px solid #10b981'
+                  : bridgeState.manualControl.lockReason === 'OPERATOR'
+                  ? '1px solid #f59e0b'
+                  : '1px solid #ef4444',
+                borderRadius: '4px',
+                padding: '2px 8px',
+                fontSize: '10px',
+                fontWeight: '800',
+                fontFamily: '"JetBrains Mono", monospace',
+                color: bridgeState.manualControl.enabled
+                  ? '#34d399'
+                  : bridgeState.manualControl.lockReason === 'OPERATOR'
+                  ? '#fbbf24'
+                  : '#f87171',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title={bridgeState.manualControl.enabled ? 'Click to manually LOCK PIXEL REMOTE' : 'Click to manually ARM PIXEL REMOTE'}
+            >
+              {bridgeState.manualControl.enabled ? (
+                <Zap style={{ width: '11px', height: '11px', color: '#34d399' }} />
+              ) : (
+                <Lock style={{ width: '11px', height: '11px', color: bridgeState.manualControl.lockReason === 'OPERATOR' ? '#fbbf24' : '#f87171' }} />
+              )}
+              <span>
+                {bridgeState.manualControl.enabled
+                  ? 'REMOTE: ARMED'
+                  : `REMOTE: LOCKED (${bridgeState.manualControl.lockReason === 'OPERATOR' ? 'MANUAL' : bridgeState.manualControl.lockReason || 'SAFETY'})`}
+              </span>
+            </button>
+          )}
         </div>
       </header>
 

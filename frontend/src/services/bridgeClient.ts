@@ -73,11 +73,30 @@ export interface BridgeEvent {
 
 export interface ManualControlStatus {
   enabled: boolean;
+  operatorManualLock?: boolean;
+  lockReason?: string | null;
   mode: string;
   obsTransitionMacroIndex: number;
   transitionLocked: boolean;
   lastTriggeredAt: string | null;
   lastResult: string | null;
+}
+
+export async function setPixelRemoteState(action: 'ARM' | 'LOCK' | 'TOGGLE'): Promise<ManualControlStatus | null> {
+  try {
+    const response = await fetch('http://127.0.0.1:3000/control/pixel-remote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.manualControl;
+    }
+  } catch (err) {
+    console.error('Failed to set PIXEL REMOTE state:', err);
+  }
+  return null;
 }
 
 export interface BridgeStatusResponse {
