@@ -1204,7 +1204,50 @@
     function initEditor() {
       checkStandaloneMode();
       currentRosterState = RosterModel.getSavedRoster(DevRoster.DEV_ROSTERS);
+      attachColorEventListeners();
       renderAll();
+    }
+
+    function attachColorEventListeners() {
+      const priPicker = document.getElementById('picker-color-pri');
+      const priInput = document.getElementById('input-color-pri');
+      const secPicker = document.getElementById('picker-color-sec');
+      const secInput = document.getElementById('input-color-sec');
+      const accPicker = document.getElementById('picker-color-acc');
+      const accInput = document.getElementById('input-color-acc');
+
+      if (priPicker) {
+        priPicker.addEventListener('input', (e) => handlePrimaryColorChange(e.target.value));
+        priPicker.addEventListener('change', (e) => handlePrimaryColorChange(e.target.value));
+      }
+      if (priInput) {
+        priInput.addEventListener('input', (e) => handlePrimaryColorChange(e.target.value));
+        priInput.addEventListener('change', (e) => handlePrimaryColorChange(e.target.value));
+        priInput.addEventListener('keyup', (e) => handlePrimaryColorChange(e.target.value));
+        priInput.addEventListener('blur', (e) => handlePrimaryColorChange(e.target.value));
+      }
+
+      if (secPicker) {
+        secPicker.addEventListener('input', (e) => syncColorPicker('sec', e.target.value));
+        secPicker.addEventListener('change', (e) => syncColorPicker('sec', e.target.value));
+      }
+      if (secInput) {
+        secInput.addEventListener('input', (e) => syncColorInput('sec', e.target.value));
+        secInput.addEventListener('change', (e) => syncColorInput('sec', e.target.value));
+        secInput.addEventListener('keyup', (e) => syncColorInput('sec', e.target.value));
+        secInput.addEventListener('blur', (e) => syncColorInput('sec', e.target.value));
+      }
+
+      if (accPicker) {
+        accPicker.addEventListener('input', (e) => syncColorPicker('acc', e.target.value));
+        accPicker.addEventListener('change', (e) => syncColorPicker('acc', e.target.value));
+      }
+      if (accInput) {
+        accInput.addEventListener('input', (e) => syncColorInput('acc', e.target.value));
+        accInput.addEventListener('change', (e) => syncColorInput('acc', e.target.value));
+        accInput.addEventListener('keyup', (e) => syncColorInput('acc', e.target.value));
+        accInput.addEventListener('blur', (e) => syncColorInput('acc', e.target.value));
+      }
     }
 
     function checkStandaloneMode() {
@@ -1429,8 +1472,14 @@
     }
 
     function handlePrimaryColorChange(val) {
-      val = (val || '').trim();
-      if (!val.startsWith('#') && val.length > 0) val = '#' + val;
+      if (!val) return;
+      val = val.trim();
+      let cleanHex = val.replace(/[^0-9A-Fa-f]/g, '');
+      if (cleanHex.length === 6 || cleanHex.length === 3) {
+        val = '#' + cleanHex;
+      } else if (!val.startsWith('#') && val.length > 0) {
+        val = '#' + val;
+      }
 
       if (activeTeamKey === 'home' && val.toUpperCase() !== '#0032A0') {
         const confirmChange = confirm('Miami Dade College HOME uses protected institutional branding (#0032A0). Are you sure you want to customize this palette?');
@@ -1446,7 +1495,7 @@
         const priHex = val.toUpperCase();
         const team = currentRosterState[activeTeamKey];
 
-        document.getElementById('picker-color-pri').value = val;
+        document.getElementById('picker-color-pri').value = priHex;
         document.getElementById('input-color-pri').value = priHex;
 
         if (autoPaletteEnabled) {

@@ -647,9 +647,8 @@
       background: #0a1122; /* 100% solid Dark Neutral Base */
     }
     .lineup-player-card {
-      background: #001956; /* 100% solid Deep Navy */
-      border: 1px solid #1a3268;
-      border-bottom: 3px solid #0047FF; /* Solid Electric Blue footer */
+      background: #001956;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 6px;
       padding: 16px 12px;
       display: flex;
@@ -664,28 +663,30 @@
       will-change: transform, opacity;
     }
     .lineup-player-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: #0047FF;
-      border-top-left-radius: 6px;
-      border-top-right-radius: 6px;
+      display: none;
+    }
+    .lineup-card-num-box {
+      border-radius: 6px;
+      padding: 4px 14px;
+      margin: 4px 0 8px 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 52px;
     }
     .lineup-card-num {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 36px;
+      font-size: 32px;
       font-weight: 900;
       color: #F8F8F8;
       line-height: 1;
-      margin-top: 4px;
     }
     .lineup-card-name {
       font-size: 13px;
       font-weight: 800;
       color: #F8F8F8;
       text-transform: uppercase;
-      margin-top: 10px;
+      margin-top: 6px;
       line-height: 1.2;
       min-height: 32px;
       display: flex;
@@ -698,18 +699,15 @@
       font-size: 10px;
       font-weight: 900;
       color: #F8F8F8;
-      background: #0032A0; /* Solid MDC Blue */
-      border: 1px solid #0047FF; /* Solid Electric Blue */
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 4px;
     }
     .lineup-card-captain {
       position: absolute;
       top: 8px;
       right: 8px;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 900;
-      color: #e3c46a;
       display: none;
     }
     .lineup-card-captain.active { display: block; }
@@ -1932,17 +1930,29 @@
 
       D.lineupTeamName.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
       D.lineupCoach.textContent = team.coach || 'HEAD COACH';
+      D.lineupCoach.style.color = accentColor;
       D.lineupHeader.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
       D.lineupHeader.style.borderBottom = `2px solid ${accentColor}`;
       D.lineupShell.style.border = `2px solid ${shellBorderColor}`;
       D.lineupAccentLine.style.background = accentColor;
+
+      const teamTag = document.getElementById('lineup-team-tag');
+      if (teamTag) {
+        teamTag.style.background = accentColor;
+        teamTag.style.color = secondaryColor;
+        teamTag.style.border = `1px solid rgba(255, 255, 255, 0.4)`;
+      }
 
       // Team Logo in Dedicated Identity Block
       const logoBox = document.getElementById('lineup-logo-container');
       if (team.logo && team.logo.trim()) {
         D.lineupTeamLogo.src = team.logo.trim();
         D.lineupTeamLogo.style.display = 'block';
-        if (logoBox) logoBox.style.display = 'flex';
+        if (logoBox) {
+          logoBox.style.display = 'flex';
+          logoBox.style.background = secondaryColor;
+          logoBox.style.borderColor = primaryColor;
+        }
       } else {
         D.lineupTeamLogo.style.display = 'none';
         D.lineupTeamLogo.src = '';
@@ -1950,10 +1960,12 @@
       }
 
       D.lineupGrid.innerHTML = lineup.slice(0, 6).map((p, idx) => `
-        <div class="lineup-player-card" id="l-card-${idx}" style="border-top: 3px solid ${primaryColor}; border-bottom: 3px solid ${primaryColor}; background: ${secondaryColor};">
+        <div class="lineup-player-card" id="l-card-${idx}" style="background: ${secondaryColor}; border: 1px solid ${primaryColor}40; border-top: 3px solid ${primaryColor}; border-bottom: 3px solid ${primaryColor};">
           <span class="lineup-card-captain ${p.captain ? 'active' : ''}" style="color: ${accentColor};">★</span>
           ${p.photo ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px auto; border: 2px solid ${accentColor};"><img src="${p.photo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : ''}
-          <div class="lineup-card-num">${p.jerseyNumber}</div>
+          <div class="lineup-card-num-box" style="background: ${primaryColor}; border: 1px solid ${accentColor}80;">
+            <span class="lineup-card-num">${p.jerseyNumber}</span>
+          </div>
           <div class="lineup-card-name">${p.displayName}</div>
           <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor}; color: #ffffff;">${p.position}</div>
         </div>
