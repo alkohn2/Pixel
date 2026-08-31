@@ -19,11 +19,24 @@ import {
   Maximize2,
   Minimize2,
   PanelLeftClose,
-  PanelRightClose
+  PanelRightClose,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 
 export type VolleyballSubTab = 'live_production' | 'roster' | 'game_package' | 'output';
 export type LiveSplitMode = 'split' | 'expand_match' | 'expand_graphics';
+
+interface GraphicsPipelineStatus {
+  overall: 'ONLINE' | 'DEGRADED' | 'OFFLINE';
+  bridge: 'READY' | 'FAIL';
+  overlayServer: 'READY' | 'FAIL';
+  renderer: 'READY' | 'STARTING' | 'FAIL';
+  ndiSender: 'READY' | 'FAIL';
+  ndiDiscovery: 'READY' | 'FAIL';
+  resolume: 'READY' | 'FAIL' | 'UNKNOWN';
+  rendererPid: number | null;
+}
 
 interface VolleyballOperationsHubProps {
   store: SwitcherStore;
@@ -32,6 +45,47 @@ interface VolleyballOperationsHubProps {
 export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = ({ store }) => {
   const [subTab, setSubTab] = useState<VolleyballSubTab>('live_production');
   const [splitMode, setSplitMode] = useState<LiveSplitMode>('split');
+  const [pipelineStatus, setPipelineStatus] = useState<GraphicsPipelineStatus | null>(null);
+  const [isRepairing, setIsRepairing] = useState<boolean>(false);
+  const [repairMessage, setRepairMessage] = useState<string | null>(null);
+
+  const fetchPipelineStatus = async () => {
+    try {
+      const res = await fetch('http://127.0.0.1:3000/graphics/pipeline');
+      if (res.ok) {
+        const data = await res.json();
+        setPipelineStatus(data);
+      }
+    } catch (_) {}
+  };
+
+  useEffect(() => {
+    fetchPipelineStatus();
+    const interval = setInterval(fetchPipelineStatus, 3000);
+    return () => clearInterval(interval);
+  }, [subTab]);
+
+  const handleRepairPipeline = async () => {
+    setIsRepairing(true);
+    setRepairMessage('Repairing Graphics Pipeline...');
+    try {
+      const res = await fetch('http://127.0.0.1:3000/graphics/repair', { method: 'POST' });
+      const data = await res.json();
+      if (data.pipeline) {
+        setPipelineStatus(data.pipeline);
+      }
+      if (data.success) {
+        setRepairMessage('✅ Pipeline repaired successfully — NDI source discoverable and online!');
+      } else {
+        setRepairMessage('⚠️ Repair completed with warnings — check logs or Resolume.');
+      }
+    } catch (err: any) {
+      setRepairMessage(`❌ Repair request failed: ${err?.message || 'Network error'}`);
+    } finally {
+      setIsRepairing(false);
+      setTimeout(() => setRepairMessage(null), 8000);
+    }
+  };
 
   useEffect(() => {
     // Check URL parameters for direct subtab deep-linking (e.g. ?tab=roster)
@@ -659,7 +713,7 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
               gap: '16px'
             }}
           >
-            {/* Monitor Header */}
+            {/* Monitor Header with Pipeline Controls */}
             <div
               style={{
                 display: 'flex',
@@ -668,7 +722,9 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
                 backgroundColor: '#0b0f19',
                 border: '1px solid #1e293b',
                 borderRadius: '8px',
-                padding: '10px 16px'
+                padding: '10px 16px',
+                flexWrap: 'wrap',
+                gap: '10px'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -683,33 +739,157 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
                 </div>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Overall Pipeline Status Pill */}
                 <span
                   style={{
-                    backgroundColor: 'rgba(236, 72, 153, 0.15)',
-                    border: '1px solid #ec4899',
-                    color: '#ec4899',
-                    fontSize: '10px',
-                    fontWeight: '700',
+                    backgroundColor:
+                      pipelineStatus?.overall === 'ONLINE'
+                        ? 'rgba(16, 185, 129, 0.15)'
+                        : pipelineStatus?.overall === 'DEGRADED'
+                        ? 'rgba(245, 158, 11, 0.15)'
+                        : 'rgba(239, 68, 68, 0.15)',
+                    border: `1px solid ${
+                      pipelineStatus?.overall === 'ONLINE'
+                        ? '#10b981'
+                        : pipelineStatus?.overall === 'DEGRADED'
+                        ? '#f59e0b'
+                        : '#ef4444'
+                    }`,
+                    color:
+                      pipelineStatus?.overall === 'ONLINE'
+                        ? '#34d399'
+                        : pipelineStatus?.overall === 'DEGRADED'
+                        ? '#fbbf24'
+                        : '#f87171',
+                    fontSize: '11px',
+                    fontWeight: '800',
                     fontFamily: '"JetBrains Mono", monospace',
-                    padding: '3px 8px',
-                    borderRadius: '4px'
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px'
                   }}
                 >
-                  LIVE PREVIEW
+                  <Activity style={{ width: '12px', height: '12px' }} />
+                  <span>GRAPHICS: {pipelineStatus?.overall || 'CHECKING...'}</span>
                 </span>
-                <span
+
+                {/* One-Click Repair Pipeline Button */}
+                <button
+                  onClick={handleRepairPipeline}
+                  disabled={isRepairing}
                   style={{
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #334155',
-                    color: '#cbd5e1',
-                    fontSize: '10px',
+                    backgroundColor: isRepairing ? '#334155' : '#0284c7',
+                    border: '1px solid #38bdf8',
+                    color: '#ffffff',
+                    fontSize: '11px',
+                    fontWeight: '800',
                     fontFamily: '"JetBrains Mono", monospace',
-                    padding: '3px 8px',
-                    borderRadius: '4px'
+                    padding: '5px 12px',
+                    borderRadius: '5px',
+                    cursor: isRepairing ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 12px rgba(56, 189, 248, 0.25)',
+                    transition: 'all 0.15s ease'
                   }}
+                  title="Restart graphics renderer, verify overlay server, and validate NDI discovery"
                 >
-                  BGRA PREMULTIPLIED
+                  <Zap style={{ width: '13px', height: '13px', color: '#facc15' }} />
+                  <span>{isRepairing ? 'REPAIRING PIPELINE...' : 'REPAIR GRAPHICS PIPELINE'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Repair Message Banner */}
+            {repairMessage && (
+              <div
+                style={{
+                  backgroundColor: repairMessage.includes('✅')
+                    ? 'rgba(16, 185, 129, 0.12)'
+                    : 'rgba(245, 158, 11, 0.12)',
+                  border: `1px solid ${repairMessage.includes('✅') ? '#10b981' : '#f59e0b'}`,
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  color: repairMessage.includes('✅') ? '#34d399' : '#fbbf24',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <span>{repairMessage}</span>
+              </div>
+            )}
+
+            {/* 6-Part Graphics Pipeline Breakdown Strip */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gap: '8px',
+                backgroundColor: '#07090e',
+                border: '1px solid #1e293b',
+                borderRadius: '8px',
+                padding: '10px 12px'
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  BRIDGE API
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.bridge === 'READY' ? '#34d399' : '#f87171', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.bridge || 'READY'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  OVERLAY SERVER (:8081)
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.overlayServer === 'READY' ? '#34d399' : '#f87171', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.overlayServer || 'CHECKING'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  RENDER ENGINE
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.renderer === 'READY' ? '#34d399' : pipelineStatus?.renderer === 'STARTING' ? '#fbbf24' : '#f87171', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.renderer || 'CHECKING'} {pipelineStatus?.rendererPid ? `(${pipelineStatus.rendererPid})` : ''}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  NDI SENDER
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.ndiSender === 'READY' ? '#34d399' : '#f87171', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.ndiSender || 'CHECKING'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  NDI DISCOVERY
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.ndiDiscovery === 'READY' ? '#34d399' : '#f87171', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.ndiDiscovery || 'CHECKING'}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '9px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
+                  RESOLUME LINK
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: '800', color: pipelineStatus?.resolume === 'READY' ? '#34d399' : '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
+                  ● {pipelineStatus?.resolume || 'MANUAL RESTORE'}
                 </span>
               </div>
             </div>
@@ -814,9 +994,9 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
                 <div style={{ fontSize: '10px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
                   RENDER ENGINE
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#34d399' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: pipelineStatus?.renderer === 'READY' ? '#34d399' : '#f87171' }}>
                   <CheckCircle2 style={{ width: '14px', height: '14px' }} />
-                  <span>PIXEL Graphics Renderer</span>
+                  <span>PIXEL Graphics Renderer {pipelineStatus?.rendererPid ? `(PID: ${pipelineStatus.rendererPid})` : ''}</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
                   Native Cocoa / WebKit (Offscreen Background)
@@ -836,14 +1016,14 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
                 }}
               >
                 <div style={{ fontSize: '10px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
-                  TRANSPORT PROTOCOL
+                  TRANSPORT PROTOCOL & DISCOVERY
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#38bdf8' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: pipelineStatus?.ndiDiscovery === 'READY' ? '#38bdf8' : '#fbbf24' }}>
                   <Radio style={{ width: '14px', height: '14px' }} />
                   <span>NDI &reg; "PIXEL Graphics"</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-                  1080p59.94 &bull; BGRA 32-bit &bull; Alpha: YES
+                  {pipelineStatus?.ndiDiscovery === 'READY' ? 'DISCOVERABLE ON NDI RUNTIME ✅' : 'SEARCHING NDI RUNTIME...'}
                 </div>
               </div>
 
@@ -862,12 +1042,12 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
                 <div style={{ fontSize: '10px', color: '#64748b', fontFamily: '"JetBrains Mono", monospace', fontWeight: '700' }}>
                   RESOLUME COMPOSITING
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: '#a78bfa' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: '700', color: pipelineStatus?.resolume === 'READY' ? '#a78bfa' : '#94a3b8' }}>
                   <Layers style={{ width: '14px', height: '14px' }} />
                   <span>Layer 5 (Overlays) &bull; Slot 1</span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#94a3b8', fontFamily: '"JetBrains Mono", monospace' }}>
-                  Scale: 100% &bull; DeckLink SDI 1 &rarr; ATEM Input 6
+                  {pipelineStatus?.resolume === 'READY' ? 'Connected & Ready' : 'RESOLUME SOURCE NEEDS MANUAL RESTORE'}
                 </div>
               </div>
             </div>

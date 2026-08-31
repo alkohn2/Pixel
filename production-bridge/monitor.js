@@ -1,6 +1,6 @@
 const { Atem } = require('atem-connection')
 const { OBSWebSocket } = require('obs-websocket-js')
-const { execFile, exec } = require('child_process')
+const { execFile, exec, execSync } = require('child_process')
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
@@ -800,6 +800,183 @@ function broadcastGraphicsUpdate(sourceAction) {
 }
 
 // ============================================================================
+// GRAPHICS PIPELINE HEALTH & REPAIR MODULE (Phase R3)
+// ============================================================================
+const RENDERER_DIR = path.resolve(__dirname, '../graphics-renderer');
+const RENDERER_PID_FILE = path.join(RENDERER_DIR, '.renderer.pid');
+const RENDERER_LOG_FILE = path.join(RENDERER_DIR, 'renderer.log');
+const NDI_DISCOVER_BIN = path.join(RENDERER_DIR, 'build/ndi-discover-source');
+
+let lastNdiDiscoveryCheck = { discoverable: false, timestamp: 0 };
+
+async function checkOverlayServerHealth() {
+  return new Promise((resolve) => {
+    const req = http.get('http://127.0.0.1:8081/graphics/volleyball/volleyball-master-overlay.html', { timeout: 1500 }, (res) => {
+      resolve(res.statusCode === 200);
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
+
+function checkRendererProcess() {
+  try {
+    if (fs.existsSync(RENDERER_PID_FILE)) {
+      const pidStr = fs.readFileSync(RENDERER_PID_FILE, 'utf8').trim();
+      const pid = parseInt(pidStr, 10);
+      if (pid && !isNaN(pid)) {
+        try {
+          process.kill(pid, 0);
+          return { alive: true, pid };
+        } catch (e) {}
+      }
+    }
+    const stdout = execSync('pgrep -f "pixel-graphics-renderer" || true', { encoding: 'utf8' }).trim();
+    if (stdout) {
+      const pids = stdout.split('\n').map(p => parseInt(p.trim(), 10)).filter(p => p && p !== process.pid);
+      if (pids.length > 0) return { alive: true, pid: pids[0] };
+    }
+  } catch (e) {}
+  return { alive: false, pid: null };
+}
+
+function checkNdiSenderLog() {
+  try {
+    if (fs.existsSync(RENDERER_LOG_FILE)) {
+      const log = fs.readFileSync(RENDERER_LOG_FILE, 'utf8');
+      const hasSender = log.includes("NDI Sender created successfully: 'PIXEL Graphics'");
+      const hasFrame = log.includes("First NDI video frame transmitted");
+      const hasWeb = log.includes("Web overlay loaded and running");
+      return { senderCreated: hasSender, frameTransmitted: hasFrame, overlayLoaded: hasWeb };
+    }
+  } catch (e) {}
+  return { senderCreated: false, frameTransmitted: false, overlayLoaded: false };
+}
+
+async function checkNdiDiscovery(force = false) {
+  const now = Date.now();
+  if (!force && (now - lastNdiDiscoveryCheck.timestamp < 3000)) {
+    return lastNdiDiscoveryCheck.discoverable;
+  }
+  return new Promise((resolve) => {
+    if (!fs.existsSync(NDI_DISCOVER_BIN)) {
+      lastNdiDiscoveryCheck = { discoverable: false, timestamp: now };
+      return resolve(false);
+    }
+    execFile(NDI_DISCOVER_BIN, ['PIXEL Graphics', '--json'], { timeout: 3500 }, (err, stdout) => {
+      let discoverable = false;
+      if (!err && stdout) {
+        try {
+          const res = JSON.parse(stdout);
+          discoverable = !!res.success;
+        } catch (e) {}
+      }
+      lastNdiDiscoveryCheck = { discoverable, timestamp: Date.now() };
+      resolve(discoverable);
+    });
+  });
+}
+
+async function getGraphicsPipelineStatus(forceDiscovery = false) {
+  const overlayReady = await checkOverlayServerHealth();
+  const proc = checkRendererProcess();
+  const logStatus = checkNdiSenderLog();
+  const ndiDiscoverable = proc.alive ? await checkNdiDiscovery(forceDiscovery) : false;
+  
+  const resolumeReady = Boolean(bridgeState.resolumeConnected);
+  const bridgeReady = true;
+
+  const rendererReady = proc.alive && logStatus.overlayLoaded;
+  const ndiSenderReady = proc.alive && logStatus.senderCreated && logStatus.frameTransmitted;
+
+  let overall = 'OFFLINE';
+  if (bridgeReady && overlayReady && rendererReady && ndiSenderReady && ndiDiscoverable) {
+    overall = resolumeReady ? 'ONLINE' : 'DEGRADED';
+  } else if (proc.alive || overlayReady) {
+    overall = 'DEGRADED';
+  }
+
+  return {
+    overall,
+    bridge: 'READY',
+    overlayServer: overlayReady ? 'READY' : 'FAIL',
+    renderer: rendererReady ? 'READY' : (proc.alive ? 'STARTING' : 'FAIL'),
+    ndiSender: ndiSenderReady ? 'READY' : 'FAIL',
+    ndiDiscovery: ndiDiscoverable ? 'READY' : 'FAIL',
+    resolume: resolumeReady ? 'READY' : (bridgeState.resolumeConnected === false ? 'FAIL' : 'UNKNOWN'),
+    rendererPid: proc.pid,
+    telemetry: {
+      logSenderCreated: logStatus.senderCreated,
+      logFrameTransmitted: logStatus.frameTransmitted,
+      logOverlayLoaded: logStatus.overlayLoaded,
+      ndiDiscoverable
+    },
+    updatedAt: new Date().toISOString()
+  };
+}
+
+async function executeGraphicsPipelineRepair() {
+  const startTs = Date.now();
+  addEvent('GRAPHICS_REPAIR_STARTED', 'Operator initiated Graphics Pipeline repair');
+  console.log('⚡ EXECUTING GRAPHICS PIPELINE REPAIR...');
+
+  const stopScript = path.join(RENDERER_DIR, 'stop-pixel-renderer.sh');
+  const runScript = path.join(RENDERER_DIR, 'run-pixel-renderer.sh');
+
+  try {
+    if (fs.existsSync(stopScript)) {
+      execSync(`"${stopScript}"`, { timeout: 5000 });
+    }
+  } catch (e) {
+    console.error('Stop script warning during repair:', e.message);
+  }
+
+  // Remove any stale PID file
+  try {
+    if (fs.existsSync(RENDERER_PID_FILE)) fs.unlinkSync(RENDERER_PID_FILE);
+  } catch (e) {}
+
+  // Verify overlay server reachable
+  let overlayOk = await checkOverlayServerHealth();
+  if (!overlayOk) {
+    console.log('Overlay server not responding; attempting background static server recovery...');
+    const distDir = path.resolve(__dirname, '../frontend/dist');
+    try {
+      execSync(`lsof -tiTCP:8081 -sTCP:LISTEN | xargs kill -9 2>/dev/null || true`);
+      exec(`nohup python3 -m http.server 8081 >/dev/null 2>&1 &`, { cwd: distDir });
+      await new Promise(r => setTimeout(r, 1200));
+      overlayOk = await checkOverlayServerHealth();
+    } catch (e) {}
+  }
+
+  // Start fresh renderer with forced restart
+  try {
+    if (fs.existsSync(runScript)) {
+      execSync(`"${runScript}" --force-restart`, { timeout: 10000 });
+    }
+  } catch (e) {
+    console.error('Renderer launch error during repair:', e.message);
+  }
+
+  const finalStatus = await getGraphicsPipelineStatus(true);
+  const durationMs = Date.now() - startTs;
+
+  if (finalStatus.overall === 'ONLINE' || (finalStatus.renderer === 'READY' && finalStatus.ndiSender === 'READY')) {
+    addEvent('GRAPHICS_REPAIR_SUCCESS', `Graphics Pipeline repaired successfully in ${durationMs}ms (Overall: ${finalStatus.overall})`);
+    console.log(`✅ GRAPHICS PIPELINE REPAIR COMPLETE (${finalStatus.overall}) in ${durationMs}ms`);
+  } else {
+    addEvent('GRAPHICS_REPAIR_FAILED', `Graphics Pipeline repair completed with warnings in ${durationMs}ms (Overall: ${finalStatus.overall})`);
+    console.log(`⚠️ GRAPHICS PIPELINE REPAIR WARNING (${finalStatus.overall}) in ${durationMs}ms`);
+  }
+
+  return {
+    success: finalStatus.overall === 'ONLINE' || (finalStatus.renderer === 'READY' && finalStatus.ndiDiscovery === 'READY'),
+    durationMs,
+    pipeline: finalStatus
+  };
+}
+
+// ============================================================================
 // HTTP SERVER & ATEM HANDLERS
 // ============================================================================
 const server = http.createServer((request, response) => {
@@ -821,15 +998,28 @@ const server = http.createServer((request, response) => {
   }
 
   if (request.method === 'GET' && request.url === '/health') {
-    response.writeHead(200)
-    response.end(JSON.stringify({
-      bridge: 'ONLINE',
-      atemConnected: bridgeState.atemConnected,
-      obsConnected: bridgeState.obsConnected,
-      resolumeConnected: bridgeState.resolumeConnected,
-      decklinkConnected: bridgeState.decklinkConnected,
-      truckConnected: bridgeState.truckConnected
-    }, null, 2))
+    getGraphicsPipelineStatus().then(pipelineStatus => {
+      response.writeHead(200)
+      response.end(JSON.stringify({
+        bridge: 'ONLINE',
+        atemConnected: bridgeState.atemConnected,
+        obsConnected: bridgeState.obsConnected,
+        resolumeConnected: bridgeState.resolumeConnected,
+        decklinkConnected: bridgeState.decklinkConnected,
+        truckConnected: bridgeState.truckConnected,
+        graphicsPipeline: pipelineStatus
+      }, null, 2))
+    }).catch(() => {
+      response.writeHead(200)
+      response.end(JSON.stringify({
+        bridge: 'ONLINE',
+        atemConnected: bridgeState.atemConnected,
+        obsConnected: bridgeState.obsConnected,
+        resolumeConnected: bridgeState.resolumeConnected,
+        decklinkConnected: bridgeState.decklinkConnected,
+        truckConnected: bridgeState.truckConnected
+      }, null, 2))
+    })
     return
   }
 
@@ -905,6 +1095,30 @@ const server = http.createServer((request, response) => {
     return
   }
 
+  // Phase R3: Graphics Pipeline Telemetry & Readiness Endpoint
+  if (request.method === 'GET' && request.url === '/graphics/pipeline') {
+    getGraphicsPipelineStatus().then(status => {
+      response.writeHead(200)
+      response.end(JSON.stringify(status, null, 2))
+    }).catch(err => {
+      response.writeHead(500)
+      response.end(JSON.stringify({ error: err.message }))
+    })
+    return
+  }
+
+  // Phase R3: One-Click Graphics Pipeline Repair Endpoint
+  if (request.method === 'POST' && request.url === '/graphics/repair') {
+    executeGraphicsPipelineRepair().then(result => {
+      response.writeHead(result.success ? 200 : 207)
+      response.end(JSON.stringify(result, null, 2))
+    }).catch(err => {
+      response.writeHead(500)
+      response.end(JSON.stringify({ error: err.message }))
+    })
+    return
+  }
+
   // Phase 8.1: Controlled Manual Trigger endpoint (for testing or UI manual triggers)
   if (request.method === 'POST' && request.url === '/control/obs-transition') {
     triggerObsStudioTransition('API_TRIGGER').then((res) => {
@@ -923,7 +1137,16 @@ const server = http.createServer((request, response) => {
   response.writeHead(404)
   response.end(JSON.stringify({
     error: 'Not found',
-    availableEndpoints: ['/status', '/health', '/events', '/graphics/state', '/graphics/events', '/control/obs-transition']
+    availableEndpoints: [
+      '/status',
+      '/health',
+      '/events',
+      '/graphics/state',
+      '/graphics/events',
+      '/graphics/pipeline',
+      '/graphics/repair',
+      '/control/obs-transition'
+    ]
   }, null, 2))
 })
 

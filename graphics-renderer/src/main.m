@@ -382,6 +382,16 @@ static void saveDiagnosticPNG(CGImageRef cgImage, NSString *path) {
     NSLog(@"[PIXEL Graphics Renderer] Web overlay loaded and running.");
 }
 
+- (void)webView:(WKWebView *)webView didFailNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"[PIXEL Graphics Renderer] ERROR: Overlay navigation failed: %@", error.localizedDescription);
+    [self performSelector:@selector(loadOverlayURL) withObject:nil afterDelay:1.5];
+}
+
+- (void)webView:(WKWebView *)webView didFailProvisionalNavigation:(WKNavigation *)navigation withError:(NSError *)error {
+    NSLog(@"[PIXEL Graphics Renderer] ERROR: Overlay provisional navigation failed: %@", error.localizedDescription);
+    [self performSelector:@selector(loadOverlayURL) withObject:nil afterDelay:1.5];
+}
+
 - (void)applicationWillTerminate:(NSNotification *)notification {
     if (self.ndiSender) {
         NDIlib_send_destroy(self.ndiSender);
