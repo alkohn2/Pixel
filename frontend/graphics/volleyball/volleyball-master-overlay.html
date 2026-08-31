@@ -1807,16 +1807,23 @@
       if (!players.length) return;
       const p = players[playerIndex % players.length];
 
+      const isHome = (teamKey === 'home');
+      const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#15803D');
+      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#052E16');
+      const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#FACC15');
+
       D.ltNumber.textContent = p.jerseyNumber;
       D.ltName.textContent = p.displayName.toUpperCase();
       D.ltPosition.textContent = p.position;
-      D.ltTeam.textContent = (team.name || 'MIAMI DADE SHARKS').toUpperCase();
+      D.ltPosition.style.background = primaryColor;
+      D.ltPosition.style.border = `1px solid ${accentColor}`;
+      D.ltPosition.style.color = '#ffffff';
+      D.ltTeam.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
       D.ltCaptainStar.className = 'lt-captain-star' + (p.captain ? ' active' : '');
-      if (teamKey === 'home') {
-        D.ltJerseyCell.style.background = 'linear-gradient(135deg, #0032A0 0%, #001956 100%)';
-      } else {
-        D.ltJerseyCell.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#b91c1c'} 0%, ${team.colorSecondary || '#7f1d1d'} 100%)`;
-      }
+      D.ltCaptainStar.style.color = accentColor;
+      D.ltJerseyCell.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      D.ltShell.style.border = `2px solid ${primaryColor}`;
+      D.ltAccentLine.style.background = accentColor;
 
       // Photo Portrait Binding
       if (p.photo && p.photo.trim()) {
@@ -1918,9 +1925,9 @@
       }
 
       const isHome = (teamKey === 'home');
-      const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#b91c1c');
-      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#7f1d1d');
-      const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#e3c46a');
+      const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#15803D');
+      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#052E16');
+      const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#FACC15');
       const shellBorderColor = isHome ? '#0047FF' : primaryColor;
 
       D.lineupTeamName.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
@@ -1943,12 +1950,12 @@
       }
 
       D.lineupGrid.innerHTML = lineup.slice(0, 6).map((p, idx) => `
-        <div class="lineup-player-card" id="l-card-${idx}" style="border-top: 3px solid ${primaryColor}; border-bottom: 3px solid ${primaryColor};">
+        <div class="lineup-player-card" id="l-card-${idx}" style="border-top: 3px solid ${primaryColor}; border-bottom: 3px solid ${primaryColor}; background: ${secondaryColor};">
           <span class="lineup-card-captain ${p.captain ? 'active' : ''}" style="color: ${accentColor};">★</span>
           ${p.photo ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px auto; border: 2px solid ${accentColor};"><img src="${p.photo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : ''}
           <div class="lineup-card-num">${p.jerseyNumber}</div>
           <div class="lineup-card-name">${p.displayName}</div>
-          <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor};">${p.position}</div>
+          <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor}; color: #ffffff;">${p.position}</div>
         </div>
       `).join('');
     }
@@ -2016,16 +2023,23 @@
       if (!players.length) return;
       const p = players[playerIndex % players.length];
 
+      const isHome = (teamKey === 'home');
+      const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#15803D');
+      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#052E16');
+      const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#FACC15');
+
       D.pstatsNumber.textContent = p.jerseyNumber;
       D.pstatsName.textContent = (p.displayName || p.name || 'PLAYER').toUpperCase();
       D.pstatsPosition.textContent = p.position || 'OH';
-      D.pstatsTeam.textContent = (team.name || 'MIAMI DADE SHARKS').toUpperCase();
+      D.pstatsPosition.style.background = primaryColor;
+      D.pstatsPosition.style.border = `1px solid ${accentColor}`;
+      D.pstatsPosition.style.color = '#ffffff';
+      D.pstatsTeam.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
       D.pstatsCaptainStar.className = 'pstats-captain-star' + (p.captain ? ' active' : '');
-      if (teamKey === 'home') {
-        D.pstatsJerseyCell.style.background = 'linear-gradient(135deg, #0032A0 0%, #001956 100%)';
-      } else {
-        D.pstatsJerseyCell.style.background = `linear-gradient(135deg, ${team.colorPrimary || '#b91c1c'} 0%, ${team.colorSecondary || '#7f1d1d'} 100%)`;
-      }
+      D.pstatsCaptainStar.style.color = accentColor;
+      D.pstatsJerseyCell.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+      D.pstatsShell.style.border = `2px solid ${primaryColor}`;
+      D.pstatsAccentLine.style.background = accentColor;
 
       if (p.photo && p.photo.trim()) {
         D.pstatsPhoto.src = p.photo.trim();
@@ -2120,10 +2134,14 @@
       const history = currentMatchState?.setsHistory || [];
       const setRecord = history.find(s => s.setNumber === setNumber);
 
-      const hName = currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
-      const aName = currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
-      const hColor = currentMatchState?.teamHome?.color || '#0032A0';
-      const aColor = currentMatchState?.teamAway?.color || '#b91c1c';
+      const hTeam = rosterState.home || {};
+      const aTeam = rosterState.away || {};
+      const hName = hTeam.name || currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
+      const aName = aTeam.name || currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
+      const hColor = hTeam.colorPrimary || '#0032A0';
+      const aColor = aTeam.colorPrimary || currentMatchState?.teamAway?.color || '#15803D';
+      const hAccent = hTeam.accentColor || '#e3c46a';
+      const aAccent = aTeam.accentColor || '#FACC15';
 
       D.setResHomeName.textContent = hName;
       D.setResAwayName.textContent = aName;
@@ -2144,6 +2162,7 @@
         if (setRecord.winner === 'home') {
           D.setResHomeScore.className = 'set-res-score-box winner';
           D.setResAwayScore.className = 'set-res-score-box';
+          D.setResAccentLine.style.background = hAccent;
           if (homeSetsUpTo > awaySetsUpTo) {
             D.setResLeadText.textContent = `${hName} LEADS ${homeSetsUpTo}–${awaySetsUpTo}`;
           } else if (homeSetsUpTo === awaySetsUpTo) {
@@ -2154,6 +2173,7 @@
         } else {
           D.setResHomeScore.className = 'set-res-score-box';
           D.setResAwayScore.className = 'set-res-score-box winner';
+          D.setResAccentLine.style.background = aAccent;
           if (awaySetsUpTo > homeSetsUpTo) {
             D.setResLeadText.textContent = `${aName} LEADS ${awaySetsUpTo}–${homeSetsUpTo}`;
           } else if (homeSetsUpTo === awaySetsUpTo) {
@@ -2168,6 +2188,7 @@
         D.setResHomeScore.className = 'set-res-score-box';
         D.setResAwayScore.className = 'set-res-score-box';
         D.setResLeadText.textContent = `SET ${setNumber} NOT COMPLETED`;
+        D.setResAccentLine.style.background = hAccent;
       }
     }
 
@@ -2223,10 +2244,14 @@
     // 7. MATCH RESULT ANIMATIONS (HERO MOTION)
     // ========================================================================
     function renderMatchResult() {
-      const hName = currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
-      const aName = currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
-      const hColor = currentMatchState?.teamHome?.color || '#0032A0';
-      const aColor = currentMatchState?.teamAway?.color || '#b91c1c';
+      const hTeam = rosterState.home || {};
+      const aTeam = rosterState.away || {};
+      const hName = hTeam.name || currentMatchState?.teamHome?.name || 'MIAMI DADE SHARKS';
+      const aName = aTeam.name || currentMatchState?.teamAway?.name || 'DAYTONA STATE FALCONS';
+      const hColor = hTeam.colorPrimary || '#0032A0';
+      const aColor = aTeam.colorPrimary || currentMatchState?.teamAway?.color || '#15803D';
+      const hAccent = hTeam.accentColor || '#e3c46a';
+      const aAccent = aTeam.accentColor || '#FACC15';
       const hSets = currentMatchState?.teamHome?.setsWon ?? 0;
       const aSets = currentMatchState?.teamAway?.setsWon ?? 0;
       const history = currentMatchState?.setsHistory || [];
@@ -2244,19 +2269,23 @@
           D.matchResHeadline.textContent = `${hName} WINS MATCH`;
           D.matchResHomeSets.className = 'match-res-sets-won winner';
           D.matchResAwaySets.className = 'match-res-sets-won';
+          D.matchResAccentLine.style.background = hAccent;
         } else if (aSets > hSets) {
           D.matchResHeadline.textContent = `${aName} WINS MATCH`;
           D.matchResHomeSets.className = 'match-res-sets-won';
           D.matchResAwaySets.className = 'match-res-sets-won winner';
+          D.matchResAccentLine.style.background = aAccent;
         } else {
           D.matchResHeadline.textContent = `MATCH FINAL`;
           D.matchResHomeSets.className = 'match-res-sets-won';
           D.matchResAwaySets.className = 'match-res-sets-won';
+          D.matchResAccentLine.style.background = hAccent;
         }
       } else {
         D.matchResHeadline.textContent = `MATCH IN PROGRESS (NOT FINAL)`;
         D.matchResHomeSets.className = 'match-res-sets-won';
         D.matchResAwaySets.className = 'match-res-sets-won';
+        D.matchResAccentLine.style.background = hAccent;
       }
 
       // Sets history breakdown
