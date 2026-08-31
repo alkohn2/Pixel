@@ -296,7 +296,17 @@ static void saveDiagnosticPNG(CGImageRef cgImage, NSString *path) {
     if ([[NSFileManager defaultManager] fileExistsAtPath:snapReqPath]) {
         NSString *snapName = [[NSString stringWithContentsOfFile:snapReqPath encoding:NSUTF8StringEncoding error:nil] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
         if (!snapName || snapName.length == 0) snapName = @"snapshot";
-        NSString *outPath = [NSString stringWithFormat:@"/Volumes/VGC-01/OBS Sports/PIXEL/graphics-renderer/snapshots/%@.png", snapName];
+        
+        NSString *pixelRoot = [[[NSProcessInfo processInfo] environment] objectForKey:@"PIXEL_ROOT"];
+        NSString *snapshotsDir = nil;
+        if (pixelRoot && pixelRoot.length > 0) {
+            snapshotsDir = [pixelRoot stringByAppendingPathComponent:@"graphics-renderer/snapshots"];
+        } else {
+            NSString *execDir = [[[NSBundle mainBundle] executablePath] stringByDeletingLastPathComponent];
+            snapshotsDir = [[execDir stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"snapshots"];
+        }
+        [[NSFileManager defaultManager] createDirectoryAtPath:snapshotsDir withIntermediateDirectories:YES attributes:nil error:nil];
+        NSString *outPath = [snapshotsDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.png", snapName]];
         saveDiagnosticPNG(cgImage, outPath);
         [[NSFileManager defaultManager] removeItemAtPath:snapReqPath error:nil];
     }

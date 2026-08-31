@@ -31,7 +31,10 @@
     if (typeof window !== 'undefined' && window.XLSX) return window.XLSX;
     if (typeof require === 'function') {
       try { return require('xlsx'); } catch (e) {}
-      try { return require('/Volumes/VGC-01/OBS Sports/PIXEL/frontend/node_modules/xlsx'); } catch (e) {}
+      try {
+        const path = require('path');
+        return require(path.resolve(__dirname, '../../node_modules/xlsx'));
+      } catch (e) {}
     }
     return null;
   }
@@ -42,7 +45,10 @@
     if (typeof window !== 'undefined' && window.JSZip) return window.JSZip;
     if (typeof require === 'function') {
       try { return require('jszip'); } catch (e) {}
-      try { return require('/Volumes/VGC-01/OBS Sports/PIXEL/frontend/node_modules/jszip'); } catch (e) {}
+      try {
+        const path = require('path');
+        return require(path.resolve(__dirname, '../../node_modules/jszip'));
+      } catch (e) {}
     }
     return null;
   }
@@ -53,7 +59,10 @@
     if (typeof window !== 'undefined' && window.PDFLib) return window.PDFLib;
     if (typeof require === 'function') {
       try { return require('pdf-lib'); } catch (e) {}
-      try { return require('/Volumes/VGC-01/OBS Sports/PIXEL/frontend/node_modules/pdf-lib'); } catch (e) {}
+      try {
+        const path = require('path');
+        return require(path.resolve(__dirname, '../../node_modules/pdf-lib'));
+      } catch (e) {}
     }
     return null;
   }
@@ -1559,9 +1568,9 @@
           const fs = require('fs');
           const path = require('path');
           const candidatePaths = [
-            '/Volumes/VGC-01/OBS Sports/PIXEL/frontend/graphics/assets/teams/home-team/mdc_sharks_athletics.png',
-            '/Volumes/VGC-01/OBS Sports/PIXEL/frontend/dist/graphics/assets/teams/home-team/mdc_sharks_athletics.png',
-            path.resolve(__dirname, '../assets/teams/home-team/mdc_sharks_athletics.png')
+            path.resolve(__dirname, '../assets/teams/home-team/mdc_sharks_athletics.png'),
+            path.resolve(__dirname, '../../dist/graphics/assets/teams/home-team/mdc_sharks_athletics.png'),
+            path.resolve(__dirname, '../../graphics/assets/teams/home-team/mdc_sharks_athletics.png')
           ];
           for (const p of candidatePaths) {
             if (fs.existsSync(p)) {

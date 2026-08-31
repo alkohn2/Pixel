@@ -17,7 +17,8 @@
         [self.webView takeSnapshotWithConfiguration:config completionHandler:^(NSImage * _Nullable snapshotImage, NSError * _Nullable error) {
             if (snapshotImage) {
                 CGImageRef cgImage = [snapshotImage CGImageForProposedRect:NULL context:NULL hints:nil];
-                NSString *path = self.outputPath ?: @"/Volumes/VGC-01/OBS Sports/PIXEL/diagnostics/browser-reference.png";
+                NSString *pixelRoot = [[[NSProcessInfo processInfo] environment] objectForKey:@"PIXEL_ROOT"] ?: @"./";
+                NSString *path = self.outputPath ?: [pixelRoot stringByAppendingPathComponent:@"diagnostics/browser-reference.png"];
                 CFURLRef url = (__bridge CFURLRef)[NSURL fileURLWithPath:path];
                 CGImageDestinationRef dest = CGImageDestinationCreateWithURL(url, (CFStringRef)UTTypePNG.identifier, 1, NULL);
                 if (dest) {

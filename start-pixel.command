@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PIXEL_ROOT="${SCRIPT_DIR}"
 BRIDGE_DIR="${SCRIPT_DIR}/production-bridge"
 FRONTEND_DIR="${SCRIPT_DIR}/frontend"
 RENDERER_DIR="${SCRIPT_DIR}/graphics-renderer"

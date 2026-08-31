@@ -2,8 +2,30 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-// Configuration
-const WATCH_DIR = '/Volumes/VGC-01/OBS Sports/Replays';
+// Replay Directory Resolution (Environment Variable -> Project Relative -> Legacy Fallback)
+function resolveReplaysDir() {
+  if (process.env.PIXEL_REPLAYS_DIR) {
+    return path.resolve(process.env.PIXEL_REPLAYS_DIR);
+  }
+  // If explicitly operating from the legacy VGC-01 volume and path exists, preserve it
+  const isLegacyLocation = __dirname.startsWith('/Volumes/VGC-01');
+  const legacyPath = '/Volumes/VGC-01/OBS Sports/Replays';
+  if (isLegacyLocation && fs.existsSync(legacyPath)) {
+    return legacyPath;
+  }
+  // Otherwise, derive local Replays directory relative to project root
+  return path.resolve(__dirname, '../Replays');
+}
+
+const WATCH_DIR = resolveReplaysDir();
+try {
+  if (!fs.existsSync(WATCH_DIR)) {
+    fs.mkdirSync(WATCH_DIR, { recursive: true });
+    console.log(`Created replay directory: ${WATCH_DIR}`);
+  }
+} catch (err) {
+  console.warn(`Warning: Could not create replay directory ${WATCH_DIR}:`, err.message);
+}
 const RESOLUME_HOST = '127.0.0.1';
 const RESOLUME_PORT = 8080;
 const RESOLUME_TARGET_LAYER = 'REPLAYS';
@@ -28,11 +50,15 @@ console.log('----------------------------------------------------');
 
 // Mark existing files as already seen so we only process new files created during the test
 try {
-  const existing = fs.readdirSync(WATCH_DIR);
-  for (const f of existing) {
-    seenFiles.add(path.join(WATCH_DIR, f));
+  if (fs.existsSync(WATCH_DIR)) {
+    const existing = fs.readdirSync(WATCH_DIR);
+    for (const f of existing) {
+      seenFiles.add(path.join(WATCH_DIR, f));
+    }
+    console.log(`Initial scan: ${seenFiles.size} existing items marked as ignored.`);
+  } else {
+    console.log('Replay watch directory initialized (empty).');
   }
-  console.log(`Initial scan: ${seenFiles.size} existing items marked as ignored.`);
 } catch (err) {
   console.error(`Error reading initial directory ${WATCH_DIR}:`, err.message);
 }
