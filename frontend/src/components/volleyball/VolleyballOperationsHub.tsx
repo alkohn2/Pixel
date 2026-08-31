@@ -610,7 +610,7 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
             {/* Embedded Authoritative Graphics Control iframe */}
             <div style={{ flex: 1, width: '100%', height: '100%', overflow: 'hidden' }}>
               <iframe
-                src="/graphics/volleyball/graphics-control.html?v=g72b"
+                src="/graphics/volleyball/graphics-control.html?v=g75d"
                 title="PIXEL Volleyball Graphics Controller"
                 style={iframeStyle}
               />
@@ -621,7 +621,7 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
         {/* VIEW 2: ROSTER / LINEUP EDITOR */}
         <div style={{ display: subTab === 'roster' ? 'block' : 'none', width: '100%', height: '100%' }}>
           <iframe
-            src="/graphics/volleyball/roster-lineup-editor.html?v=1.2.2"
+            src="/graphics/volleyball/roster-lineup-editor.html?v=g75d"
             title="PIXEL Volleyball Roster and Lineup Editor"
             style={iframeStyle}
           />
@@ -630,7 +630,7 @@ export const VolleyballOperationsHub: React.FC<VolleyballOperationsHubProps> = (
         {/* VIEW 3: GAME PACKAGE MANAGER */}
         <div style={{ display: subTab === 'game_package' ? 'block' : 'none', width: '100%', height: '100%' }}>
           <iframe
-            src="/graphics/volleyball/game-package-manager.html"
+            src="/graphics/volleyball/game-package-manager.html?v=g75d"
             title="PIXEL Volleyball Game Package Manager"
             style={iframeStyle}
           />

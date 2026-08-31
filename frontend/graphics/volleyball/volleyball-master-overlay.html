@@ -1912,6 +1912,29 @@
     }
 
     // ========================================================================
+    function getRelativeLuminance(hex) {
+      let c = (hex || '').replace('#', '').trim();
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length !== 6) return 0.5;
+      const r = parseInt(c.substr(0, 2), 16) / 255;
+      const g = parseInt(c.substr(2, 2), 16) / 255;
+      const b = parseInt(c.substr(4, 2), 16) / 255;
+      const toLinear = (v) => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+      return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+    }
+
+    function getContrastTextColor(bgHex) {
+      if (!bgHex || !bgHex.startsWith('#')) return '#F8F8F8';
+      let c = bgHex.replace('#', '').trim();
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      if (c.length !== 6) return '#F8F8F8';
+      const lum = getRelativeLuminance(bgHex);
+      const crWhite = 1.05 / (lum + 0.05);
+      const crDark = (lum + 0.05) / 0.055;
+      return (crWhite >= 3.0 && crWhite >= crDark) ? '#F8F8F8' : '#050B18';
+    }
+
+    // ========================================================================
     // 4. STARTING LINEUP ANIMATIONS (~750ms HERO IN / ~450ms OUT)
     // ========================================================================
     function renderLineupCards(teamKey) {
@@ -1924,11 +1947,15 @@
 
       const isHome = (teamKey === 'home');
       const primaryColor = isHome ? '#0032A0' : (team.colorPrimary || '#15803D');
-      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#052E16');
+      const secondaryColor = isHome ? '#001956' : (team.colorSecondary || '#042E14');
       const accentColor = isHome ? '#e3c46a' : (team.accentColor || '#FACC15');
       const shellBorderColor = isHome ? '#0047FF' : primaryColor;
 
+      const headerTextColor = getContrastTextColor(primaryColor);
+      const priBlockTextColor = getContrastTextColor(primaryColor);
+
       D.lineupTeamName.textContent = (team.name || (isHome ? 'MIAMI DADE SHARKS' : 'VISITING TEAM')).toUpperCase();
+      D.lineupTeamName.style.color = headerTextColor;
       D.lineupCoach.textContent = team.coach || 'HEAD COACH';
       D.lineupCoach.style.color = accentColor;
       D.lineupHeader.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
@@ -1938,8 +1965,9 @@
 
       const teamTag = document.getElementById('lineup-team-tag');
       if (teamTag) {
+        const tagTextColor = getContrastTextColor(accentColor);
         teamTag.style.background = accentColor;
-        teamTag.style.color = secondaryColor;
+        teamTag.style.color = tagTextColor;
         teamTag.style.border = `1px solid rgba(255, 255, 255, 0.4)`;
       }
 
@@ -1964,10 +1992,10 @@
           <span class="lineup-card-captain ${p.captain ? 'active' : ''}" style="color: ${accentColor};">★</span>
           ${p.photo ? `<div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; margin: 0 auto 6px auto; border: 2px solid ${accentColor};"><img src="${p.photo}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.parentElement.style.display='none'"></div>` : ''}
           <div class="lineup-card-num-box" style="background: ${primaryColor}; border: 1px solid ${accentColor}80;">
-            <span class="lineup-card-num">${p.jerseyNumber}</span>
+            <span class="lineup-card-num" style="color: ${priBlockTextColor};">${p.jerseyNumber}</span>
           </div>
           <div class="lineup-card-name">${p.displayName}</div>
-          <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor}; color: #ffffff;">${p.position}</div>
+          <div class="lineup-card-pos" style="background: ${primaryColor}; border: 1px solid ${accentColor}; color: ${priBlockTextColor}; font-weight: 900;">${p.position}</div>
         </div>
       `).join('');
     }

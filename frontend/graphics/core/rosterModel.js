@@ -401,11 +401,11 @@
 
     // 2. ACCENT: High-contrast athletic broadcast highlight
     let accH, accS, accL;
-    if (hsl.h >= 70 && hsl.h <= 165) {
-      // Green family -> Vivid Athletic Gold/Yellow (#FACC15)
+    if (hsl.h >= 70 && hsl.h < 205) {
+      // Green & Cyan/Teal family -> Vivid Athletic Gold/Yellow (#FACC15)
       accH = 47.95; accS = 0.958; accL = 0.5314;
-    } else if (hsl.h >= 180 && hsl.h <= 260) {
-      // Blue family -> Athletic Warm Gold / MDC Gold (#E3C46A)
+    } else if (hsl.h >= 205 && hsl.h <= 260) {
+      // Blue & Navy family -> Athletic Warm Gold / MDC Gold (#E3C46A)
       accH = 44.63; accS = 0.684; accL = 0.653;
     } else if ((hsl.h >= 340 && hsl.h <= 360) || (hsl.h >= 0 && hsl.h <= 20)) {
       // Red / Crimson family -> Warm Gold / Amber (#FBBF24)
