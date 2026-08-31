@@ -1345,8 +1345,7 @@
 
     let autoPaletteEnabled = true;
 
-    function toggleAutoPalette() {
-      autoPaletteEnabled = !autoPaletteEnabled;
+    function updateAutoPaletteUI() {
       const btn = document.getElementById('btn-auto-palette-toggle');
       const icon = document.getElementById('icon-auto-palette');
       const lbl = document.getElementById('lbl-auto-palette');
@@ -1362,17 +1361,13 @@
         if (btn) btn.className = 'auto-palette-btn active';
         if (icon) icon.className = 'ti ti-toggle-right';
         if (lbl) lbl.textContent = 'ON';
-        if (hint) hint.textContent = 'DERIVING HARMONIZED PALETTE';
+        if (hint) hint.textContent = 'AUTO PALETTE: ON (HARMONIZED)';
         if (rowSec) rowSec.classList.add('auto-disabled');
         if (rowAcc) rowAcc.classList.add('auto-disabled');
         if (badgeSec) badgeSec.style.display = 'inline-block';
         if (badgeAcc) badgeAcc.style.display = 'inline-block';
         if (inputSec) inputSec.readOnly = true;
         if (inputAcc) inputAcc.readOnly = true;
-
-        // Immediately regenerate palette from current Primary
-        const currentPri = document.getElementById('input-color-pri').value.trim() || '#0032A0';
-        applyAutoPalette(currentPri);
       } else {
         if (btn) btn.className = 'auto-palette-btn';
         if (icon) icon.className = 'ti ti-toggle-left';
@@ -1385,24 +1380,55 @@
         if (inputSec) inputSec.readOnly = false;
         if (inputAcc) inputAcc.readOnly = false;
       }
-      markUnsaved();
     }
 
-    function applyAutoPalette(priHex) {
-      if (!autoPaletteEnabled) return;
-      const derived = derivePaletteFromPrimary(priHex);
+    function toggleAutoPalette() {
+      autoPaletteEnabled = !autoPaletteEnabled;
+      const team = currentRosterState[activeTeamKey];
+      if (team) team.autoPalette = autoPaletteEnabled;
 
-      document.getElementById('input-color-sec').value = derived.secondary;
-      document.getElementById('picker-color-sec').value = derived.secondary;
+      updateAutoPaletteUI();
 
-      document.getElementById('input-color-acc').value = derived.accent;
-      document.getElementById('picker-color-acc').value = derived.accent;
-
-      updateBrandPreview();
-      markUnsaved();
+      if (autoPaletteEnabled) {
+        const currentPri = document.getElementById('input-color-pri').value.trim() || team?.colorPrimary || '#0032A0';
+        handlePrimaryColorChange(currentPri);
+      } else {
+        persistAndBroadcastRoster();
+        markSaved();
+      }
     }
 
-    function onPrimaryColorChange(val) {
+    function persistAndBroadcastRoster() {
+      try {
+        currentRosterState.stateRevision = (currentRosterState.stateRevision || 0) + 1;
+        currentRosterState.timestamp = Date.now();
+        localStorage.setItem(RosterModel.STORAGE_KEY, JSON.stringify(currentRosterState));
+      } catch (e) {}
+
+      if (rosterChannel) {
+        try {
+          rosterChannel.postMessage({
+            type: 'ROSTER_STATE_UPDATE',
+            roster: currentRosterState,
+            timestamp: currentRosterState.timestamp
+          });
+        } catch (e) {}
+      }
+
+      // Sync to Production Bridge
+      try {
+        fetch('http://127.0.0.1:3000/graphics/state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'ROSTER_BRANDING_UPDATE',
+            roster: currentRosterState
+          })
+        }).catch(() => {});
+      } catch (e) {}
+    }
+
+    function handlePrimaryColorChange(val) {
       val = (val || '').trim();
       if (!val.startsWith('#') && val.length > 0) val = '#' + val;
 
@@ -1411,22 +1437,50 @@
         if (!confirmChange) {
           document.getElementById('input-color-pri').value = '#0032A0';
           document.getElementById('picker-color-pri').value = '#0032A0';
-          if (autoPaletteEnabled) applyAutoPalette('#0032A0');
+          if (autoPaletteEnabled) handlePrimaryColorChange('#0032A0');
           return;
         }
       }
 
       if (val.length === 7 || val.length === 4) {
+        const priHex = val.toUpperCase();
+        const team = currentRosterState[activeTeamKey];
+
         document.getElementById('picker-color-pri').value = val;
-        document.getElementById('input-color-pri').value = val.toUpperCase();
+        document.getElementById('input-color-pri').value = priHex;
+
         if (autoPaletteEnabled) {
-          applyAutoPalette(val);
+          const derived = derivePaletteFromPrimary(priHex);
+
+          // Update Secondary DOM inputs
+          document.getElementById('input-color-sec').value = derived.secondary;
+          document.getElementById('picker-color-sec').value = derived.secondary;
+
+          // Update Accent DOM inputs
+          document.getElementById('input-color-acc').value = derived.accent;
+          document.getElementById('picker-color-acc').value = derived.accent;
+
+          // Atomically update state
+          if (team) {
+            team.colorPrimary = derived.primary;
+            team.colorSecondary = derived.secondary;
+            team.accentColor = derived.accent;
+            team.autoPalette = true;
+          }
         } else {
-          updateBrandPreview();
-          markUnsaved();
+          if (team) {
+            team.colorPrimary = priHex;
+          }
         }
+
+        updateBrandPreview();
+        checkColorContrast(priHex);
+        persistAndBroadcastRoster();
+        markSaved();
       }
     }
+
+    const onPrimaryColorChange = handlePrimaryColorChange;
 
     function getRelativeLuminance(hex) {
       let c = (hex || '').replace('#', '').trim();
@@ -1600,41 +1654,13 @@
 
       if (team.autoPalette !== undefined) {
         autoPaletteEnabled = Boolean(team.autoPalette);
-      }
-      const btn = document.getElementById('btn-auto-palette-toggle');
-      const icon = document.getElementById('icon-auto-palette');
-      const lbl = document.getElementById('lbl-auto-palette');
-      const hint = document.getElementById('palette-mode-hint');
-      const rowSec = document.getElementById('row-color-sec');
-      const rowAcc = document.getElementById('row-color-acc');
-      const badgeSec = document.getElementById('badge-auto-sec');
-      const badgeAcc = document.getElementById('badge-auto-acc');
-      const inputSec = document.getElementById('input-color-sec');
-      const inputAcc = document.getElementById('input-color-acc');
-
-      if (autoPaletteEnabled) {
-        if (btn) btn.className = 'auto-palette-btn active';
-        if (icon) icon.className = 'ti ti-toggle-right';
-        if (lbl) lbl.textContent = 'ON';
-        if (hint) hint.textContent = 'DERIVING HARMONIZED PALETTE';
-        if (rowSec) rowSec.classList.add('auto-disabled');
-        if (rowAcc) rowAcc.classList.add('auto-disabled');
-        if (badgeSec) badgeSec.style.display = 'inline-block';
-        if (badgeAcc) badgeAcc.style.display = 'inline-block';
-        if (inputSec) inputSec.readOnly = true;
-        if (inputAcc) inputAcc.readOnly = true;
       } else {
-        if (btn) btn.className = 'auto-palette-btn';
-        if (icon) icon.className = 'ti ti-toggle-left';
-        if (lbl) lbl.textContent = 'OFF';
-        if (hint) hint.textContent = 'MANUAL PALETTE OVERRIDE';
-        if (rowSec) rowSec.classList.remove('auto-disabled');
-        if (rowAcc) rowAcc.classList.remove('auto-disabled');
-        if (badgeSec) badgeSec.style.display = 'none';
-        if (badgeAcc) badgeAcc.style.display = 'none';
-        if (inputSec) inputSec.readOnly = false;
-        if (inputAcc) inputAcc.readOnly = false;
+        autoPaletteEnabled = true;
+        team.autoPalette = true;
       }
+      updateAutoPaletteUI();
+      checkColorContrast(pri);
+      updateBrandPreview();
 
       updateBrandPreview();
 
@@ -1803,31 +1829,48 @@
 
     function syncColorInput(type, val) {
       if (type === 'pri') {
-        document.getElementById('input-color-pri').value = val.toUpperCase();
-        document.getElementById('picker-color-pri').value = val;
+        handlePrimaryColorChange(val);
+        return;
       }
+      const team = currentRosterState[activeTeamKey];
       if (type === 'sec') {
         document.getElementById('input-color-sec').value = val.toUpperCase();
         document.getElementById('picker-color-sec').value = val;
+        if (team) team.colorSecondary = val.toUpperCase();
       }
       if (type === 'acc') {
         document.getElementById('input-color-acc').value = val.toUpperCase();
         document.getElementById('picker-color-acc').value = val;
+        if (team) team.accentColor = val.toUpperCase();
       }
       updateBrandPreview();
-      markUnsaved();
+      persistAndBroadcastRoster();
+      markSaved();
     }
 
     function syncColorPicker(type, val) {
       val = (val || '').trim();
       if (!val.startsWith('#') && val.length > 0) val = '#' + val;
-      if (val.length === 7 || val.length === 4) {
-        if (type === 'pri') document.getElementById('picker-color-pri').value = val;
-        if (type === 'sec') document.getElementById('picker-color-sec').value = val;
-        if (type === 'acc') document.getElementById('picker-color-acc').value = val;
+      if (type === 'pri') {
+        handlePrimaryColorChange(val);
+        return;
       }
-      updateBrandPreview();
-      markUnsaved();
+      if (val.length === 7 || val.length === 4) {
+        const team = currentRosterState[activeTeamKey];
+        if (type === 'sec') {
+          document.getElementById('picker-color-sec').value = val;
+          document.getElementById('input-color-sec').value = val.toUpperCase();
+          if (team) team.colorSecondary = val.toUpperCase();
+        }
+        if (type === 'acc') {
+          document.getElementById('picker-color-acc').value = val;
+          document.getElementById('input-color-acc').value = val.toUpperCase();
+          if (team) team.accentColor = val.toUpperCase();
+        }
+        updateBrandPreview();
+        persistAndBroadcastRoster();
+        markSaved();
+      }
     }
 
     function syncInputsToState() {
