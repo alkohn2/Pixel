@@ -19,5 +19,12 @@
     "input-6": null,
     "input-7": null,
     "input-8": null
+  },
+  "manualControl": {
+    "enabled": true,
+    "obsTransitionMacroIndex": 0,
+    "truckCamera1MacroIndex": 1,
+    "transitionLockMs": 2000,
+    "truckDebounceMs": 750
   }
 }

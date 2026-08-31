@@ -73,6 +73,7 @@ const bridgeState = {
     lockReason: 'INITIALIZING',
     mode: 'MANUAL_CONTROL',
     obsTransitionMacroIndex: setup.manualControl?.obsTransitionMacroIndex ?? 0,
+    truckCamera1MacroIndex: setup.manualControl?.truckCamera1MacroIndex ?? 1,
     transitionLocked: false,
     lastTriggeredAt: null,
     lastResult: null
@@ -430,6 +431,88 @@ async function triggerObsStudioTransition(source = 'ATEM_MACRO') {
     addEvent('OBS_TRANSITION_FAILED', `OBS Transition failed: ${err?.message || err}`, { error: err?.message })
     return { success: false, reason: 'ERROR', error: err?.message }
   }
+}
+
+// ============================================================================
+// TRUCK LOCAL CONTROL MODULE (Phase TRUCK-CONTROL-1: ATEM Macro 2 → Truck Cam 1)
+// ============================================================================
+const TRUCK_KEY_SENDER_BIN = path.join(__dirname, 'truck-key-sender')
+let truckDebounceTimeout = null
+let truckDebounceLocked = false
+
+async function triggerTruckCutCamera1(source = 'ATEM_MACRO_2') {
+  addEvent('TRUCK_MACRO_DETECTED', `Truck Macro execution detected via ${source}`, { source, macroIndex: setup.manualControl?.truckCamera1MacroIndex ?? 1 })
+
+  // 1. Safety Gate: Require PIXEL REMOTE = ARMED
+  evaluateManualControlSafety()
+  const mc = bridgeState.manualControl
+  if (!mc.enabled) {
+    const lockReason = mc.lockReason === 'OPERATOR' ? 'OPERATOR' : (mc.lockReason || 'SAFETY')
+    addEvent('TRUCK_CONTROL_BLOCKED', `Truck Cut Camera 1 blocked: PIXEL REMOTE is LOCKED (${lockReason})`, { reason: 'BLOCKED_REMOTE_LOCKED', lockReason })
+    console.log(`⚠️ Truck Control blocked: PIXEL REMOTE is LOCKED (${lockReason})`)
+    return { success: false, reason: 'BLOCKED_REMOTE_LOCKED', lockReason }
+  }
+
+  // 2. Debounce / lock protection (500ms - 1000ms)
+  if (truckDebounceLocked) {
+    addEvent('TRUCK_CONTROL_BLOCKED', `Truck Cut Camera 1 blocked: Debounce lock active`, { reason: 'DEBOUNCE_LOCKED' })
+    return { success: false, reason: 'DEBOUNCE_LOCKED' }
+  }
+
+  // 3. Resolve active Truck process at execution time
+  let truckPid = 0
+  try {
+    const pgrepOut = execSync("pgrep -f 'Production Truck' | head -n 1 || true", { encoding: 'utf8' }).trim()
+    if (pgrepOut) truckPid = parseInt(pgrepOut, 10)
+  } catch (e) {}
+
+  if (!truckPid || isNaN(truckPid)) {
+    addEvent('TRUCK_PROCESS_NOT_FOUND', 'Truck Cut Camera 1 blocked: Hudl Production Truck process is not running', { reason: 'BLOCKED_TRUCK_NOT_RUNNING' })
+    addEvent('TRUCK_CONTROL_BLOCKED', 'Truck Cut Camera 1 blocked: BLOCKED_TRUCK_NOT_RUNNING', { reason: 'BLOCKED_TRUCK_NOT_RUNNING' })
+    console.log('❌ Truck Control blocked: BLOCKED_TRUCK_NOT_RUNNING')
+    return { success: false, reason: 'BLOCKED_TRUCK_NOT_RUNNING' }
+  }
+
+  // Activate debounce lock
+  truckDebounceLocked = true
+  const debounceMs = setup.manualControl?.truckDebounceMs || 750
+  if (truckDebounceTimeout) clearTimeout(truckDebounceTimeout)
+  truckDebounceTimeout = setTimeout(() => {
+    truckDebounceLocked = false
+  }, debounceMs)
+
+  addEvent('TRUCK_CUT_CAMERA_1_REQUESTED', `Truck Cut Camera 1 requested (F1 -> PID ${truckPid}) via ${source}`, { source, targetPid: truckPid })
+
+  // 4. Send F1 native keyboard event via truck-key-sender
+  return new Promise((resolve) => {
+    execFile(TRUCK_KEY_SENDER_BIN, ['--json', '--pid', String(truckPid)], { timeout: 3000 }, (error, stdout) => {
+      if (error || !stdout) {
+        addEvent('TRUCK_CONTROL_FAILED', `Truck key injection failed: ${error?.message || 'Unknown error'}`, { error: error?.message, targetPid: truckPid })
+        return resolve({ success: false, reason: 'KEY_INJECTION_FAILED', error: error?.message })
+      }
+
+      try {
+        const result = JSON.parse(stdout)
+        if (result.success) {
+          addEvent('TRUCK_F1_SENT', `Native F1 event delivered to Production Truck (PID: ${truckPid}, Frontmost: ${result.isFrontmost ? 'YES' : 'NO'}, Mode: ${result.mode})`, {
+            targetPid: truckPid,
+            key: 'F1',
+            keyCode: result.keyCode,
+            isFrontmost: result.isFrontmost,
+            mode: result.mode
+          })
+          console.log(`✅ TRUCK F1 SENT -> PID ${truckPid} (Frontmost: ${result.isFrontmost ? 'YES' : 'NO'})`)
+          return resolve({ success: true, ...result })
+        } else {
+          addEvent('TRUCK_CONTROL_BLOCKED', `Truck key injection reported failure: ${result.error}`, { reason: result.error })
+          return resolve({ success: false, ...result })
+        }
+      } catch (err) {
+        addEvent('TRUCK_CONTROL_FAILED', `Failed to parse truck key sender output: ${err.message}`)
+        return resolve({ success: false, reason: 'PARSE_ERROR' })
+      }
+    })
+  })
 }
 
 setInterval(() => {
@@ -1239,6 +1322,18 @@ const server = http.createServer((request, response) => {
     return
   }
 
+  // Phase TRUCK-CONTROL-1: Controlled Truck Camera 1 Cut Trigger Endpoint
+  if (request.method === 'POST' && (request.url === '/control/truck-cut-camera-1' || request.url === '/control/truck-camera-1')) {
+    triggerTruckCutCamera1('API_TRIGGER').then((res) => {
+      response.writeHead(res.success ? 200 : 400)
+      response.end(JSON.stringify(res, null, 2))
+    }).catch((err) => {
+      response.writeHead(500)
+      response.end(JSON.stringify({ error: err?.message }, null, 2))
+    })
+    return
+  }
+
   // Phase 8.1: Controlled Manual Trigger endpoint (for testing or UI manual triggers)
   if (request.method === 'POST' && request.url === '/control/obs-transition') {
     triggerObsStudioTransition('API_TRIGGER').then((res) => {
@@ -1267,13 +1362,14 @@ const server = http.createServer((request, response) => {
       '/graphics/repair',
       '/control/pixel-remote',
       '/control/manual',
-      '/control/obs-transition'
+      '/control/obs-transition',
+      '/control/truck-cut-camera-1'
     ]
   }, null, 2))
 })
 
 // ============================================================================
-// ATEM MACRO EDGE DETECTION & HANDLERS (Phase 8.1)
+// ATEM MACRO EDGE DETECTION & HANDLERS (Phase 8.1 & Phase TRUCK-CONTROL-1)
 // ============================================================================
 let lastAtemMacroRunning = false
 let atemMacroStateInitialized = false
@@ -1283,7 +1379,8 @@ function handleAtemMacroStateChange(macroPlayer) {
 
   const isRunning = Boolean(macroPlayer.isRunning)
   const macroIndex = Number(macroPlayer.macroIndex)
-  const targetIndex = Number(bridgeState.manualControl.obsTransitionMacroIndex)
+  const obsMacroIndex = Number(bridgeState.manualControl.obsTransitionMacroIndex ?? 0)
+  const truckCam1MacroIndex = Number(bridgeState.manualControl.truckCamera1MacroIndex ?? 1)
 
   // Initialization safeguard: capture initial state on sync without triggering
   if (!atemMacroStateInitialized) {
@@ -1294,9 +1391,11 @@ function handleAtemMacroStateChange(macroPlayer) {
 
   // Detect rising edge: false -> true
   if (isRunning && !lastAtemMacroRunning) {
-    console.log(`ATEM Macro execution detected: Macro index ${macroIndex} (configured target: ${targetIndex})`)
-    if (macroIndex === targetIndex) {
+    console.log(`ATEM Macro execution detected: Macro index ${macroIndex} (OBS target: ${obsMacroIndex}, Truck Cam 1 target: ${truckCam1MacroIndex})`)
+    if (macroIndex === obsMacroIndex) {
       triggerObsStudioTransition(`ATEM_MACRO_${macroIndex + 1}`)
+    } else if (macroIndex === truckCam1MacroIndex) {
+      triggerTruckCutCamera1(`ATEM_MACRO_${macroIndex + 1}`)
     }
   }
 

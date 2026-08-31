@@ -23,6 +23,8 @@
   "manualControl": {
     "enabled": true,
     "obsTransitionMacroIndex": 0,
-    "transitionLockMs": 2000
+    "truckCamera1MacroIndex": 1,
+    "transitionLockMs": 2000,
+    "truckDebounceMs": 750
   }
 }
